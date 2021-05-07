@@ -2540,6 +2540,8 @@ var nodom = (function (exports) {
             });
         }
     }
+    var nodom = Nodom;
+    var $ = nodom;
 
     /**
      * 异常处理类
@@ -5968,6 +5970,7 @@ var nodom = (function (exports) {
         }
     }
 
+    exports.$ = $;
     exports.Application = Application;
     exports.ChangedDom = ChangedDom;
     exports.Compiler = Compiler;
@@ -6001,6 +6004,7 @@ var nodom = (function (exports) {
     exports.TipMessage_en = TipMessage_en;
     exports.TipMessage_zh = TipMessage_zh;
     exports.Util = Util;
+    exports.nodom = nodom;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 

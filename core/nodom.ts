@@ -215,6 +215,6 @@ export class Nodom {
     }
 }
 
-var nodom = Nodom;
-var $ = nodom;
+export var nodom = Nodom;
+export var $ = nodom;
 

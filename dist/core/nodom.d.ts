@@ -47,3 +47,5 @@ export declare class Nodom {
      */
     static request(config: any): Promise<any>;
 }
+export declare var nodom: typeof Nodom;
+export declare var $: typeof Nodom;

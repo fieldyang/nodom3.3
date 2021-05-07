@@ -18,7 +18,7 @@ export { Model } from "./core/model";
 export { ModelManager } from "./core/modelmanager";
 export { Module } from "./core/module";
 export { ModuleFactory } from "./core/modulefactory";
-export { Nodom } from "./core/nodom";
+export { Nodom, nodom, $ } from "./core/nodom";
 export { Plugin } from "./core/plugin";
 export { PluginManager } from "./core/pluginmanager";
 export { Renderer } from "./core/renderer";
