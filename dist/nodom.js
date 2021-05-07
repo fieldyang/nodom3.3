@@ -1,8 +1,5 @@
-(function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-    typeof define === 'function' && define.amd ? define(['exports'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.nodom = {}));
-}(this, (function (exports) { 'use strict';
+var nodom = (function (exports) {
+    'use strict';
 
     /**
      * 应用类
@@ -46,6 +43,31 @@
         static setPath(pathObj) {
             this.path = pathObj;
         }
+    }
+
+    /*! *****************************************************************************
+    Copyright (c) Microsoft Corporation.
+
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose with or without fee is hereby granted.
+
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+    PERFORMANCE OF THIS SOFTWARE.
+    ***************************************************************************** */
+
+    function __awaiter(thisArg, _arguments, P, generator) {
+        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+        return new (P || (P = Promise))(function (resolve, reject) {
+            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+            step((generator = generator.apply(thisArg, _arguments || [])).next());
+        });
     }
 
     /**
@@ -300,53 +322,55 @@
          * @param urls  [{url:**,type:**}]或 [url1,url2,...]
          * @returns     IResourceObj
          */
-        static async getResources(reqs) {
-            let me = this;
-            this.preHandle(reqs);
-            //无请求
-            if (reqs.length === 0) {
-                return [];
-            }
-            let taskId = Util.genId();
-            //设置任务资源数组
-            let resArr = [];
-            for (let item of reqs) {
-                resArr.push(item.url);
-            }
-            this.loadingTasks.set(taskId, resArr);
-            return new Promise(async (res, rej) => {
-                //保存资源id状态
+        static getResources(reqs) {
+            return __awaiter(this, void 0, void 0, function* () {
+                let me = this;
+                this.preHandle(reqs);
+                //无请求
+                if (reqs.length === 0) {
+                    return [];
+                }
+                let taskId = Util.genId();
+                //设置任务资源数组
+                let resArr = [];
                 for (let item of reqs) {
-                    let url = item.url;
-                    if (this.resources.has(url)) { //已加载，直接获取资源内容
-                        let r = me.awake(taskId);
-                        if (r) {
-                            res(r);
-                        }
-                    }
-                    else if (this.waitList.has(url)) { //加载中，放入资源等待队列
-                        this.waitList.get(url).push(taskId);
-                    }
-                    else { //新加载
-                        //将自己的任务加入等待队列
-                        this.waitList.set(url, [taskId]);
-                        //请求资源
-                        let content = await Nodom.request({ url: url });
-                        let rObj = { type: item.type, content: content };
-                        this.handleOne(url, rObj);
-                        this.resources.set(url, rObj);
-                        let arr = this.waitList.get(url);
-                        //从等待列表移除
-                        this.waitList.delete(url);
-                        //唤醒任务
-                        for (let tid of arr) {
-                            let r = me.awake(tid);
+                    resArr.push(item.url);
+                }
+                this.loadingTasks.set(taskId, resArr);
+                return new Promise((res, rej) => __awaiter(this, void 0, void 0, function* () {
+                    //保存资源id状态
+                    for (let item of reqs) {
+                        let url = item.url;
+                        if (this.resources.has(url)) { //已加载，直接获取资源内容
+                            let r = me.awake(taskId);
                             if (r) {
                                 res(r);
                             }
                         }
+                        else if (this.waitList.has(url)) { //加载中，放入资源等待队列
+                            this.waitList.get(url).push(taskId);
+                        }
+                        else { //新加载
+                            //将自己的任务加入等待队列
+                            this.waitList.set(url, [taskId]);
+                            //请求资源
+                            let content = yield Nodom.request({ url: url });
+                            let rObj = { type: item.type, content: content };
+                            this.handleOne(url, rObj);
+                            this.resources.set(url, rObj);
+                            let arr = this.waitList.get(url);
+                            //从等待列表移除
+                            this.waitList.delete(url);
+                            //唤醒任务
+                            for (let tid of arr) {
+                                let r = me.awake(tid);
+                                if (r) {
+                                    res(r);
+                                }
+                            }
+                        }
                     }
-                }
+                }));
             });
         }
         /**
@@ -494,54 +518,56 @@
          * @param moduleName    模块名
          * @param data          数据或数据url
          */
-        static async getInstance(className, moduleName, data) {
-            if (!this.classes.has(className)) {
-                throw new NError('notexist1', Nodom.tipMessage.TipWords['moduleClass'], className);
-            }
-            let cfg = this.classes.get(className);
-            if (moduleName) {
-                cfg.name = moduleName;
-            }
-            if (!cfg.instance) {
-                Util.genId();
-                if (!cfg.initing) {
-                    cfg.initing = true;
-                    this.initModule(cfg);
+        static getInstance(className, moduleName, data) {
+            return __awaiter(this, void 0, void 0, function* () {
+                if (!this.classes.has(className)) {
+                    throw new NError('notexist1', Nodom.tipMessage.TipWords['moduleClass'], className);
                 }
-                return new Promise((res, rej) => {
-                    check();
-                    function check() {
-                        if (!cfg.initing) {
-                            res(get(cfg));
-                        }
-                        else {
-                            setTimeout(check, 0);
-                        }
+                let cfg = this.classes.get(className);
+                if (moduleName) {
+                    cfg.name = moduleName;
+                }
+                if (!cfg.instance) {
+                    Util.genId();
+                    if (!cfg.initing) {
+                        cfg.initing = true;
+                        this.initModule(cfg);
                     }
-                });
-            }
-            else {
-                return get(cfg);
-            }
-            function get(cfg) {
-                if (cfg.singleton) {
-                    return cfg.instance;
+                    return new Promise((res, rej) => {
+                        check();
+                        function check() {
+                            if (!cfg.initing) {
+                                res(get(cfg));
+                            }
+                            else {
+                                setTimeout(check, 0);
+                            }
+                        }
+                    });
                 }
                 else {
-                    let mdl = cfg.instance.clone(moduleName);
-                    //处理数据
-                    if (data) {
-                        //如果为url，则设置dataurl和loadnewdata标志
-                        if (typeof data === 'string') {
-                            mdl.setDataUrl(data);
-                        }
-                        else { //数据模型化
-                            mdl.model = new Model(data, mdl);
-                        }
-                    }
-                    return mdl;
+                    return get(cfg);
                 }
-            }
+                function get(cfg) {
+                    if (cfg.singleton) {
+                        return cfg.instance;
+                    }
+                    else {
+                        let mdl = cfg.instance.clone(moduleName);
+                        //处理数据
+                        if (data) {
+                            //如果为url，则设置dataurl和loadnewdata标志
+                            if (typeof data === 'string') {
+                                mdl.setDataUrl(data);
+                            }
+                            else { //数据模型化
+                                mdl.model = new Model(data, mdl);
+                            }
+                        }
+                        return mdl;
+                    }
+                }
+            });
         }
         /**
          * 从工厂移除模块
@@ -569,62 +595,66 @@
          * 添加模块类
          * @param modules
          */
-        static async addModules(modules) {
-            for (let cfg of modules) {
-                if (!cfg.path) {
-                    throw new NError("paramException", 'modules', 'path');
+        static addModules(modules) {
+            return __awaiter(this, void 0, void 0, function* () {
+                for (let cfg of modules) {
+                    if (!cfg.path) {
+                        throw new NError("paramException", 'modules', 'path');
+                    }
+                    if (!cfg.class) {
+                        throw new NError("paramException", 'modules', 'class');
+                    }
+                    //lazy默认true
+                    if (cfg.lazy === undefined) {
+                        cfg.lazy = true;
+                    }
+                    //singleton默认true
+                    if (cfg.singleton === undefined) {
+                        cfg.singleton = true;
+                    }
+                    if (!cfg.lazy) {
+                        yield this.initModule(cfg);
+                    }
+                    //存入class工厂
+                    this.classes.set(cfg.class, cfg);
                 }
-                if (!cfg.class) {
-                    throw new NError("paramException", 'modules', 'class');
-                }
-                //lazy默认true
-                if (cfg.lazy === undefined) {
-                    cfg.lazy = true;
-                }
-                //singleton默认true
-                if (cfg.singleton === undefined) {
-                    cfg.singleton = true;
-                }
-                if (!cfg.lazy) {
-                    await this.initModule(cfg);
-                }
-                //存入class工厂
-                this.classes.set(cfg.class, cfg);
-            }
+            });
         }
         /**
          * 出事化模块
          * @param cfg 模块类对象
          */
-        static async initModule(cfg) {
-            //增加 .js后缀
-            let path = cfg.path;
-            if (!path.endsWith('.js')) {
-                path += '.js';
-            }
-            //加载模块类js文件
-            let url = Util.mergePath([Application.getPath('module'), path]);
-            await ResourceManager.getResources([{ url: url, type: 'js' }]);
-            let cls = eval(cfg.class);
-            if (cls) {
-                let instance = Reflect.construct(cls, [{
-                        name: cfg.name,
-                        data: cfg.data,
-                        lazy: cfg.lazy
-                    }]);
-                //模块初始化
-                await instance.init();
-                cfg.instance = instance;
-                //单例，则需要保存到modules
-                if (cfg.singleton) {
-                    this.modules.set(instance.id, instance);
+        static initModule(cfg) {
+            return __awaiter(this, void 0, void 0, function* () {
+                //增加 .js后缀
+                let path = cfg.path;
+                if (!path.endsWith('.js')) {
+                    path += '.js';
                 }
-                //初始化完成
-                cfg.initing = false;
-            }
-            else {
-                throw new NError('notexist1', Nodom.tipMessage.TipWords['moduleClass'], cfg.class);
-            }
+                //加载模块类js文件
+                let url = Util.mergePath([Application.getPath('module'), path]);
+                yield ResourceManager.getResources([{ url: url, type: 'js' }]);
+                let cls = eval(cfg.class);
+                if (cls) {
+                    let instance = Reflect.construct(cls, [{
+                            name: cfg.name,
+                            data: cfg.data,
+                            lazy: cfg.lazy
+                        }]);
+                    //模块初始化
+                    yield instance.init();
+                    cfg.instance = instance;
+                    //单例，则需要保存到modules
+                    if (cfg.singleton) {
+                        this.modules.set(instance.id, instance);
+                    }
+                    //初始化完成
+                    cfg.initing = false;
+                }
+                else {
+                    throw new NError('notexist1', Nodom.tipMessage.TipWords['moduleClass'], cfg.class);
+                }
+            });
         }
     }
     /**
@@ -1068,106 +1098,108 @@
         /**
          * 初始化模块（加载和编译）
          */
-        async init() {
-            let config = this.initConfig;
-            let urlArr = []; //请求url数组
-            let cssPath = Application.getPath('css');
-            let templatePath = Application.getPath('template');
-            let jsPath = Application.getPath('js');
-            //加载文件
-            if (config && Util.isArray(config.requires) && config.requires.length > 0) {
-                config.requires.forEach((item) => {
-                    let type;
-                    let url = '';
-                    if (Util.isObject(item)) { //为对象，可能是css或js
-                        type = item['type'] || 'js';
-                        url = item['url'];
-                    }
-                    else { //js文件
-                        type = 'js';
-                        url = item;
-                    }
-                    //转换路径
-                    let path = type === 'js' ? jsPath : cssPath;
-                    urlArr.push({ url: Util.mergePath([path, url]), type: type });
-                });
-            }
-            //模版串
-            let templateStr = this.template;
-            //模版信息
-            if (config.template) {
-                config.template = config.template.trim();
-                if (config.template.startsWith('<')) { //html模版串
-                    templateStr = config.template;
-                }
-                else { //文件
-                    urlArr.push({
-                        url: Util.mergePath([templatePath, config.template]),
-                        type: config.template.endsWith('.nd') ? 'nd' : 'template'
+        init() {
+            return __awaiter(this, void 0, void 0, function* () {
+                let config = this.initConfig;
+                let urlArr = []; //请求url数组
+                let cssPath = Application.getPath('css');
+                let templatePath = Application.getPath('template');
+                let jsPath = Application.getPath('js');
+                //加载文件
+                if (config && Util.isArray(config.requires) && config.requires.length > 0) {
+                    config.requires.forEach((item) => {
+                        let type;
+                        let url = '';
+                        if (Util.isObject(item)) { //为对象，可能是css或js
+                            type = item['type'] || 'js';
+                            url = item['url'];
+                        }
+                        else { //js文件
+                            type = 'js';
+                            url = item;
+                        }
+                        //转换路径
+                        let path = type === 'js' ? jsPath : cssPath;
+                        urlArr.push({ url: Util.mergePath([path, url]), type: type });
                     });
                 }
-            }
-            //删除template
-            delete this.template;
-            //如果已存在templateStr，则直接编译
-            if (!Util.isEmpty(templateStr)) {
-                this.virtualDom = Compiler.compile(templateStr);
-            }
-            //数据
-            if (config.data) { //数据
-                if (Util.isObject(config.data)) { //数据
-                    this.model = new Model(config.data, this);
-                }
-                else { //数据url
-                    urlArr.push({
-                        url: config.data,
-                        type: 'data'
-                    });
-                    this.dataUrl = config.data;
-                }
-            }
-            else { //空数据
-                this.model = new Model({}, this);
-            }
-            //批量请求文件
-            if (urlArr.length > 0) {
-                let rets = await ResourceManager.getResources(urlArr);
-                for (let r of rets) {
-                    if (r.type === 'template' || r.type === 'nd') {
-                        this.virtualDom = r.content;
+                //模版串
+                let templateStr = this.template;
+                //模版信息
+                if (config.template) {
+                    config.template = config.template.trim();
+                    if (config.template.startsWith('<')) { //html模版串
+                        templateStr = config.template;
                     }
-                    else if (r.type === 'data') {
-                        this.model = new Model(r.content, this);
+                    else { //文件
+                        urlArr.push({
+                            url: Util.mergePath([templatePath, config.template]),
+                            type: config.template.endsWith('.nd') ? 'nd' : 'template'
+                        });
                     }
                 }
-            }
-            //处理子模块
-            if (this.initConfig.modules) {
-                for (let cfg of this.initConfig.modules) {
-                    let mdl = new Module(cfg);
-                    mdl.parentId = this.id;
-                    this.addChild(mdl.id);
+                //删除template
+                delete this.template;
+                //如果已存在templateStr，则直接编译
+                if (!Util.isEmpty(templateStr)) {
+                    this.virtualDom = Compiler.compile(templateStr);
                 }
-            }
-            changeState(this);
-            delete this.initConfig;
-            /**
-             * 修改状态
-             * @param mod 	模块
-             */
-            function changeState(mod) {
-                if (mod.isMain) {
-                    mod.state = 3;
-                    //可能不能存在数据，需要手动添加到渲染器
-                    Renderer.add(mod);
+                //数据
+                if (config.data) { //数据
+                    if (Util.isObject(config.data)) { //数据
+                        this.model = new Model(config.data, this);
+                    }
+                    else { //数据url
+                        urlArr.push({
+                            url: config.data,
+                            type: 'data'
+                        });
+                        this.dataUrl = config.data;
+                    }
                 }
-                else if (mod.parentId) {
-                    mod.state = ModuleFactory.get(mod.parentId).state;
+                else { //空数据
+                    this.model = new Model({}, this);
                 }
-                else {
-                    mod.state = 1;
+                //批量请求文件
+                if (urlArr.length > 0) {
+                    let rets = yield ResourceManager.getResources(urlArr);
+                    for (let r of rets) {
+                        if (r.type === 'template' || r.type === 'nd') {
+                            this.virtualDom = r.content;
+                        }
+                        else if (r.type === 'data') {
+                            this.model = new Model(r.content, this);
+                        }
+                    }
                 }
-            }
+                //处理子模块
+                if (this.initConfig.modules) {
+                    for (let cfg of this.initConfig.modules) {
+                        let mdl = new Module(cfg);
+                        mdl.parentId = this.id;
+                        this.addChild(mdl.id);
+                    }
+                }
+                changeState(this);
+                delete this.initConfig;
+                /**
+                 * 修改状态
+                 * @param mod 	模块
+                 */
+                function changeState(mod) {
+                    if (mod.isMain) {
+                        mod.state = 3;
+                        //可能不能存在数据，需要手动添加到渲染器
+                        Renderer.add(mod);
+                    }
+                    else if (mod.parentId) {
+                        mod.state = ModuleFactory.get(mod.parentId).state;
+                    }
+                    else {
+                        mod.state = 1;
+                    }
+                }
+            });
         }
         /**
          * 模型渲染
@@ -1412,27 +1444,29 @@
         /**
          * 激活模块(添加到渲染器)
          */
-        async active() {
-            //激活状态不用激活，创建状态不能激活
-            if (this.state === 3) {
-                return;
-            }
-            //未初始化，需要先初始化
-            if (this.state === 0) {
-                await this.init();
-            }
-            this.state = 3;
-            //添加到渲染器
-            Renderer.add(this);
-            //孩子节点激活
-            if (Util.isArray(this.children)) {
-                this.children.forEach(async (item) => {
-                    let m = ModuleFactory.get(item);
-                    if (m) {
-                        await m.active();
-                    }
-                });
-            }
+        active() {
+            return __awaiter(this, void 0, void 0, function* () {
+                //激活状态不用激活，创建状态不能激活
+                if (this.state === 3) {
+                    return;
+                }
+                //未初始化，需要先初始化
+                if (this.state === 0) {
+                    yield this.init();
+                }
+                this.state = 3;
+                //添加到渲染器
+                Renderer.add(this);
+                //孩子节点激活
+                if (Util.isArray(this.children)) {
+                    this.children.forEach((item) => __awaiter(this, void 0, void 0, function* () {
+                        let m = ModuleFactory.get(item);
+                        if (m) {
+                            yield m.active();
+                        }
+                    }));
+                }
+            });
         }
         /**
          * 取消激活
@@ -1664,200 +1698,206 @@
          * 把路径加入跳转列表(准备跳往该路由)
          * @param path 	路径
          */
-        static async go(path) {
-            for (let i = 0; i < this.waitList.length; i++) {
-                let li = this.waitList[i];
-                //相等，则不加入队列
-                if (li === path) {
-                    return;
+        static go(path) {
+            return __awaiter(this, void 0, void 0, function* () {
+                for (let i = 0; i < this.waitList.length; i++) {
+                    let li = this.waitList[i];
+                    //相等，则不加入队列
+                    if (li === path) {
+                        return;
+                    }
+                    //父路径，不加入
+                    if (li.indexOf(path) === 0 && li.substr(path.length + 1, 1) === '/') {
+                        return;
+                    }
                 }
-                //父路径，不加入
-                if (li.indexOf(path) === 0 && li.substr(path.length + 1, 1) === '/') {
-                    return;
-                }
-            }
-            this.waitList.push(path);
-            this.load();
+                this.waitList.push(path);
+                this.load();
+            });
         }
         /**
          * 启动加载
          */
-        static async load() {
-            //在加载，或无等待列表，则返回
-            if (this.loading || this.waitList.length === 0) {
-                return;
-            }
-            let path = this.waitList.shift();
-            this.loading = true;
-            await this.start(path);
-            this.loading = false;
-            this.load();
+        static load() {
+            return __awaiter(this, void 0, void 0, function* () {
+                //在加载，或无等待列表，则返回
+                if (this.loading || this.waitList.length === 0) {
+                    return;
+                }
+                let path = this.waitList.shift();
+                this.loading = true;
+                yield this.start(path);
+                this.loading = false;
+                this.load();
+            });
         }
         /**
          * 切换路由
          * @param path 	路径
          */
-        static async start(path) {
-            let diff = this.compare(this.currentPath, path);
-            //获得当前模块，用于寻找router view
-            let parentModule;
-            if (diff[0] === null) {
-                parentModule = findParentModule();
-            }
-            else {
-                if (typeof diff[0].module === 'string') {
-                    parentModule = await ModuleFactory.getInstance(diff[0].module, diff[0].moduleName, diff[0].dataUrl);
+        static start(path) {
+            return __awaiter(this, void 0, void 0, function* () {
+                let diff = this.compare(this.currentPath, path);
+                //获得当前模块，用于寻找router view
+                let parentModule;
+                if (diff[0] === null) {
+                    parentModule = findParentModule();
                 }
                 else {
-                    parentModule = ModuleFactory.get(diff[0].module);
-                }
-            }
-            //父模块不存在，不继续处理
-            if (!parentModule) {
-                return;
-            }
-            //onleave事件，从末往前执行
-            for (let i = diff[1].length - 1; i >= 0; i--) {
-                const r = diff[1][i];
-                if (!r.module) {
-                    continue;
-                }
-                let module = ModuleFactory.get(r.module);
-                if (Util.isFunction(this.onDefaultLeave)) {
-                    this.onDefaultLeave(module.model);
-                }
-                if (Util.isFunction(r.onLeave)) {
-                    r.onLeave(module.model);
-                }
-                //module置为不激活
-                module.unactive();
-            }
-            let showPath; //实际要显示的路径
-            if (diff[2].length === 0) { //路由相同，参数不同
-                let route = diff[0];
-                let proute = diff[3];
-                if (route !== null) {
-                    //如果useparentpath，则使用父路由的路径，否则使用自己的路径
-                    showPath = route.useParentPath && proute ? proute.fullPath : route.fullPath;
-                    //给模块设置路由参数
-                    let module = ModuleFactory.get(route.module);
-                    route.setLinkActive();
-                    //设置首次渲染
-                    module.setFirstRender(true);
-                    await module.active();
-                    setRouteParamToNModel(route, module);
-                }
-            }
-            else { //路由不同
-                //加载模块
-                for (let ii = 0, len = diff[2].length; ii < len; ii++) {
-                    let route = diff[2][ii];
-                    //路由不存在或路由没有模块（空路由）
-                    if (!route || !route.module) {
-                        continue;
-                    }
-                    if (!route.useParentPath) {
-                        showPath = route.fullPath;
-                    }
-                    let module;
-                    //尚未获取module，进行初始化
-                    if (typeof route.module === 'string') {
-                        module = await ModuleFactory.getInstance(route.module, route.moduleName, route.dataUrl);
-                        if (!module) {
-                            throw new NError('notexist1', Nodom.tipMessage.TipWords['module'], route.module);
-                        }
-                        route.module = module.id;
+                    if (typeof diff[0].module === 'string') {
+                        parentModule = yield ModuleFactory.getInstance(diff[0].module, diff[0].moduleName, diff[0].dataUrl);
                     }
                     else {
-                        module = ModuleFactory.get(route.module);
+                        parentModule = ModuleFactory.get(diff[0].module);
                     }
-                    //设置首次渲染
-                    module.setFirstRender(true);
-                    let routerKey = Router.routerKeyMap.get(parentModule.id);
-                    //从父模块子节点中删除以此routerKey为containerKey的模块
-                    for (let i = 0; i < parentModule.children.length; i++) {
-                        let m = ModuleFactory.get(parentModule.children[i]);
-                        if (m && m.isContainerKey(routerKey)) {
-                            parentModule.children.splice(i, 1);
-                            break;
-                        }
-                    }
-                    //把此模块添加到父模块
-                    parentModule.addChild(module.id);
-                    module.setContainerKey(routerKey);
-                    //激活模块
-                    await module.active();
-                    //设置active项激活
-                    route.setLinkActive();
-                    //设置路由参数
-                    setRouteParamToNModel(route);
-                    //默认全局路由enter事件
-                    if (Util.isFunction(this.onDefaultEnter)) {
-                        this.onDefaultEnter(module.model);
-                    }
-                    //当前路由进入事件
-                    if (Util.isFunction(route.onEnter)) {
-                        route.onEnter(module.model);
-                    }
-                    parentModule = module;
                 }
-            }
-            //如果是history popstate，则不加入history
-            if (this.startStyle !== 2 && showPath) {
-                let p = Util.mergePath([Application.getPath('route'), showPath]);
-                //子路由，替换state
-                if (this.showPath && showPath.indexOf(this.showPath) === 0) {
-                    history.replaceState(path, '', p);
-                }
-                else { //路径push进history
-                    history.pushState(path, '', p);
-                }
-                //设置显示路径
-                this.showPath = showPath;
-            }
-            //修改currentPath
-            this.currentPath = path;
-            //设置start类型为正常start
-            this.startStyle = 0;
-            /**
-             * 将路由参数放入module的model中
-             * @param route 	路由
-             * @param module    模块
-             */
-            function setRouteParamToNModel(route, module) {
-                if (!route) {
+                //父模块不存在，不继续处理
+                if (!parentModule) {
                     return;
                 }
-                if (!module) {
-                    module = ModuleFactory.get(route.module);
+                //onleave事件，从末往前执行
+                for (let i = diff[1].length - 1; i >= 0; i--) {
+                    const r = diff[1][i];
+                    if (!r.module) {
+                        continue;
+                    }
+                    let module = ModuleFactory.get(r.module);
+                    if (Util.isFunction(this.onDefaultLeave)) {
+                        this.onDefaultLeave(module.model);
+                    }
+                    if (Util.isFunction(r.onLeave)) {
+                        r.onLeave(module.model);
+                    }
+                    //module置为不激活
+                    module.unactive();
                 }
-                let o = {
-                    path: route.path
-                };
-                if (!Util.isEmpty(route.data)) {
-                    o['data'] = route.data;
+                let showPath; //实际要显示的路径
+                if (diff[2].length === 0) { //路由相同，参数不同
+                    let route = diff[0];
+                    let proute = diff[3];
+                    if (route !== null) {
+                        //如果useparentpath，则使用父路由的路径，否则使用自己的路径
+                        showPath = route.useParentPath && proute ? proute.fullPath : route.fullPath;
+                        //给模块设置路由参数
+                        let module = ModuleFactory.get(route.module);
+                        route.setLinkActive();
+                        //设置首次渲染
+                        module.setFirstRender(true);
+                        yield module.active();
+                        setRouteParamToNModel(route, module);
+                    }
                 }
-                if (!module.model) {
-                    module.model = new Model({}, module);
+                else { //路由不同
+                    //加载模块
+                    for (let ii = 0, len = diff[2].length; ii < len; ii++) {
+                        let route = diff[2][ii];
+                        //路由不存在或路由没有模块（空路由）
+                        if (!route || !route.module) {
+                            continue;
+                        }
+                        if (!route.useParentPath) {
+                            showPath = route.fullPath;
+                        }
+                        let module;
+                        //尚未获取module，进行初始化
+                        if (typeof route.module === 'string') {
+                            module = yield ModuleFactory.getInstance(route.module, route.moduleName, route.dataUrl);
+                            if (!module) {
+                                throw new NError('notexist1', Nodom.tipMessage.TipWords['module'], route.module);
+                            }
+                            route.module = module.id;
+                        }
+                        else {
+                            module = ModuleFactory.get(route.module);
+                        }
+                        //设置首次渲染
+                        module.setFirstRender(true);
+                        let routerKey = Router.routerKeyMap.get(parentModule.id);
+                        //从父模块子节点中删除以此routerKey为containerKey的模块
+                        for (let i = 0; i < parentModule.children.length; i++) {
+                            let m = ModuleFactory.get(parentModule.children[i]);
+                            if (m && m.isContainerKey(routerKey)) {
+                                parentModule.children.splice(i, 1);
+                                break;
+                            }
+                        }
+                        //把此模块添加到父模块
+                        parentModule.addChild(module.id);
+                        module.setContainerKey(routerKey);
+                        //激活模块
+                        yield module.active();
+                        //设置active项激活
+                        route.setLinkActive();
+                        //设置路由参数
+                        setRouteParamToNModel(route);
+                        //默认全局路由enter事件
+                        if (Util.isFunction(this.onDefaultEnter)) {
+                            this.onDefaultEnter(module.model);
+                        }
+                        //当前路由进入事件
+                        if (Util.isFunction(route.onEnter)) {
+                            route.onEnter(module.model);
+                        }
+                        parentModule = module;
+                    }
                 }
-                module.model['$route'] = o;
-            }
-            /**
-             * 找到第一个带router的父模块
-             * @param pm    父模块
-             */
-            function findParentModule(pm) {
-                if (!pm) {
-                    pm = ModuleFactory.getMain();
+                //如果是history popstate，则不加入history
+                if (this.startStyle !== 2 && showPath) {
+                    let p = Util.mergePath([Application.getPath('route'), showPath]);
+                    //子路由，替换state
+                    if (this.showPath && showPath.indexOf(this.showPath) === 0) {
+                        history.replaceState(path, '', p);
+                    }
+                    else { //路径push进history
+                        history.pushState(path, '', p);
+                    }
+                    //设置显示路径
+                    this.showPath = showPath;
                 }
-                if (Router.routerKeyMap.has(pm.id)) {
-                    return pm;
+                //修改currentPath
+                this.currentPath = path;
+                //设置start类型为正常start
+                this.startStyle = 0;
+                /**
+                 * 将路由参数放入module的model中
+                 * @param route 	路由
+                 * @param module    模块
+                 */
+                function setRouteParamToNModel(route, module) {
+                    if (!route) {
+                        return;
+                    }
+                    if (!module) {
+                        module = ModuleFactory.get(route.module);
+                    }
+                    let o = {
+                        path: route.path
+                    };
+                    if (!Util.isEmpty(route.data)) {
+                        o['data'] = route.data;
+                    }
+                    if (!module.model) {
+                        module.model = new Model({}, module);
+                    }
+                    module.model['$route'] = o;
                 }
-                for (let c of pm.children) {
-                    let m = ModuleFactory.get(c);
-                    return findParentModule(m);
+                /**
+                 * 找到第一个带router的父模块
+                 * @param pm    父模块
+                 */
+                function findParentModule(pm) {
+                    if (!pm) {
+                        pm = ModuleFactory.getMain();
+                    }
+                    if (Router.routerKeyMap.has(pm.id)) {
+                        return pm;
+                    }
+                    for (let c of pm.children) {
+                        let m = ModuleFactory.get(c);
+                        return findParentModule(m);
+                    }
                 }
-            }
+            });
         }
         /*
             * 重定向
@@ -2313,45 +2353,47 @@
          * 新建一个App
          * @param config 应用配置
          */
-        static async newApp(config) {
-            if (window['NodomConfig']) {
-                config = Util.merge({}, window['NodomConfig'], config);
-            }
-            let lang = config && config.language;
-            if (!lang) {
-                lang = navigator.language ? navigator.language.substr(0, 2) : 'zh';
-            }
-            this.tipMessage = eval('(nodom.TipMessagee_' + lang + ')');
-            if (!config || !config.module) {
-                throw new NError('config', Nodom.tipMessage.TipWords['application']);
-            }
-            Application.setPath(config.path);
-            //模块数组初始化
-            if (config.modules) {
-                await ModuleFactory.addModules(config.modules);
-            }
-            //消息队列消息处理任务
-            Scheduler.addTask(MessageQueue.handleQueue, MessageQueue);
-            //渲染器启动渲染
-            Scheduler.addTask(Renderer.render, Renderer);
-            //启动调度器
-            Scheduler.start(config.scheduleCircle);
-            //存在类名
-            let module;
-            if (config.module.class) {
-                module = await ModuleFactory.getInstance(config.module.class, config.module.name, config.module.data);
-                module.setSelector(config.module.el);
-            }
-            else {
-                module = new Module(config.module);
-            }
-            //设置主模块
-            ModuleFactory.setMain(module);
-            await module.active();
-            if (config.routes) {
-                this.createRoute(config.routes);
-            }
-            return module;
+        static newApp(config) {
+            return __awaiter(this, void 0, void 0, function* () {
+                if (window['NodomConfig']) {
+                    config = Util.merge({}, window['NodomConfig'], config);
+                }
+                let lang = config && config.language;
+                if (!lang) {
+                    lang = navigator.language ? navigator.language.substr(0, 2) : 'zh';
+                }
+                this.tipMessage = eval('(Nodom.TipMessagee_' + lang + ')');
+                if (!config || !config.module) {
+                    throw new NError('config', Nodom.tipMessage.TipWords['application']);
+                }
+                Application.setPath(config.path);
+                //模块数组初始化
+                if (config.modules) {
+                    yield ModuleFactory.addModules(config.modules);
+                }
+                //消息队列消息处理任务
+                Scheduler.addTask(MessageQueue.handleQueue, MessageQueue);
+                //渲染器启动渲染
+                Scheduler.addTask(Renderer.render, Renderer);
+                //启动调度器
+                Scheduler.start(config.scheduleCircle);
+                //存在类名
+                let module;
+                if (config.module.class) {
+                    module = yield ModuleFactory.getInstance(config.module.class, config.module.name, config.module.data);
+                    module.setSelector(config.module.el);
+                }
+                else {
+                    module = new Module(config.module);
+                }
+                //设置主模块
+                ModuleFactory.setMain(module);
+                yield module.active();
+                if (config.routes) {
+                    this.createRoute(config.routes);
+                }
+                return module;
+            });
         }
         /**
          * 暴露的创建路由方法
@@ -3356,8 +3398,10 @@
          * @param dom       指令执行时dom
          * @param parent    父虚拟dom
          */
-        async exec(module, dom, parent) {
-            return DirectiveManager.exec(this, dom, module, parent);
+        exec(module, dom, parent) {
+            return __awaiter(this, void 0, void 0, function* () {
+                return DirectiveManager.exec(this, dom, module, parent);
+            });
         }
         /**
          * 克隆
@@ -5924,8 +5968,6 @@
         }
     }
 
-    let newApp = Nodom.newApp;
-
     exports.Application = Application;
     exports.ChangedDom = ChangedDom;
     exports.Compiler = Compiler;
@@ -5947,6 +5989,7 @@
     exports.NError = NError;
     exports.NEvent = NEvent;
     exports.NFactory = NFactory;
+    exports.Nodom = Nodom;
     exports.Plugin = Plugin;
     exports.PluginManager = PluginManager;
     exports.Renderer = Renderer;
@@ -5958,9 +6001,10 @@
     exports.TipMessage_en = TipMessage_en;
     exports.TipMessage_zh = TipMessage_zh;
     exports.Util = Util;
-    exports.newApp = newApp;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 
-})));
+    return exports;
+
+}({}));
 //# sourceMappingURL=nodom.js.map

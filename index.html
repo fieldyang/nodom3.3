@@ -5,18 +5,22 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Document</title>
+		<!-- 如果是umd 或者 iife 则需要这里引入文件 -->
 		<script src="./dist/nodom.js"></script>
 	</head>
 	<body>
 		<div id="app">{{a}}</div>
-		<button e-click="click">cilck</button>
+		<!-- <button e-click="click">cilck</button> -->
 	</body>
-	<script>
-		nodom.newApp({
+	<!-- 这个标签里面可以写import export -->
+	<script type="module">
+		// iife 包的用法 iife包需要去head标签里面引入编译好的文件
+		const { Nodom, Module } = nodom;
+		Nodom.newApp({
 			module: {
 				el: "#app",
 				data: {
-					a: 1,
+					a: "这是一个测试程序",
 				},
 				methods: {
 					click: function (dom, model, module) {
@@ -25,5 +29,41 @@
 				},
 			},
 		});
+		let a = new Module();
+		console.log(a);
+
+		// esm 写法
+		// import { Nodom as $ } from "./dist/nodom.js";
+		// import { Module as module } from "./dist/nodom.js";
+		// $.newApp({
+		// 	module: {
+		// 		el: "#app",
+		// 		data: {
+		// 			a: "这是一个测试程序",
+		// 		},
+		// 		methods: {
+		// 			click: function (dom, model, module) {
+		// 				console.log(this);
+		// 			},
+		// 		},
+		// 	},
+		// });
+		// let a =  new module();
+		// console.log(a);
+
+		// umd 写法  umd打包去index.ts里面把newApp暴露出来，不然使用起来需要nodom.Nodom.newApp 不是很方便
+		// nodom.newApp({
+		// 	module: {
+		// 		el: "#app",
+		// 		data: {
+		// 			a: "这是一个测试程序",
+		// 		},
+		// 		methods: {
+		// 			click: function (dom, model, module) {
+		// 				console.log(this);
+		// 			},
+		// 		},
+		// 	},
+		// });
 	</script>
 </html>

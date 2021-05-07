@@ -18,6 +18,7 @@ export { Model } from "./core/model";
 export { ModelManager } from "./core/modelmanager";
 export { Module } from "./core/module";
 export { ModuleFactory } from "./core/modulefactory";
+export { Nodom } from "./core/nodom";
 export { Plugin } from "./core/plugin";
 export { PluginManager } from "./core/pluginmanager";
 export { Renderer } from "./core/renderer";
@@ -27,6 +28,7 @@ export { Scheduler } from "./core/scheduler";
 export { Serializer } from "./core/serializer";
 export { ChangedDom, IAppCfg, IMdlClassObj, IModuleCfg, IResourceObj, IRouteCfg, ITipMessage } from "./core/types";
 export { Util } from "./core/util";
-import { Nodom } from "./core/nodom";
 
-export let newApp = Nodom.newApp;
+// 打包成umd 把newApp暴露出来，否则需要 nodom.Nodom.newApp 使用不是很方便
+// export const newApp = Nodom.newApp;
+

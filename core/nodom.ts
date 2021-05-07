@@ -25,7 +25,7 @@ export class Nodom {
         if (!lang) {
             lang = navigator.language ? navigator.language.substr(0, 2) : 'zh';
         }
-        this.tipMessage = eval('(nodom.TipMessagee_' + lang + ')');
+        this.tipMessage = eval('(Nodom.TipMessagee_' + lang + ')');
 
         if (!config || !config.module) {
             throw new NError('config', Nodom.tipMessage.TipWords['application']);
