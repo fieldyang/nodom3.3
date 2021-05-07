@@ -1,4 +1,3 @@
-import { request } from "http";
 import { Compiler } from "./compiler";
 import { Nodom } from "./nodom";
 import { Serializer } from "./serializer";

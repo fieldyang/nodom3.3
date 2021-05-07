@@ -1,4 +1,3 @@
-import { request } from "http";
 import { Application } from "./application";
 import { Compiler } from "./compiler";
 import { Element } from "./element";

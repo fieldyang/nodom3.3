@@ -1,7 +1,7 @@
 /**
  * 指令类
  */
-export class DirectiveType {
+export  class DirectiveType {
     /**
      * 指令类型名
      */

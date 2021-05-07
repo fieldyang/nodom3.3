@@ -5,7 +5,7 @@ import { Util } from "./util";
  * 异常处理类
  * @since       1.0.0
  */
-export class NError extends Error{
+export  class NError extends Error{
     constructor(errorName:string,p1?:string,p2?:string,p3?:string,p4?:string){
         super(errorName);
         let msg:string = Nodom.tipMessage.ErrorMsgs[errorName];

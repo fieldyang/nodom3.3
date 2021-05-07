@@ -7,7 +7,7 @@ import { Util } from "./util";
 /**
  * 指令管理器
  */
-export class DirectiveManager {
+export  class DirectiveManager {
     /**
      * 指令类型集合
      */

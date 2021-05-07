@@ -8,7 +8,7 @@ import { Util } from "./util";
 /**
  * 指令类
  */
-export class Directive {
+export  class Directive {
     /**
      * 指令id
      */

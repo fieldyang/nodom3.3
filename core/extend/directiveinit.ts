@@ -13,7 +13,7 @@ import { NError } from "../error";
 import { NEvent } from "../event";
 import { Nodom } from "../nodom";
 
-namespace nodom {
+
     /**
      *  指令类型初始化    
      *  每个指令类型都有一个init和handle方法，init和handle都可选
@@ -710,4 +710,4 @@ namespace nodom {
 
         }
     )
-}
+

@@ -6,7 +6,7 @@ module.exports = function (grunt) {
 				compile: true,
 				comments: false,
 				target: "es6",
-        module:'amd',
+				module: "amd",
 				lib: ["es7", "dom"],
 				fast: "never",
 			},
@@ -97,6 +97,6 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks("grunt-contrib-clean");
 	//注册grunt的默认任务
 	// grunt.registerTask("default", ["clean", "ts:dev1", "ts:dev2"]);
-  grunt.registerTask("default", ["clean", "ts:dev1"]);
+	grunt.registerTask("default", ["clean", "ts:dev1"]);
 	//"clean" , "ts:dev1", "ts:dev2"
 };

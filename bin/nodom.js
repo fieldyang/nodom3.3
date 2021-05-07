@@ -151,7 +151,7 @@ define("modelmanager", ["require", "exports", "renderer"], function (require, ex
             if (watcher) {
                 for (let foo of watcher) {
                     if (typeof foo === 'string') {
-                        if (module) {
+                        if (this.module) {
                             foo = this.module.getMethod(foo);
                             if (foo) {
                                 foo.call(model, oldValue, newValue);
