@@ -5382,7 +5382,7 @@ var nodom = (function (exports) {
                 if (s == '"') {
                     yinhaoFlag = !yinhaoFlag;
                 }
-                else if (s == " " && !yinhaoFlag) {
+                else if (/\s/.test(s) && !yinhaoFlag) {
                     //遇到空格并且不在引号中
                     if (!/^\s*?$/.test(attrString.substring(point, i))) {
                         result.push(attrString.substring(point, i).trim());
@@ -5417,8 +5417,8 @@ var nodom = (function (exports) {
             let stack1 = [];
             let stack2 = [{ tagName: undefined, children: [], attrs: [] }];
             let index = 0;
-            // 开始标签的正则表达式
-            let startRegExp = /^\<(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)((?:\s+.+?)*?)(\s*)\>/;
+            // 开始标签的正则表达式 
+            let startRegExp = /^\<(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)((?:\s+.+?[\"\'](?:[\s\S]+?)[\"\']|\w+))?(\s*)\>/;
             // 匹配结束标签的正则表达式
             let endRegExp = /^\<(\s*)\/(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)(\s*)\>/;
             // 匹配开始标签和结束标签之间的文字的正则表达式 
@@ -5426,7 +5426,7 @@ var nodom = (function (exports) {
             // 匹配裸字符串，全字符匹配配合wordRegExp标签判断是不是裸字符串
             let onlyWordRegExp = /^([\s\S]+)/;
             // 匹配注释
-            let commentRegExp = /^\<!--[\s\S]+?--\>/;
+            let commentRegExp = /^\s*\<!--[\s\S]+?--\>/;
             // pre结束标签。
             let preEndTagRegExp = /^([\s\S]+)(?=\<(\s*)\/(\s*)pre(?:\s.+?)?(\s*)\>)/;
             // pre标签标志，遇到pre标签要把标签里面的内容当成文本节点。
