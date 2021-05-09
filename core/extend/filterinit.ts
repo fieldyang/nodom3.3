@@ -5,7 +5,7 @@ import { FilterManager } from "../filtermanager";
 import { Nodom } from "../nodom";
 import { Util } from "../util";
 
-
+export default (function(){
 
     /**
      * 过滤器类型初始化
@@ -285,4 +285,4 @@ import { Util } from "../util";
         //方法调用
         return Util.apply(handler[type], this, params);
     });
-
+}());

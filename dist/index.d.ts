@@ -28,3 +28,5 @@ export { Scheduler } from "./core/scheduler";
 export { Serializer } from "./core/serializer";
 export { ChangedDom, IAppCfg, IMdlClassObj, IModuleCfg, IResourceObj, IRouteCfg, ITipMessage } from "./core/types";
 export { Util } from "./core/util";
+export * from "./core/extend/directiveinit";
+export * from "./core/extend/filterinit";

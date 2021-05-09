@@ -4,22 +4,18 @@
     "target": "ES2015",
     "sourceMap": true,
     "lib": [
-                "es5",
-                "es6",
-                "dom"
-            ],
+      "es5",
+      "es6",
+      "dom"
+    ],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "outDir":"./dist",
     "declaration": true,
     "declarationDir":"./dist/types"
   },
-  "include":[
-    "**/*.ts"
-, "index.ts"  ],
+  "include":["**/*.ts", "index.ts"],
   "exclude": [
-    // "core/index.ts",
     "./examples"
-  ],
- 
+  ]
 }

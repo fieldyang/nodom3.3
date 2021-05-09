@@ -13,6 +13,7 @@ import { NError } from "../error";
 import { NEvent } from "../event";
 import { Nodom } from "../nodom";
 
+export default (function(){
 
     /**
      *  指令类型初始化    
@@ -710,4 +711,4 @@ import { Nodom } from "../nodom";
 
         }
     )
-
+}())

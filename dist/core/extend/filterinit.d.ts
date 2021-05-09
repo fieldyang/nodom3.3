@@ -1,2 +1,3 @@
 /// <reference types=".cache/rollup-plugin-typescript2/placeholder/core/nodom" />
-export {};
+declare const _default: void;
+export default _default;
