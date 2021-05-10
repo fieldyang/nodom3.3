@@ -67,7 +67,13 @@ export class Expression {
                 })
             }
         });
-        exprStr = exprStr.trim().replace(/([^w])\s+/g, '$1');
+        exprStr = exprStr = exprStr.trim().replace(/([^w])\s+|instanceof|\s+/g, (w, index) => {
+            if (index) return index;
+            else {
+                if (w == 'instanceof')  return ' ' + w + ' ';
+                return '';
+            }
+        });
         //首尾指针
         let [first, last] = [0, 0];
         let [braces, fields, funArr, filters] = [[], [], [], []];
@@ -124,7 +130,6 @@ export class Expression {
             } else if (lastStr == '$') {
                 isInFun = true;
                 funArr.push(last++);
-                // last++;
             } else if (special.test(lastStr) && !isInBrace) {
                 express += exprStr.substring(first, last) + lastStr;
                 //特殊字符处理
@@ -179,7 +184,6 @@ export class Expression {
             tmpStr.replace(/\:/g, function (m, i) {
                 num++;
                 return m;
-
             });
             if (tmpStr.indexOf(':') != -1) {//有过滤器格式
                 args = tmpStr.split(/[\:\+\-\*><=&%]/);
@@ -207,8 +211,8 @@ export class Expression {
                 length,
             }
         }
-        if (fields.length == 0) {
-            fields.push(express);
+        if (express.indexOf('instanceof') !== -1) {
+            fields.push(express.split(' ')[0]);
         }
         fields = [...(new Set(fields))].filter((v) => {
             return v != null && !v.startsWith('.') && !v.startsWith('$module') && !v.startsWith('TMP');
