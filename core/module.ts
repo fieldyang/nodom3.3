@@ -6,7 +6,7 @@ import { MethodFactory } from "./methodfactory";
 import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
 import { ModuleFactory } from "./modulefactory";
-import {request} from "./nodom";
+import { request } from "./nodom";
 import { Plugin } from "./plugin";
 import { Renderer } from "./renderer";
 import { ResourceManager } from "./resourcemanager";

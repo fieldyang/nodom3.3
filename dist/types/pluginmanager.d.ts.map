@@ -1,1 +1,0 @@
-{"version":3,"file":"pluginmanager.d.ts","sourceRoot":"","sources":["../../core/pluginmanager.ts"],"names":[],"mappings":"AAIA;;GAEG;AACH,qBAAa,aAAa;IACtB,OAAO,CAAC,MAAM,CAAC,OAAO,CAAgC;IACtD;;;;OAIG;WACW,GAAG,CAAC,IAAI,EAAC,MAAM,EAAC,GAAG,EAAC,GAAG;IAOrC;;;OAGG;WACW,GAAG,CAAC,OAAO,EAAC,MAAM,GAAE,GAAG;CAGxC"}
