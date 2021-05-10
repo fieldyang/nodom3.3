@@ -1,9 +1,0 @@
-.DS_Store
-
-#other
-.gitignore
-./package-lock.json
-/node_modules
-/dist
-/out
-/笔记

@@ -20,7 +20,9 @@ export default (function(){
             return '';
         }
         //去掉首尾" '
-        param = param.substr(1, param.length - 2);
+        if(/[\'\"\`]/.test(param)){
+            param = param.substr(1, param.length - 2);
+        }
         return Util.formatDate(value, param);
     });
 
