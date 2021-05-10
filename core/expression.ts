@@ -307,7 +307,6 @@ export class Expression {
          * @return          字段值
          */
         function getFieldValue(module:Module,dataObj:Object,field:string){
-            console.log(dataObj,field);
             if(dataObj.hasOwnProperty(field)){
                 return dataObj[field];
             }
