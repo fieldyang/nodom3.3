@@ -28,12 +28,5 @@ export { Scheduler } from "./core/scheduler";
 export { Serializer } from "./core/serializer";
 export { ChangedDom, IAppCfg, IMdlClassObj, IModuleCfg, IResourceObj, IRouteCfg, ITipMessage } from "./core/types";
 export { Util } from "./core/util";
-
 export * from "./core/extend/directiveinit";
 export * from "./core/extend/filterinit";
-
-// 打包成umd 把newApp暴露出来，否则需要 nodom.Nodom.newApp 使用不是很方便
-// export const newApp = Nodom.newApp;
-
-
-

@@ -1,8 +1,8 @@
 import { Compiler } from "./compiler";
-import { Nodom } from "./nodom";
 import { Serializer } from "./serializer";
 import { IResourceObj } from "./types";
 import { Util } from "./util";
+import { request } from "./nodom";
 
 /**
  * 资源管理器
@@ -59,7 +59,7 @@ export class ResourceManager{
                     //将自己的任务加入等待队列
                     this.waitList.set(url,[taskId]);
                     //请求资源
-                    let content = await Nodom.request({url:url})
+                    let content = await request({url:url})
                     let rObj = {type:item.type,content:content};
                     this.handleOne(url,rObj);
                     this.resources.set(url,rObj);

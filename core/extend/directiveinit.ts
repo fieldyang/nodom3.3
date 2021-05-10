@@ -11,7 +11,7 @@ import { Model } from "../model";
 import { Renderer } from "../renderer";
 import { NError } from "../error";
 import { NEvent } from "../event";
-import { Nodom } from "../nodom";
+import { NodomMessage } from "../nodom";
 
 export default (function(){
 
@@ -581,7 +581,7 @@ export default (function(){
                 //子节点不存在，添加一个
                 let text = ( <string> vd.children[0].textContent).trim();
                 if (text === '') { //没有提示内容，根据类型提示
-                    text = Util.compileStr(Nodom.tipMessage.FormMsgs[vn], el.getAttribute(vn));
+                    text = Util.compileStr(NodomMessage.FormMsgs[vn], el.getAttribute(vn));
                 }
                 vd.children[0].textContent = text;
             }

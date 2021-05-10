@@ -6,7 +6,7 @@ import { MethodFactory } from "./methodfactory";
 import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
 import { ModuleFactory } from "./modulefactory";
-import { Nodom } from "./nodom";
+import {request} from "./nodom";
 import { Plugin } from "./plugin";
 import { Renderer } from "./renderer";
 import { ResourceManager } from "./resourcemanager";
@@ -300,7 +300,7 @@ export class Module {
         if (this.firstRender) {
             //model无数据，如果存在dataUrl，则需要加载数据
             if (this.loadNewData && this.dataUrl) {
-                Nodom.request({
+                request({
                     url: this.dataUrl,
                     type: 'json'
                 }).then(

@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 	<title>field</title>
-    <script type="text/javascript" src="../bin/nodom.js"></script>
+    <script type="text/javascript" src="../dist/nodom.js"></script>
 	
 	<style>
 		.cls1{
@@ -26,7 +26,7 @@
 	</div>
 </body>
 	<script>
-		nodom.newApp({
+		nodom.app({
 			module:{
 				el:'div',
 				
@@ -47,7 +47,7 @@
 						console.log('item');
 					},
 					show:function(dom,model){
-
+						console.log(this);
 						model.set('show',!model.data['show']);
 						
 					}

@@ -1,5 +1,5 @@
 import { NError } from "./error";
-import { Nodom } from "./nodom";
+import { NodomMessage } from "./nodom";
 import { Plugin } from "./plugin";
 
 /**
@@ -14,7 +14,7 @@ export class PluginManager{
      */
     public static add(name:string,cfg:any){
         if(this.plugins.has(name)){
-            throw new NError('exist1',Nodom.tipMessage.TipWords['element'],name);
+            throw new NError('exist1',NodomMessage.TipWords['element'],name);
         }
         this.plugins.set(name,cfg);
     }

@@ -122,12 +122,12 @@ export class Element {
      * 渲染到virtualdom树
      * @param module 	模块
      * @param parent 	父节点
+     * @returns         渲染成功（dontRender=false） true,否则false
      */
-    public render(module:Module, parent?:Element) {
+    public render(module:Module, parent?:Element):Boolean{
         if(this.dontRender){
             this.doDontRender();
-            this.recover();
-            return;
+            return false;
         }
         
         // 设置父对象
@@ -146,24 +146,20 @@ export class Element {
         }
         
         if (this.tagName !== undefined) { //element
-            this.handleDirectives(module);
+            if(!this.handleDirectives(module)){
+                this.doDontRender();
+                return false;
+            }
             this.handleProps(module);
         } else { //textContent
             this.handleTextContent(module);
         }
         
-        if(this.dontRender){
-            this.doDontRender();
-            this.recover();
-            return;
-        }
-        
-        //子节点渲染
+        //子模块渲染
         if(!this.hasDirective('module')){
             for (let i = 0; i < this.children.length; i++) {
                 let item = this.children[i];
-                item.render(module, this);
-                if(item.dontRender){
+                if(!item.render(module, this)){
                     item.doDontRender();
                     this.children.splice(i--,1);
                 }
@@ -173,6 +169,7 @@ export class Element {
         if(this.plugin){
             this.plugin.afterRender(module,this);
         }
+        return true;
     }
 
     /**
@@ -185,7 +182,7 @@ export class Element {
         delete this.model;
 
         //删除dontRender
-        delete this.dontRender
+        delete this.dontRender;
     }
 
     /**
@@ -201,7 +198,7 @@ export class Element {
         let type = params.type;
         let parent = params.parent;
         //重置dontRender
-        this.dontRender = false;
+        // this.dontRender = false;
         //构建el
         if (type === 'fresh' || type === 'add' || type === 'text') {
             if(parent){
@@ -452,16 +449,14 @@ export class Element {
      * @param module    模块
      */
     public handleDirectives(module:Module) {
-        if (this.dontRender) {
-            return;
-        }
         for(let d of this.directives.values()){
             //指令可能改变render标志
             if (this.dontRender) {
-                return;
+                return false;
             }
             d.exec(module,this,this.parent);
         }
+        return true;
     }
 
     /**
@@ -470,9 +465,6 @@ export class Element {
      * @param module    模块
      */
     public handleExpression(exprArr:Array<Expression|string>, module:Module) {
-        if (this.dontRender) {
-            return;
-        }
         let model:Model = this.model;
         
         let value = '';
@@ -492,13 +484,7 @@ export class Element {
      * @param module    模块
      */
     public handleProps(module:Module) {
-        if (this.dontRender) {
-            return;
-        }
         for(let k of Util.getOwnProps(this.exprProps)) {
-            if (this.dontRender) {
-                return;
-            }
             //属性值为数组，则为表达式
             if (Util.isArray(this.exprProps[k])) {
                 let pv = this.handleExpression(this.exprProps[k], module);
@@ -533,9 +519,6 @@ export class Element {
      * @param module    模块
      */
     public handleTextContent(module) {
-        if (this.dontRender) {
-            return;
-        }
         if (this.expressions !== undefined && this.expressions.length>0) {
             let v = this.handleExpression(this.expressions, module)||'';
             this.textContent = this.handleExpression(this.expressions, module);
@@ -650,7 +633,6 @@ export class Element {
         if(parent){
             parent.removeChild(this);
         }
-                
         // 删除html dom节点
         if (delHtml && module) {
             let el = module.getNode(this.key);
@@ -1027,5 +1009,6 @@ export class Element {
         for(let c of this.children){
             c.doDontRender();
         }
+        this.recover();
     }
 }
