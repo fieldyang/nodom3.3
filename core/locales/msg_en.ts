@@ -1,7 +1,7 @@
 /*
  * 消息js文件 中文文件
  */
-export const TipMessage_en = {
+export const NodomMessage_en = {
     /**
      * tip words
      */

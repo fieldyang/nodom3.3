@@ -154,7 +154,7 @@ export class Compiler {
     /**
      * 处理属性字符串
      * @param attrString 属性字符串
-     * @returns attrs数组
+     * @returns attrs数组 
      */
     private static parseAttrString(attrString: string | undefined): Array<any> {
         if (attrString == undefined || attrString.length === 0) return [];
@@ -239,6 +239,7 @@ export class Compiler {
 
                 }
             } else if (startRegExp.test(rest)) {
+
                 // 识别遍历到的字符是不是一个开始标签
 
                 // beforeSpaceString:左尖括号与标签名之间的空格

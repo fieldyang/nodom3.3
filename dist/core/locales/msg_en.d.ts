@@ -1,4 +1,4 @@
-export declare const TipMessage_en: {
+export declare const NodomMessage_en: {
     /**
      * tip words
      */

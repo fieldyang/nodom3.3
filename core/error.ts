@@ -1,4 +1,4 @@
-import { Nodom } from "./nodom";
+import { NodomMessage } from "./nodom";
 import { Util } from "./util";
 
 /**
@@ -8,7 +8,7 @@ import { Util } from "./util";
 export  class NError extends Error{
     constructor(errorName:string,p1?:string,p2?:string,p3?:string,p4?:string){
         super(errorName);
-        let msg:string = Nodom.tipMessage.ErrorMsgs[errorName];
+        let msg:string = NodomMessage.ErrorMsgs[errorName];
         if(msg === undefined){
             this.message = "未知错误";
             return;

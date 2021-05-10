@@ -3,7 +3,7 @@ import { NError } from "./error";
 import { Model } from "./model";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
-import { Nodom } from "./nodom";
+import { NodomMessage } from "./nodom";
 import { IRouteCfg } from "./types";
 import { Util } from "./util";
 
@@ -168,7 +168,7 @@ export class Router {
                 if(typeof route.module === 'string'){
                     module = await ModuleFactory.getInstance(route.module,route.moduleName,route.dataUrl);
                     if(!module){
-                        throw new NError('notexist1',Nodom.tipMessage.TipWords['module'],route.module);
+                        throw new NError('notexist1',NodomMessage.TipWords['module'],route.module);
                     }
                     route.module = module.id;
                 }else{
@@ -282,7 +282,7 @@ export class Router {
     static addRoute(route:Route, parent:Route) {
         //加入router tree
         if (RouterTree.add(route, parent) === false) {
-            throw new NError("exist1", Nodom.tipMessage.TipWords['route'], route.path);
+            throw new NError("exist1", NodomMessage.TipWords['route'], route.path);
         }
 
         //加入map
@@ -625,7 +625,7 @@ class RouterTree {
      */
     static get(path:string):Array<Route> {
         if (!this.root) {
-            throw new NError("notexist", Nodom.tipMessage.TipWords['root']);
+            throw new NError("notexist", NodomMessage.TipWords['root']);
         }
         let pathArr:string[] = path.split('/');
         let node:Route = this.root;

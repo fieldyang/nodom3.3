@@ -1,5 +1,5 @@
 import { NError } from "./error";
-import { Nodom } from "./nodom";
+import { NodomMessage } from "./nodom";
 
 /**
  * 基础服务库
@@ -534,7 +534,7 @@ export class Util {
 
         //星期
         if (/(E+)/.test(format)) {
-            format = format.replace(RegExp.$1, ((RegExp.$1.length > 1) ? (RegExp.$1.length > 2 ? "/u661f/u671f" : "/u5468") : "") + Nodom.tipMessage.WeekDays[date.getDay() + ""]);
+            format = format.replace(RegExp.$1, ((RegExp.$1.length > 1) ? (RegExp.$1.length > 2 ? "/u661f/u671f" : "/u5468") : "") + NodomMessage.WeekDays[date.getDay() + ""]);
         }
         return format;
     }

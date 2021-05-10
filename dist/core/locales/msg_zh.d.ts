@@ -1,4 +1,4 @@
-export declare const TipMessage_zh: {
+export declare const NodomMessage_zh: {
     /**
      * 提示单词
      */

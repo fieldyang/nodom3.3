@@ -354,7 +354,7 @@ var nodom = (function (exports) {
                             //将自己的任务加入等待队列
                             this.waitList.set(url, [taskId]);
                             //请求资源
-                            let content = yield Nodom.request({ url: url });
+                            let content = yield request({ url: url });
                             let rObj = { type: item.type, content: content };
                             this.handleOne(url, rObj);
                             this.resources.set(url, rObj);
@@ -521,7 +521,7 @@ var nodom = (function (exports) {
         static getInstance(className, moduleName, data) {
             return __awaiter(this, void 0, void 0, function* () {
                 if (!this.classes.has(className)) {
-                    throw new NError('notexist1', Nodom.tipMessage.TipWords['moduleClass'], className);
+                    throw new NError('notexist1', exports.NodomMessage.TipWords['moduleClass'], className);
                 }
                 let cfg = this.classes.get(className);
                 if (moduleName) {
@@ -652,7 +652,7 @@ var nodom = (function (exports) {
                     cfg.initing = false;
                 }
                 else {
-                    throw new NError('notexist1', Nodom.tipMessage.TipWords['moduleClass'], cfg.class);
+                    throw new NError('notexist1', exports.NodomMessage.TipWords['moduleClass'], cfg.class);
                 }
             });
         }
@@ -803,7 +803,7 @@ var nodom = (function (exports) {
         invoke(name, params) {
             const foo = this.get(name);
             if (!Util.isFunction(foo)) {
-                throw new NError(Nodom.tipMessage.ErrorMsgs['notexist1'], Nodom.tipMessage.TipWords['method'], name);
+                throw new NError(exports.NodomMessage.ErrorMsgs['notexist1'], exports.NodomMessage.TipWords['method'], name);
             }
             return Util.apply(foo, this.module.model, params);
         }
@@ -1091,13 +1091,10 @@ var nodom = (function (exports) {
             }
             //清除container的内部内容
             if (this.getContainer()) {
-                new TextEncoder();
-                // let html = encoder.encode(this.container.innerHTML.trim());
-                let html = this.container.innerHTML;
-                // let decoder = new TextDecoder();
-                // console.log(decoder.decode(html));
-                console.log(unescape(html));
-                this.template = html;
+                // 处理特殊字符
+                this.template = this.container.innerHTML.trim();
+                let transferWords = { 'lt': '<', 'gt': '>', 'nbsp': ' ', 'amp': '&', 'quot': '"' };
+                this.template = this.template.replace(/&(lt|gt|nbsp|amp|quot);/ig, function (all, t) { return transferWords[t]; });
                 this.container.innerHTML = '';
             }
         }
@@ -1225,7 +1222,7 @@ var nodom = (function (exports) {
             if (this.firstRender) {
                 //model无数据，如果存在dataUrl，则需要加载数据
                 if (this.loadNewData && this.dataUrl) {
-                    Nodom.request({
+                    request({
                         url: this.dataUrl,
                         type: 'json'
                     }).then((r) => {
@@ -1809,7 +1806,7 @@ var nodom = (function (exports) {
                         if (typeof route.module === 'string') {
                             module = yield ModuleFactory.getInstance(route.module, route.moduleName, route.dataUrl);
                             if (!module) {
-                                throw new NError('notexist1', Nodom.tipMessage.TipWords['module'], route.module);
+                                throw new NError('notexist1', exports.NodomMessage.TipWords['module'], route.module);
                             }
                             route.module = module.id;
                         }
@@ -1920,7 +1917,7 @@ var nodom = (function (exports) {
         static addRoute(route, parent) {
             //加入router tree
             if (RouterTree.add(route, parent) === false) {
-                throw new NError("exist1", Nodom.tipMessage.TipWords['route'], route.path);
+                throw new NError("exist1", exports.NodomMessage.TipWords['route'], route.path);
             }
             //加入map
             this.routes.set(route.id, route);
@@ -2237,7 +2234,7 @@ var nodom = (function (exports) {
          */
         static get(path) {
             if (!this.root) {
-                throw new NError("notexist", Nodom.tipMessage.TipWords['root']);
+                throw new NError("notexist", exports.NodomMessage.TipWords['root']);
             }
             let pathArr = path.split('/');
             let node = this.root;
@@ -2354,104 +2351,108 @@ var nodom = (function (exports) {
     }
     Scheduler.tasks = [];
 
-    class Nodom {
-        /**
-         * 新建一个App
-         * @param config 应用配置
-         */
-        static newApp(config) {
-            return __awaiter(this, void 0, void 0, function* () {
-                if (window['NodomConfig']) {
-                    config = Util.merge({}, window['NodomConfig'], config);
-                }
-                let lang = config && config.language;
-                if (!lang) {
-                    lang = navigator.language ? navigator.language.substr(0, 2) : 'zh';
-                }
-                this.tipMessage = eval('(Nodom.TipMessagee_' + lang + ')');
-                if (!config || !config.module) {
-                    throw new NError('config', Nodom.tipMessage.TipWords['application']);
-                }
-                Application.setPath(config.path);
-                //模块数组初始化
-                if (config.modules) {
-                    yield ModuleFactory.addModules(config.modules);
-                }
-                //消息队列消息处理任务
-                Scheduler.addTask(MessageQueue.handleQueue, MessageQueue);
-                //渲染器启动渲染
-                Scheduler.addTask(Renderer.render, Renderer);
-                //启动调度器
-                Scheduler.start(config.scheduleCircle);
-                //存在类名
-                let module;
-                if (config.module.class) {
-                    module = yield ModuleFactory.getInstance(config.module.class, config.module.name, config.module.data);
-                    module.setSelector(config.module.el);
-                }
-                else {
-                    module = new Module(config.module);
-                }
-                //设置主模块
-                ModuleFactory.setMain(module);
-                yield module.active();
-                if (config.routes) {
-                    this.createRoute(config.routes);
-                }
-                return module;
-            });
-        }
-        /**
-         * 暴露的创建路由方法
-         * @param config  数组或单个配置
-         */
-        static createRoute(config) {
-            if (Util.isArray(config)) {
-                for (let item of config) {
-                    new Route(item);
-                }
+    /**
+     * nodom提示消息
+     */
+    exports.NodomMessage = void 0;
+    /**
+     * 新建一个App
+     * @param config 应用配置
+     */
+    function app(config) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (window['NodomConfig']) {
+                config = Util.merge({}, window['NodomConfig'], config);
+            }
+            let lang = config && config.language;
+            if (!lang) {
+                lang = navigator.language ? navigator.language.substr(0, 2) : 'zh';
+            }
+            exports.NodomMessage = eval('(NodomMessage_' + lang + ')');
+            if (!config || !config.module) {
+                throw new NError('config', exports.NodomMessage.TipWords['application']);
+            }
+            Application.setPath(config.path);
+            //模块数组初始化
+            if (config.modules) {
+                yield ModuleFactory.addModules(config.modules);
+            }
+            //消息队列消息处理任务
+            Scheduler.addTask(MessageQueue.handleQueue, MessageQueue);
+            //渲染器启动渲染
+            Scheduler.addTask(Renderer.render, Renderer);
+            //启动调度器
+            Scheduler.start(config.scheduleCircle);
+            //存在类名
+            let module;
+            if (config.module.class) {
+                module = yield ModuleFactory.getInstance(config.module.class, config.module.name, config.module.data);
+                module.setSelector(config.module.el);
             }
             else {
-                return new Route(config);
+                module = new Module(config.module);
+            }
+            //设置主模块
+            ModuleFactory.setMain(module);
+            yield module.active();
+            if (config.routes) {
+                this.createRoute(config.routes);
+            }
+            return module;
+        });
+    }
+    /**
+     * 暴露的创建路由方法
+     * @param config  数组或单个配置
+     */
+    function createRoute(config) {
+        if (Util.isArray(config)) {
+            for (let item of config) {
+                new Route(item);
             }
         }
-        /**
-         * 创建指令
-         * @param name      指令名
-         * @param priority  优先级（1最小，1-10为框架保留优先级）
-         * @param init      初始化方法
-         * @param handler   渲染时方法
-         */
-        static createDirective(name, priority, init, handler) {
-            return DirectiveManager.addType(name, priority, init, handler);
+        else {
+            return new Route(config);
         }
-        /**
-         * 创建模块
-         * @param modules 模块配置数组
-         */
-        static addModules(modules) {
-            ModuleFactory.addModules(modules);
-        }
-        /**
-         * ajax 请求
-         * @param config    object 或 string
-         *                  如果为string，则直接以get方式获取资源
-         *                  object 项如下:
-         *                  参数名|类型|默认值|必填|可选值|描述
-         *                  -|-|-|-|-|-
-         *                  url|string|无|是|无|请求url
-         *					method|string|GET|否|GET,POST,HEAD|请求类型
-         *					params|Object/FormData|{}|否|无|参数，json格式
-         *					async|bool|true|否|true,false|是否异步
-         *  				timeout|number|0|否|无|请求超时时间
-         *                  type|string|text|否|json,text|
-         *					withCredentials|bool|false|否|true,false|同源策略，跨域时cookie保存
-         *                  header|Object|无|否|无|request header 对象
-         *                  user|string|无|否|无|需要认证的请求对应的用户名
-         *                  pwd|string|无|否|无|需要认证的请求对应的密码
-         *                  rand|bool|无|否|无|请求随机数，设置则浏览器缓存失效
-         */
-        static request(config) {
+    }
+    /**
+     * 创建指令
+     * @param name      指令名
+     * @param priority  优先级（1最小，1-10为框架保留优先级）
+     * @param init      初始化方法
+     * @param handler   渲染时方法
+     */
+    function createDirective(name, priority, init, handler) {
+        return DirectiveManager.addType(name, priority, init, handler);
+    }
+    /**
+     * 创建模块
+     * @param modules 模块配置数组
+     */
+    function addModules(modules) {
+        ModuleFactory.addModules(modules);
+    }
+    /**
+     * ajax 请求
+     * @param config    object 或 string
+     *                  如果为string，则直接以get方式获取资源
+     *                  object 项如下:
+     *                  参数名|类型|默认值|必填|可选值|描述
+     *                  -|-|-|-|-|-
+     *                  url|string|无|是|无|请求url
+     *					method|string|GET|否|GET,POST,HEAD|请求类型
+     *					params|Object/FormData|{}|否|无|参数，json格式
+     *					async|bool|true|否|true,false|是否异步
+     *  				timeout|number|0|否|无|请求超时时间
+     *                  type|string|text|否|json,text|
+     *					withCredentials|bool|false|否|true,false|同源策略，跨域时cookie保存
+     *                  header|Object|无|否|无|request header 对象
+     *                  user|string|无|否|无|需要认证的请求对应的用户名
+     *                  pwd|string|无|否|无|需要认证的请求对应的密码
+     *                  rand|bool|无|否|无|请求随机数，设置则浏览器缓存失效
+     */
+    function request(config) {
+        return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
                 if (typeof config === 'string') {
                     config = {
@@ -2537,17 +2538,15 @@ var nodom = (function (exports) {
             }).catch((re) => {
                 switch (re.type) {
                     case "error":
-                        throw new NError("notexist1", Nodom.tipMessage.TipWords['resource'], re.url);
+                        throw new NError("notexist1", exports.NodomMessage.TipWords['resource'], re.url);
                     case "timeout":
                         throw new NError("timeout");
                     case "jsonparse":
                         throw new NError("jsonparse");
                 }
             });
-        }
+        });
     }
-    var nodom = Nodom;
-    var $ = nodom;
 
     /**
      * 异常处理类
@@ -2556,7 +2555,7 @@ var nodom = (function (exports) {
     class NError extends Error {
         constructor(errorName, p1, p2, p3, p4) {
             super(errorName);
-            let msg = Nodom.tipMessage.ErrorMsgs[errorName];
+            let msg = exports.NodomMessage.ErrorMsgs[errorName];
             if (msg === undefined) {
                 this.message = "未知错误";
                 return;
@@ -3085,7 +3084,7 @@ var nodom = (function (exports) {
             });
             //星期
             if (/(E+)/.test(format)) {
-                format = format.replace(RegExp.$1, ((RegExp.$1.length > 1) ? (RegExp.$1.length > 2 ? "/u661f/u671f" : "/u5468") : "") + Nodom.tipMessage.WeekDays[date.getDay() + ""]);
+                format = format.replace(RegExp.$1, ((RegExp.$1.length > 1) ? (RegExp.$1.length > 2 ? "/u661f/u671f" : "/u5468") : "") + exports.NodomMessage.WeekDays[date.getDay() + ""]);
             }
             return format;
         }
@@ -3210,10 +3209,10 @@ var nodom = (function (exports) {
          */
         static addType(name, handler) {
             if (!/^[a-zA-Z]+$/.test(name)) {
-                throw new NError('namedinvalid', Nodom.tipMessage.TipWords['filterType'], name);
+                throw new NError('namedinvalid', exports.NodomMessage.TipWords['filterType'], name);
             }
             if (this.filterTypes.has(name)) {
-                throw new NError('exist1', Nodom.tipMessage.TipWords['filterType'], name);
+                throw new NError('exist1', exports.NodomMessage.TipWords['filterType'], name);
             }
             if (!Util.isFunction(handler)) {
                 throw new NError('invoke', 'FilterManager.addType', '1', 'Function');
@@ -3226,7 +3225,7 @@ var nodom = (function (exports) {
          */
         static removeType(name) {
             if (!this.filterTypes.has(name)) {
-                throw new NError('notexist1', Nodom.tipMessage.TipWords['filterType'], name);
+                throw new NError('notexist1', exports.NodomMessage.TipWords['filterType'], name);
             }
             this.filterTypes.delete(name);
         }
@@ -3251,7 +3250,7 @@ var nodom = (function (exports) {
                 params.push(arguments[i]);
             }
             if (!FilterManager.filterTypes.has(type)) {
-                throw new NError('notexist1', Nodom.tipMessage.TipWords['filterType'], type);
+                throw new NError('notexist1', exports.NodomMessage.TipWords['filterType'], type);
             }
             //调用
             return Util.apply(FilterManager.filterTypes.get(type), module, params);
@@ -3838,12 +3837,12 @@ var nodom = (function (exports) {
          * 渲染到virtualdom树
          * @param module 	模块
          * @param parent 	父节点
+         * @returns         渲染成功（dontRender=false） true,否则false
          */
         render(module, parent) {
             if (this.dontRender) {
                 this.doDontRender();
-                this.recover();
-                return;
+                return false;
             }
             // 设置父对象
             if (parent) {
@@ -3859,23 +3858,20 @@ var nodom = (function (exports) {
                 this.plugin.beforeRender(module, this);
             }
             if (this.tagName !== undefined) { //element
-                this.handleDirectives(module);
+                if (!this.handleDirectives(module)) {
+                    this.doDontRender();
+                    return false;
+                }
                 this.handleProps(module);
             }
             else { //textContent
                 this.handleTextContent(module);
             }
-            if (this.dontRender) {
-                this.doDontRender();
-                this.recover();
-                return;
-            }
-            //子节点渲染
+            //子模块渲染
             if (!this.hasDirective('module')) {
                 for (let i = 0; i < this.children.length; i++) {
                     let item = this.children[i];
-                    item.render(module, this);
-                    if (item.dontRender) {
+                    if (!item.render(module, this)) {
                         item.doDontRender();
                         this.children.splice(i--, 1);
                     }
@@ -3885,6 +3881,7 @@ var nodom = (function (exports) {
             if (this.plugin) {
                 this.plugin.afterRender(module, this);
             }
+            return true;
         }
         /**
          * 恢复到渲染前
@@ -3910,7 +3907,7 @@ var nodom = (function (exports) {
             let type = params.type;
             let parent = params.parent;
             //重置dontRender
-            this.dontRender = false;
+            // this.dontRender = false;
             //构建el
             if (type === 'fresh' || type === 'add' || type === 'text') {
                 if (parent) {
@@ -4154,16 +4151,14 @@ var nodom = (function (exports) {
          * @param module    模块
          */
         handleDirectives(module) {
-            if (this.dontRender) {
-                return;
-            }
             for (let d of this.directives.values()) {
                 //指令可能改变render标志
                 if (this.dontRender) {
-                    return;
+                    return false;
                 }
                 d.exec(module, this, this.parent);
             }
+            return true;
         }
         /**
          * 表达式处理，添加到expression计算队列
@@ -4171,9 +4166,6 @@ var nodom = (function (exports) {
          * @param module    模块
          */
         handleExpression(exprArr, module) {
-            if (this.dontRender) {
-                return;
-            }
             let model = this.model;
             let value = '';
             exprArr.forEach((v) => {
@@ -4192,13 +4184,7 @@ var nodom = (function (exports) {
          * @param module    模块
          */
         handleProps(module) {
-            if (this.dontRender) {
-                return;
-            }
             for (let k of Util.getOwnProps(this.exprProps)) {
-                if (this.dontRender) {
-                    return;
-                }
                 //属性值为数组，则为表达式
                 if (Util.isArray(this.exprProps[k])) {
                     let pv = this.handleExpression(this.exprProps[k], module);
@@ -4232,9 +4218,6 @@ var nodom = (function (exports) {
          * @param module    模块
          */
         handleTextContent(module) {
-            if (this.dontRender) {
-                return;
-            }
             if (this.expressions !== undefined && this.expressions.length > 0) {
                 this.handleExpression(this.expressions, module) || '';
                 this.textContent = this.handleExpression(this.expressions, module);
@@ -4709,6 +4692,7 @@ var nodom = (function (exports) {
             for (let c of this.children) {
                 c.doDontRender();
             }
+            this.recover();
         }
     }
 
@@ -5217,7 +5201,7 @@ var nodom = (function (exports) {
          */
         static add(name, cfg) {
             if (this.plugins.has(name)) {
-                throw new NError('exist1', Nodom.tipMessage.TipWords['element'], name);
+                throw new NError('exist1', exports.NodomMessage.TipWords['element'], name);
             }
             this.plugins.set(name, cfg);
         }
@@ -5239,13 +5223,25 @@ var nodom = (function (exports) {
         */
         static compile(elementStr) {
             // 这里是把模板串通过正则表达式匹配 生成AST
-            console.log(decodeURI(elementStr));
-            let ast = this.compileTemplateToAst(decodeURI(elementStr));
+            let ast = this.compileTemplateToAst(elementStr);
             // console.log(ast);
             let oe = new Element('div');
             // 将AST编译成抽象语法树
             this.compileAST(oe, ast);
             return oe;
+            // // 这里是使用游离的dom来充当ast的流程 暂时先保留着以便对比
+            // const div: HTMLElement = Util.newEl('div');
+            // try {
+            //     div.innerHTML = elementStr;
+            // } catch (e) { }
+            // let oe = new Element('div');
+            // this.handleChildren(oe, div);
+            // //保证模块只有一个根节点
+            // // if (oe.children.length === 1) {
+            // //     return oe.children[0];
+            // // }
+            // // console.log(oe);
+            // return oe;
         }
         /**
          * 把AST编译成虚拟dom
@@ -5254,6 +5250,8 @@ var nodom = (function (exports) {
          * @returns oe 虚拟dom的根容器
          */
         static compileAST(oe, ast) {
+            // const div: HTMLElement = Util.newEl('div');
+            // let oe = new Element('div');
             if (!ast)
                 return;
             for (const a of ast) {
@@ -5265,6 +5263,7 @@ var nodom = (function (exports) {
                         break;
                     default:
                         if (a.tagName !== 'svg') {
+                            // let chlid = new Element(a.tagName);
                             this.handleAstNode(oe, a);
                         }
                         break;
@@ -5755,7 +5754,7 @@ var nodom = (function (exports) {
     /*
      * 消息js文件 中文文件
      */
-    const TipMessage_en = {
+    const NodomMessage_en = {
         /**
          * tip words
          */
@@ -5829,7 +5828,7 @@ var nodom = (function (exports) {
     /*
      * 消息js文件 中文文件
      */
-    const TipMessage_zh = {
+    const NodomMessage_zh = {
         /**
          * 提示单词
          */
@@ -6468,7 +6467,7 @@ var nodom = (function (exports) {
                 //子节点不存在，添加一个
                 let text = vd.children[0].textContent.trim();
                 if (text === '') { //没有提示内容，根据类型提示
-                    text = Util.compileStr(Nodom.tipMessage.FormMsgs[vn], el.getAttribute(vn));
+                    text = Util.compileStr(exports.NodomMessage.FormMsgs[vn], el.getAttribute(vn));
                 }
                 vd.children[0].textContent = text;
             }
@@ -6635,7 +6634,7 @@ var nodom = (function (exports) {
                 return '';
             }
             if (!Util.isString(value) || Util.isEmpty(value)) {
-                throw new NError('invoke1', Nodom.tipMessage.TipWords['filter'] + ' tolowercase', '0', 'string');
+                throw new NError('invoke1', exports.NodomMessage.TipWords['filter'] + ' tolowercase', '0', 'string');
             }
             return value.toLowerCase();
         });
@@ -6647,7 +6646,7 @@ var nodom = (function (exports) {
                 return '';
             }
             if (!Util.isString(value) || Util.isEmpty(value)) {
-                throw new NError('invoke1', Nodom.tipMessage.TipWords['filter'] + ' touppercase', '0', 'string');
+                throw new NError('invoke1', exports.NodomMessage.TipWords['filter'] + ' touppercase', '0', 'string');
             }
             return value.toUpperCase();
         });
@@ -6663,7 +6662,7 @@ var nodom = (function (exports) {
             let field = args[1]; //比较字段
             let odr = args[2] || 'asc'; //升序或降序,默认升序
             if (!Util.isArray(arr)) {
-                throw new NError('invoke1', Nodom.tipMessage.TipWords['filter'] + ' orderby', '0', 'array');
+                throw new NError('invoke1', exports.NodomMessage.TipWords['filter'] + ' orderby', '0', 'array');
             }
             //复制数组
             let ret = arr.concat([]);
@@ -6698,7 +6697,7 @@ var nodom = (function (exports) {
          */
         FilterManager.addType('select', function () {
             if (!Util.isArray(arguments[0])) {
-                throw new NError('invoke1', Nodom.tipMessage.TipWords['filter'] + ' filter', '0', 'array');
+                throw new NError('invoke1', exports.NodomMessage.TipWords['filter'] + ' filter', '0', 'array');
             }
             let params = new Array();
             for (let i = 0; i < arguments.length; i++) {
@@ -6736,21 +6735,21 @@ var nodom = (function (exports) {
                     let first = args[1];
                     let last = args[2];
                     if (isNaN(first)) {
-                        throw new NError('paramException', Nodom.tipMessage.TipWords['filter'], 'filter range');
+                        throw new NError('paramException', exports.NodomMessage.TipWords['filter'], 'filter range');
                     }
                     if (!Util.isNumber(first)) {
                         first = parseInt(first);
                     }
                     //判断数字
                     if (isNaN(last)) {
-                        throw new NError('paramException', Nodom.tipMessage.TipWords['filter'], 'filter range');
+                        throw new NError('paramException', exports.NodomMessage.TipWords['filter'], 'filter range');
                     }
                     //字符串转数字
                     if (!Util.isNumber(last)) {
                         last = parseInt(last);
                     }
                     if (first > last) {
-                        throw new NError('paramException', Nodom.tipMessage.TipWords['filter'], 'filter range');
+                        throw new NError('paramException', exports.NodomMessage.TipWords['filter'], 'filter range');
                     }
                     return arr.slice(first, last + 1);
                 },
@@ -6759,7 +6758,7 @@ var nodom = (function (exports) {
                     let args = arguments;
                     let arr = args[0];
                     if (!Util.isArray(args[0])) {
-                        throw new NError('paramException', Nodom.tipMessage.TipWords['filter'], 'filter index');
+                        throw new NError('paramException', exports.NodomMessage.TipWords['filter'], 'filter index');
                     }
                     let ret = [];
                     //读取所有index
@@ -6779,7 +6778,7 @@ var nodom = (function (exports) {
                 //函数过滤
                 func: function (arr, param) {
                     if (!Util.isArray(arr) || Util.isEmpty(param)) {
-                        throw new NError('paramException', Nodom.tipMessage.TipWords['filter'], 'filter func');
+                        throw new NError('paramException', exports.NodomMessage.TipWords['filter'], 'filter func');
                     }
                     //自定义函数
                     let foo = this.methodFactory.get(param);
@@ -6791,7 +6790,7 @@ var nodom = (function (exports) {
                 //值过滤
                 value: function (arr, param) {
                     if (!Util.isArray(arr) || Util.isEmpty(param)) {
-                        throw new NError('paramException', Nodom.tipMessage.TipWords['filter'], 'filter value');
+                        throw new NError('paramException', exports.NodomMessage.TipWords['filter'], 'filter value');
                     }
                     //属性值对象，所有属性值满足才过滤出来
                     if (Util.isObject(param)) {
@@ -6840,7 +6839,7 @@ var nodom = (function (exports) {
             //校验输入参数是否为空
             if (type === 'range' || type === 'index' || type === 'func') {
                 if (params.length < 2) {
-                    throw new NError('paramException', Nodom.tipMessage.TipWords['filter']);
+                    throw new NError('paramException', exports.NodomMessage.TipWords['filter']);
                 }
             }
             //方法调用
@@ -6848,7 +6847,6 @@ var nodom = (function (exports) {
         });
     })());
 
-    exports.$ = $;
     exports.Application = Application;
     exports.ChangedDom = ChangedDom;
     exports.Compiler = Compiler;
@@ -6870,7 +6868,8 @@ var nodom = (function (exports) {
     exports.NError = NError;
     exports.NEvent = NEvent;
     exports.NFactory = NFactory;
-    exports.Nodom = Nodom;
+    exports.NodomMessage_en = NodomMessage_en;
+    exports.NodomMessage_zh = NodomMessage_zh;
     exports.Plugin = Plugin;
     exports.PluginManager = PluginManager;
     exports.Renderer = Renderer;
@@ -6879,10 +6878,12 @@ var nodom = (function (exports) {
     exports.Router = Router;
     exports.Scheduler = Scheduler;
     exports.Serializer = Serializer;
-    exports.TipMessage_en = TipMessage_en;
-    exports.TipMessage_zh = TipMessage_zh;
     exports.Util = Util;
-    exports.nodom = nodom;
+    exports.addModules = addModules;
+    exports.app = app;
+    exports.createDirective = createDirective;
+    exports.createRoute = createRoute;
+    exports.request = request;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 

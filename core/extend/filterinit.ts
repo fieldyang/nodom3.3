@@ -2,7 +2,7 @@
 
 import { NError } from "../error";
 import { FilterManager } from "../filtermanager";
-import { Nodom } from "../nodom";
+import { NodomMessage } from "../nodom";
 import { Util } from "../util";
 
 export default (function(){
@@ -71,7 +71,7 @@ export default (function(){
             return '';
         }
         if (!Util.isString(value) || Util.isEmpty(value)) {
-            throw new NError('invoke1', Nodom.tipMessage.TipWords['filter'] + ' tolowercase', '0', 'string');
+            throw new NError('invoke1', NodomMessage.TipWords['filter'] + ' tolowercase', '0', 'string');
         }
         return value.toLowerCase();
     });
@@ -84,7 +84,7 @@ export default (function(){
             return '';
         }
         if (!Util.isString(value) || Util.isEmpty(value)) {
-            throw new NError('invoke1', Nodom.tipMessage.TipWords['filter'] + ' touppercase', '0', 'string');
+            throw new NError('invoke1', NodomMessage.TipWords['filter'] + ' touppercase', '0', 'string');
         }
         return value.toUpperCase();
     });
@@ -101,7 +101,7 @@ export default (function(){
         let field = args[1]; //比较字段
         let odr = args[2] || 'asc'; //升序或降序,默认升序
         if (!Util.isArray(arr)) {
-            throw new NError('invoke1', Nodom.tipMessage.TipWords['filter'] + ' orderby', '0', 'array');
+            throw new NError('invoke1', NodomMessage.TipWords['filter'] + ' orderby', '0', 'array');
         }
         //复制数组
         let ret = arr.concat([]);
@@ -134,7 +134,7 @@ export default (function(){
      */
     FilterManager.addType('select', function () {
         if (!Util.isArray(arguments[0])) {
-            throw new NError('invoke1', Nodom.tipMessage.TipWords['filter'] + ' filter', '0', 'array');
+            throw new NError('invoke1', NodomMessage.TipWords['filter'] + ' filter', '0', 'array');
         }
 
         let params = new Array();
@@ -174,14 +174,14 @@ export default (function(){
                 let first = args[1];
                 let last = args[2];
                 if (isNaN(first)) {
-                    throw new NError('paramException', Nodom.tipMessage.TipWords['filter'], 'filter range');
+                    throw new NError('paramException', NodomMessage.TipWords['filter'], 'filter range');
                 }
                 if (!Util.isNumber(first)) {
                     first = parseInt(first);
                 }
                 //判断数字
                 if (isNaN(last)) {
-                    throw new NError('paramException', Nodom.tipMessage.TipWords['filter'], 'filter range');
+                    throw new NError('paramException', NodomMessage.TipWords['filter'], 'filter range');
                 }
 
                 //字符串转数字
@@ -190,7 +190,7 @@ export default (function(){
                 }
 
                 if (first > last) {
-                    throw new NError('paramException', Nodom.tipMessage.TipWords['filter'], 'filter range');
+                    throw new NError('paramException', NodomMessage.TipWords['filter'], 'filter range');
                 }
                 return arr.slice(first, last + 1);
             },
@@ -199,7 +199,7 @@ export default (function(){
                 let args = arguments;
                 let arr = args[0];
                 if (!Util.isArray(args[0])) {
-                    throw new NError('paramException', Nodom.tipMessage.TipWords['filter'], 'filter index');
+                    throw new NError('paramException', NodomMessage.TipWords['filter'], 'filter index');
                 }
                 let ret = [];
                 //读取所有index
@@ -219,7 +219,7 @@ export default (function(){
             //函数过滤
             func: function (arr, param) {
                 if (!Util.isArray(arr) || Util.isEmpty(param)) {
-                    throw new NError('paramException', Nodom.tipMessage.TipWords['filter'], 'filter func');
+                    throw new NError('paramException', NodomMessage.TipWords['filter'], 'filter func');
                 }
                 //自定义函数
                 let foo = this.methodFactory.get(param);
@@ -231,7 +231,7 @@ export default (function(){
             //值过滤
             value: function (arr, param) {
                 if (!Util.isArray(arr) || Util.isEmpty(param)) {
-                    throw new NError('paramException', Nodom.tipMessage.TipWords['filter'], 'filter value');
+                    throw new NError('paramException', NodomMessage.TipWords['filter'], 'filter value');
                 }
                 //属性值对象，所有属性值满足才过滤出来
                 if (Util.isObject(param)) {
@@ -279,7 +279,7 @@ export default (function(){
         //校验输入参数是否为空
         if (type === 'range' || type === 'index' || type === 'func') {
             if (params.length < 2) {
-                throw new NError('paramException', Nodom.tipMessage.TipWords['filter']);
+                throw new NError('paramException', NodomMessage.TipWords['filter']);
             }
         }
         //方法调用

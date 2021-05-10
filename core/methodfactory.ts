@@ -1,6 +1,6 @@
 import { NError } from "./error";
 import { NFactory } from "./factory";
-import { Nodom } from "./nodom";
+import { NodomMessage } from "./nodom";
 import { Module } from "./module";
 import { Util } from "./util";
 
@@ -17,7 +17,7 @@ export class MethodFactory extends NFactory {
     public invoke(name:string, params:Array<any>) {
         const foo = this.get(name);
         if (!Util.isFunction(foo)) {
-            throw new NError(Nodom.tipMessage.ErrorMsgs['notexist1'], Nodom.tipMessage.TipWords['method'], name);
+            throw new NError(NodomMessage.ErrorMsgs['notexist1'], NodomMessage.TipWords['method'], name);
         }
         return Util.apply(foo, this.module.model, params);
     }

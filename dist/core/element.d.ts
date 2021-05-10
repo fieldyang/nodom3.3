@@ -92,8 +92,9 @@ export declare class Element {
      * 渲染到virtualdom树
      * @param module 	模块
      * @param parent 	父节点
+     * @returns         渲染成功（dontRender=false） true,否则false
      */
-    render(module: Module, parent?: Element): void;
+    render(module: Module, parent?: Element): Boolean;
     /**
      * 恢复到渲染前
      */
@@ -115,7 +116,7 @@ export declare class Element {
      * 处理指令
      * @param module    模块
      */
-    handleDirectives(module: Module): void;
+    handleDirectives(module: Module): boolean;
     /**
      * 表达式处理，添加到expression计算队列
      * @param exprArr   表达式或字符串数组

@@ -9,28 +9,39 @@
 		<script src="./dist/nodom.js"></script>
 	</head>
 	<body>
-		<div id="app">{{a}}</div>
+		<div id="app">
+			{{a}}
+			<li
+				x-show="price|orderby:asc"
+				x-repeat="commodities"
+				x-class="{red:'price>100 &&(!rows||rows.length===0)',bold:'discount<0.8'}"
+			>
+				&&
+			</li>
+		</div>
 		<!-- <button e-click="click">cilck</button> -->
 	</body>
 	<!-- 这个标签里面可以写import export -->
 	<script type="module">
+		let li = document.querySelector("#app").innerHTML;
+		console.log(li);
 		// iife 包的用法 iife包需要去head标签里面引入编译好的文件
-		const { $, Module } = nodom;
-		$.newApp({
-			module: {
-				el: "#app",
-				data: {
-					a: "这是一个测试程序",
-				},
-				methods: {
-					click: function (dom, model, module) {
-						console.log(this);
-					},
-				},
-			},
-		});
-		let a = new Module();
-		console.log(a);
+		// const { $, Module } = nodom;
+		// $.newApp({
+		// 	module: {
+		// 		el: "#app",
+		// 		data: {
+		// 			a: "这是一个测试程序",
+		// 		},
+		// 		methods: {
+		// 			click: function (dom, model, module) {
+		// 				console.log(this);
+		// 			},
+		// 		},
+		// 	},
+		// });
+		// let a = new Module();
+		// console.log(a);
 
 		// esm 写法
 		// import { $ } from "./dist/nodom.js";
