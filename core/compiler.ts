@@ -187,7 +187,7 @@ export class Compiler {
         result = result.map((item) => {
             // 如果match为空说明属性串里面没有“”也就是自定义的只有属性名没有属性值得属性，这种直接给他的value字段设置为空就行了
 
-            const o = item.match(/^(.+)=[\'|\"](.+)[\'|\"]$/) || [, item];
+            const o = item.match(/^(.+)=[\'|\"](.*)[\'|\"]$/) || [, item];
             return {
                 propName: o[1],
                 value: o[2] ? o[2] : '',
@@ -210,7 +210,7 @@ export class Compiler {
         let index = 0;
 
         // 开始标签的正则表达式 
-        let startRegExp = /^\<(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)((?:\s+.+?[\"\'](?:[\s\S]+?)[\"\']|\w+))?(\s*)\>/
+        let startRegExp = /^\<(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)((?:\s+.+?[\"\'](?:[\s\S]*?)[\"\']|\w+))?(\s*)\>/
         // 匹配结束标签的正则表达式
         let endRegExp = /^\<(\s*)\/(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)(\s*)\>/;
         // 匹配开始标签和结束标签之间的文字的正则表达式 
@@ -458,7 +458,7 @@ export class Compiler {
     //             directives.push(attr);
     //         } else if (attr.name.startsWith('e-')) { //事件
     //             let en = attr.name.substr(2);
-    //             oe.addEvent(new NodomEvent(en, attr.value.trim()));
+    //             oe.addEvent(new NEvent(en, attr.value.trim()));
     //         } else {
     //             let isExpr: boolean = false;
     //             let v = attr.value.trim();
