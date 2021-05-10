@@ -1091,7 +1091,10 @@ var nodom = (function (exports) {
             }
             //清除container的内部内容
             if (this.getContainer()) {
+                // 处理特殊字符
                 this.template = this.container.innerHTML.trim();
+                let transferWords = { 'lt': '<', 'gt': '>', 'nbsp': ' ', 'amp': '&', 'quot': '"' };
+                this.template = this.template.replace(/&(lt|gt|nbsp|amp|quot);/ig, function (all, t) { return transferWords[t]; });
                 this.container.innerHTML = '';
             }
         }
