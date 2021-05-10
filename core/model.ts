@@ -101,8 +101,7 @@ export class Model{
                 return;
             }
             key = arr[arr.length-1];
-        }else{
-            return model[key];
         }
+        return model[key];
     }
 }

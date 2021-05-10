@@ -98,9 +98,9 @@ export default (function(){
         },
 
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            let startIndex:number=0;
             let model:Model = dom.model;
             // //从根获取数据,$$开始数据项
+            // let startIndex:number=0;
             // if (directive.extra===1) {
             //     model = module.model;
             //     startIndex = 1;
@@ -110,6 +110,7 @@ export default (function(){
             if(model){
                 dom.model = model;
             }
+            console.log(directive.value,model);
         }
     );
 
@@ -124,7 +125,7 @@ export default (function(){
             if (!value) {
                 throw new NError("paramException", "x-repeat");
             }
-            
+
             let modelName:string;
             let fa:string[] = value.split('|');
             modelName = fa[0];
@@ -137,9 +138,9 @@ export default (function(){
             }
             
             //模块全局数据
-            // if(modelName.startsWith('$$')){
-            //     modelName = modelName.substr(2);
-            // }
+            if(modelName.startsWith('$$')){
+                modelName = modelName.substr(2);
+            }
             directive.value = modelName;
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
@@ -152,7 +153,7 @@ export default (function(){
             if (!Util.isArray(rows) || rows.length === 0) {
                 return;
             }
-            console.log(rows);
+            dom.dontRender = false;
             //有过滤器，处理数据集合
             if (directive.filters && directive.filters.length>0) {
                 for(let f of directive.filters){
@@ -236,16 +237,13 @@ export default (function(){
                     break;
                 }
             }
-            if (v && v !== 'false') { //为真
-                let ind = 0;
-                //删除else
+            if (v && v !== 'false') { //为真,if节点显示，else节点隐藏
+                dom.dontRender = false;
                 if (indelse > 0) {
                     parent.children[indelse].dontRender = true;
                 }
             } else{
-                //替换if
                 dom.dontRender = true;
-                //为假则进入else渲染
                 if (indelse > 0) {
                     parent.children[indelse].dontRender = false;
                 }

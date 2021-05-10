@@ -186,9 +186,7 @@ var nodom = (function (exports) {
                 }
                 key = arr[arr.length - 1];
             }
-            else {
-                return model[key];
-            }
+            return model[key];
         }
     }
 
@@ -3454,7 +3452,6 @@ var nodom = (function (exports) {
             }
             if (execStr) {
                 let v = this.fields.length > 0 ? ',' + this.fields.join(',') : '';
-                console.log(execStr);
                 execStr = 'function($module' + v + '){return ' + execStr + '}';
                 this.execFunc = eval('(' + execStr + ')');
             }
@@ -4154,11 +4151,11 @@ var nodom = (function (exports) {
          */
         handleDirectives(module) {
             for (let d of this.directives.values()) {
+                d.exec(module, this, this.parent);
                 //指令可能改变render标志
                 if (this.dontRender) {
                     return false;
                 }
-                d.exec(module, this, this.parent);
             }
             return true;
         }
@@ -5389,7 +5386,7 @@ var nodom = (function (exports) {
             }
             result = result.map((item) => {
                 // 如果match为空说明属性串里面没有“”也就是自定义的只有属性名没有属性值得属性，这种直接给他的value字段设置为空就行了
-                const o = item.match(/^(.+)=[\'|\"](.+)[\'|\"]$/) || [, item];
+                const o = item.match(/^(.+)=[\'|\"](.*)[\'|\"]$/) || [, item];
                 return {
                     propName: o[1],
                     value: o[2] ? o[2] : '',
@@ -5409,7 +5406,7 @@ var nodom = (function (exports) {
             let stack2 = [{ tagName: undefined, children: [], attrs: [] }];
             let index = 0;
             // 开始标签的正则表达式 
-            let startRegExp = /^\<(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)((?:\s+.+?[\"\'](?:[\s\S]+?)[\"\']|\w+))?(\s*)\>/;
+            let startRegExp = /^\<(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)((?:\s+.+?[\"\'](?:[\s\S]*?)[\"\']|\w+))?(\s*)\>/;
             // 匹配结束标签的正则表达式
             let endRegExp = /^\<(\s*)\/(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)(\s*)\>/;
             // 匹配开始标签和结束标签之间的文字的正则表达式 
@@ -6036,6 +6033,7 @@ var nodom = (function (exports) {
         }, (directive, dom, module, parent) => {
             let model = dom.model;
             // //从根获取数据,$$开始数据项
+            // let startIndex:number=0;
             // if (directive.extra===1) {
             //     model = module.model;
             //     startIndex = 1;
@@ -6044,6 +6042,7 @@ var nodom = (function (exports) {
             if (model) {
                 dom.model = model;
             }
+            console.log(directive.value, model);
         });
         /**
          * 指令名 repeat
@@ -6065,9 +6064,9 @@ var nodom = (function (exports) {
                 }
             }
             //模块全局数据
-            // if(modelName.startsWith('$$')){
-            //     modelName = modelName.substr(2);
-            // }
+            if (modelName.startsWith('$$')) {
+                modelName = modelName.substr(2);
+            }
             directive.value = modelName;
         }, (directive, dom, module, parent) => {
             let model = dom.model;
@@ -6079,7 +6078,7 @@ var nodom = (function (exports) {
             if (!Util.isArray(rows) || rows.length === 0) {
                 return;
             }
-            console.log(rows);
+            dom.dontRender = false;
             //有过滤器，处理数据集合
             if (directive.filters && directive.filters.length > 0) {
                 for (let f of directive.filters) {
@@ -6154,16 +6153,14 @@ var nodom = (function (exports) {
                     break;
                 }
             }
-            if (v && v !== 'false') { //为真
-                //删除else
+            if (v && v !== 'false') { //为真,if节点显示，else节点隐藏
+                dom.dontRender = false;
                 if (indelse > 0) {
                     parent.children[indelse].dontRender = true;
                 }
             }
             else {
-                //替换if
                 dom.dontRender = true;
-                //为假则进入else渲染
                 if (indelse > 0) {
                     parent.children[indelse].dontRender = false;
                 }
