@@ -1091,7 +1091,13 @@ var nodom = (function (exports) {
             }
             //清除container的内部内容
             if (this.getContainer()) {
-                this.template = this.container.innerHTML.trim();
+                new TextEncoder();
+                // let html = encoder.encode(this.container.innerHTML.trim());
+                let html = this.container.innerHTML;
+                // let decoder = new TextDecoder();
+                // console.log(decoder.decode(html));
+                console.log(unescape(html));
+                this.template = html;
                 this.container.innerHTML = '';
             }
         }
@@ -5233,25 +5239,13 @@ var nodom = (function (exports) {
         */
         static compile(elementStr) {
             // 这里是把模板串通过正则表达式匹配 生成AST
-            let ast = this.compileTemplateToAst(elementStr);
+            console.log(decodeURI(elementStr));
+            let ast = this.compileTemplateToAst(decodeURI(elementStr));
             // console.log(ast);
             let oe = new Element('div');
             // 将AST编译成抽象语法树
             this.compileAST(oe, ast);
             return oe;
-            // // 这里是使用游离的dom来充当ast的流程 暂时先保留着以便对比
-            // const div: HTMLElement = Util.newEl('div');
-            // try {
-            //     div.innerHTML = elementStr;
-            // } catch (e) { }
-            // let oe = new Element('div');
-            // this.handleChildren(oe, div);
-            // //保证模块只有一个根节点
-            // // if (oe.children.length === 1) {
-            // //     return oe.children[0];
-            // // }
-            // // console.log(oe);
-            // return oe;
         }
         /**
          * 把AST编译成虚拟dom
@@ -5260,8 +5254,6 @@ var nodom = (function (exports) {
          * @returns oe 虚拟dom的根容器
          */
         static compileAST(oe, ast) {
-            // const div: HTMLElement = Util.newEl('div');
-            // let oe = new Element('div');
             if (!ast)
                 return;
             for (const a of ast) {
@@ -5273,7 +5265,6 @@ var nodom = (function (exports) {
                         break;
                     default:
                         if (a.tagName !== 'svg') {
-                            // let chlid = new Element(a.tagName);
                             this.handleAstNode(oe, a);
                         }
                         break;
