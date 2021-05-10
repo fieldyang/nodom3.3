@@ -5,21 +5,21 @@ import { Renderer } from "./renderer";
 /**
  * 模型工厂
  */
-export class ModelManager{
-    private module:Module;
+export class ModelManager {
+    private module: Module;
     /**
      * 数据对象与模型映射，key为数据对象，value为model
      */
-    private dataMap:WeakMap<object,Model> = new WeakMap();
+    private dataMap: WeakMap<object, Model> = new WeakMap();
 
     /**
      * 模型模块映射
      * key:model proxy, value:{model:model,watchers:{key:[监听器1,监听器2,...]}}
      * 每个数据对象，可有多个监听器
      */
-    private modelMap:WeakMap<Model,any> = new WeakMap();
+    private modelMap: WeakMap<Model, any> = new WeakMap();
 
-    constructor(module:Module){
+    constructor(module: Module) {
         this.module = module;
     }
     /**
@@ -27,17 +27,17 @@ export class ModelManager{
      * @param data      数据对象
      * @param model     模型
      */
-    public addToDataMap(data:Object,model:Model){
-        this.dataMap.set(data,model);
+    public addToDataMap(data: Object, model: Model) {
+        this.dataMap.set(data, model);
     }
 
-    
+
     /**
      * 从dataNModelMap获取model
      * @param data      数据对象
      * @returns         model
      */
-    public getFromDataMap(data:Object):Model{
+    public getFromDataMap(data: Object): Model {
         return this.dataMap.get(data);
     }
 
@@ -46,20 +46,20 @@ export class ModelManager{
      * @param data  数据对象
      * @returns     true/false
      */
-    public hasDataNModel(data:Object):Boolean{
+    public hasDataNModel(data: Object): Boolean {
         return this.dataMap.has(data);
     }
 
-    
+
     /**
      * 添加源模型到到模型map
      * @param model     模型代理
      * @param srcNModel  源模型
      */
-    public addModelToModelMap(model:any,srcNModel:Model){
-        if(!this.modelMap.has(model)){
-            this.modelMap.set(model,{model:srcNModel});
-        }else{
+    public addModelToModelMap(model: any, srcNModel: Model) {
+        if (!this.modelMap.has(model)) {
+            this.modelMap.set(model, { model: srcNModel });
+        } else {
             this.modelMap.get(model).model = srcNModel;
         }
     }
@@ -69,8 +69,8 @@ export class ModelManager{
      * @param model     模型代理
      * @returns         源模型
      */
-    public getModelFromModelMap(model:any):Model{
-        if(this.modelMap.has(model)){
+    public getModelFromModelMap(model: any): Model {
+        if (this.modelMap.has(model)) {
             return this.modelMap.get(model).model;
         }
         return undefined;
@@ -83,18 +83,18 @@ export class ModelManager{
      * @param foo       监听处理方法
      * @returns         void
      */
-    public addWatcherToModelMap(model:Model,key:string,foo:Function|string){
+    public addWatcherToModelMap(model: Model, key: string, foo: Function | string) {
         // 把model加入到model map
-        if(!this.modelMap.has(model)){
-            this.modelMap.set(model,{});
+        if (!this.modelMap.has(model)) {
+            this.modelMap.set(model, {});
         }
         //添加watchers属性
-        if(!this.modelMap.get(model).watchers){
+        if (!this.modelMap.get(model).watchers) {
             this.modelMap.get(model).watchers = Object.create(null);
         }
         let watchers = this.modelMap.get(model).watchers;
         //添加观察器数组
-        if(!watchers[key]){
+        if (!watchers[key]) {
             watchers[key] = [];
         }
         //把处理函数加入观察器数组
@@ -108,21 +108,21 @@ export class ModelManager{
      * @param foo       监听处理方法
      * @returns         void
      */
-    public removeWatcherFromModelMap(model:Model,key:string,foo:Function|string){
-        if(!this.modelMap.has(model)){
+    public removeWatcherFromModelMap(model: Model, key: string, foo: Function | string) {
+        if (!this.modelMap.has(model)) {
             return;
         }
-        if(!this.modelMap.get(model).watchers){
+        if (!this.modelMap.get(model).watchers) {
             return;
         }
         let watchers = this.modelMap.get(model).watchers;
-        if(!watchers[key]){
+        if (!watchers[key]) {
             return;
         }
         let index = watchers[key].findIndex(foo);
         //找到后移除
-        if(index !== -1){
-            watchers.splice(index,1);
+        if (index !== -1) {
+            watchers.splice(index, 1);
         }
     }
 
@@ -132,12 +132,12 @@ export class ModelManager{
      * @param key       model对应的属性
      * @returns         监听处理函数数组
      */
-    public getWatcherFromModelMap(model:Model,key:string):Array<Function>{
-        if(!this.modelMap.has(model)){
+    public getWatcherFromModelMap(model: Model, key: string): Array<Function> {
+        if (!this.modelMap.has(model)) {
             return undefined;
         }
         let watchers = this.modelMap.get(model).watchers;
-        if(watchers){
+        if (watchers) {
             return watchers[key];
         }
     }
@@ -149,22 +149,22 @@ export class ModelManager{
      * @param oldValue  旧值
      * @param newValue  新值
      */
-    public update(model:Model,key:string,oldValue:any,newValue:any){
+    public update(model: Model, key: string, oldValue: any, newValue: any) {
         Renderer.add(this.module);
         //处理观察器函数
-        let watcher = this.getWatcherFromModelMap(model,key);
-        if(watcher){
-            for(let foo of watcher){
+        let watcher = this.getWatcherFromModelMap(model, key);
+        if (watcher) {
+            for (let foo of watcher) {
                 //方法名
-                if(typeof foo === 'string'){
-                    if(module){
+                if (typeof foo === 'string') {
+                    if (this.module) {
                         foo = this.module.getMethod(foo);
-                        if(foo){
-                            foo.call(model,oldValue,newValue);
+                        if (foo) {
+                            foo.call(model, oldValue, newValue);
                         }
                     }
-                }else{
-                    foo.call(model,oldValue,newValue);
+                } else {
+                    foo.call(model, oldValue, newValue);
                 }
             }
         }

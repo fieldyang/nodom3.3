@@ -11,9 +11,10 @@ import { Model } from "../model";
 import { Renderer } from "../renderer";
 import { NError } from "../error";
 import { NEvent } from "../event";
-import { Nodom } from "../nodom";
+import { NodomMessage } from "../nodom";
 
-namespace nodom {
+export default (function(){
+
     /**
      *  指令类型初始化    
      *  每个指令类型都有一个init和handle方法，init和handle都可选
@@ -580,7 +581,7 @@ namespace nodom {
                 //子节点不存在，添加一个
                 let text = ( <string> vd.children[0].textContent).trim();
                 if (text === '') { //没有提示内容，根据类型提示
-                    text = Util.compileStr(Nodom.tipMessage.FormMsgs[vn], el.getAttribute(vn));
+                    text = Util.compileStr(NodomMessage.FormMsgs[vn], el.getAttribute(vn));
                 }
                 vd.children[0].textContent = text;
             }
@@ -710,4 +711,4 @@ namespace nodom {
 
         }
     )
-}
+}())

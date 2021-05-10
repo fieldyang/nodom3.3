@@ -1,30 +1,31 @@
 {
-  "name": "nodom2.1",
-  "version": "1.0.0",
-  "description": "",
-  "main": "Gruntfile.js",
-  "directories": {
-    "example": "examples",
-    "test": "test"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@types/jest": "^23.3.1",
-    "@types/node": "^10.5.5",
-    "clean-webpack-plugin": "^1.0.1",
-    "jest": "^23.4.2",
-    "prettier": "^1.16.4",
-    "ts-jest": "^23.0.1",
-    "ts-lint": "^4.5.1",
-    "ts-loader": "^5.3.3",
-    "tslint": "^5.11.0",
-    "tslint-loader": "^3.5.4",
-    "typescript": "^3.0.1",
-    "webpack": "^4.28.1"
-  }
+    "name": "nodom2.1",
+    "version": "1.0.0",
+    "description": "",
+    "private": true,
+    "main": "index.ts",
+    "directories": {
+        "example": "examples",
+        "test": "test"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "rollup -c"
+    },
+    "author": "",
+    "license": "ISC",
+    "browser": "dist/nodom.js",
+    "devDependencies": {
+        "@rollup/plugin-commonjs": "^18.1.0",
+        "@rollup/plugin-node-resolve": "^13.0.0",
+        "grunt-contrib-clean": "^2.0.0",
+        "grunt-ts": "^6.0.0-beta.22",
+        "rollup": "^2.47.0",
+        "rollup-plugin-typescript2": "^0.30.0"
+    },
+    "dependencies": {
+        "grunt": "^1.4.0",
+        "typescript": "^4.2.4",
+        "webpack-cli": "^4.6.0"
+    }
 }

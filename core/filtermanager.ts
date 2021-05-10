@@ -1,7 +1,7 @@
 import {Module} from "./module"
 import { NError } from "./error";
 import { Util } from "./util";
-import { Nodom } from "./nodom";
+import { NodomMessage } from "./nodom";
 
 /**
  * filter类型命名规则：以小写字母a-z命名，其它字母不允许
@@ -19,10 +19,10 @@ export class FilterManager{
      */
     public static addType(name, handler) {
         if (!/^[a-zA-Z]+$/.test(name)) {
-            throw new NError('namedinvalid', Nodom.tipMessage.TipWords['filterType'], name);
+            throw new NError('namedinvalid', NodomMessage.TipWords['filterType'], name);
         }
         if (this.filterTypes.has(name)) {
-            throw new NError('exist1', Nodom.tipMessage.TipWords['filterType'], name);
+            throw new NError('exist1', NodomMessage.TipWords['filterType'], name);
         }
         if (!Util.isFunction(handler)) {
             throw new NError('invoke', 'FilterManager.addType', '1', 'Function');
@@ -36,7 +36,7 @@ export class FilterManager{
      */
     public static removeType(name:string) {
         if (!this.filterTypes.has(name)) {
-            throw new NError('notexist1', Nodom.tipMessage.TipWords['filterType'], name);
+            throw new NError('notexist1', NodomMessage.TipWords['filterType'], name);
         }
         this.filterTypes.delete(name);
     }
@@ -63,7 +63,7 @@ export class FilterManager{
             params.push(arguments[i]);
         }
         if (!FilterManager.filterTypes.has(type)) {
-            throw new NError('notexist1', Nodom.tipMessage.TipWords['filterType'], type);
+            throw new NError('notexist1', NodomMessage.TipWords['filterType'], type);
         }
         //调用
         return Util.apply(FilterManager.filterTypes.get(type), module, params);

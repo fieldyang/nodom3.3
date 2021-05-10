@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+		<!-- 如果是umd 或者 iife 则需要这里引入文件 -->
+		<script src="./dist/nodom.js"></script>
+	</head>
+	<body>
+		<div id="app">
+			{{a}}
+			<li
+				x-show="price|orderby:asc"
+				x-repeat="commodities"
+				x-class="{red:'price>100 &&(!rows||rows.length===0)',bold:'discount<0.8'}"
+			>
+				&&
+			</li>
+		</div>
+		<!-- <button e-click="click">cilck</button> -->
+	</body>
+	<!-- 这个标签里面可以写import export -->
+	<script type="module">
+		let li = document.querySelector("#app").innerHTML;
+		console.log(li);
+		// iife 包的用法 iife包需要去head标签里面引入编译好的文件
+		// const { $, Module } = nodom;
+		// $.newApp({
+		// 	module: {
+		// 		el: "#app",
+		// 		data: {
+		// 			a: "这是一个测试程序",
+		// 		},
+		// 		methods: {
+		// 			click: function (dom, model, module) {
+		// 				console.log(this);
+		// 			},
+		// 		},
+		// 	},
+		// });
+		// let a = new Module();
+		// console.log(a);
+
+		// esm 写法
+		// import { $ } from "./dist/nodom.js";
+		// import { Module as module } from "./dist/nodom.js";
+		// $.newApp({
+		// 	module: {
+		// 		el: "#app",
+		// 		data: {
+		// 			a: "这是一个测试程序",
+		// 		},
+		// 		methods: {
+		// 			click: function (dom, model, module) {
+		// 				console.log(this);
+		// 			},
+		// 		},
+		// 	},
+		// });
+		// let a = new module();
+		// console.log(a);
+
+		// umd 写法  umd打包去index.ts里面把newApp暴露出来，不然使用起来需要nodom.Nodom.newApp 不是很方便
+		// nodom.newApp({
+		// 	module: {
+		// 		el: "#app",
+		// 		data: {
+		// 			a: "这是一个测试程序",
+		// 		},
+		// 		methods: {
+		// 			click: function (dom, model, module) {
+		// 				console.log(this);
+		// 			},
+		// 		},
+		// 	},
+		// });
+	</script>
+</html>

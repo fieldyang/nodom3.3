@@ -1,6 +1,6 @@
 import { Application } from "./application";
 import { NError } from "./error";
-import { Nodom } from "./nodom";
+import { NodomMessage } from "./nodom";
 import { Model } from "./model";
 import { Module } from "./module";
 import { ResourceManager } from "./resourcemanager";
@@ -50,7 +50,7 @@ export class ModuleFactory {
      */
     public static async getInstance(className:string,moduleName?:string,data?:any):Promise<Module>{
         if(!this.classes.has(className)){
-            throw new NError('notexist1',Nodom.tipMessage.TipWords['moduleClass'],className);
+            throw new NError('notexist1',NodomMessage.TipWords['moduleClass'],className);
         }
         let cfg:IMdlClassObj = this.classes.get(className);
         if(moduleName){
@@ -180,7 +180,7 @@ export class ModuleFactory {
             //初始化完成
             cfg.initing = false;
         }else{
-            throw new NError('notexist1',Nodom.tipMessage.TipWords['moduleClass'],cfg.class);
+            throw new NError('notexist1',NodomMessage.TipWords['moduleClass'],cfg.class);
         }
     }
 }

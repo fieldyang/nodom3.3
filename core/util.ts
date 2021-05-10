@@ -1,14 +1,14 @@
 import { NError } from "./error";
-import { Nodom } from "./nodom";
+import { NodomMessage } from "./nodom";
 
 /**
  * 基础服务库
  * @since       1.0.0
  */
-export class Util{
-    private static generatedId:number=1;
+export class Util {
+    private static generatedId: number = 1;
     //唯一主键
-    public static genId(){
+    public static genId() {
         return this.generatedId++;
     }
     /******对象相关******/
@@ -21,10 +21,10 @@ export class Util{
      * @returns         复制的对象
      */
 
-    public static clone(srcObj:Object,expKey?:RegExp|string[],extra?:any):any{
+    public static clone(srcObj: Object, expKey?: RegExp | string[], extra?: any): any {
         let me = this;
-        let map:WeakMap<Object,any> = new WeakMap();
-        return clone(srcObj,expKey,extra);
+        let map: WeakMap<Object, any> = new WeakMap();
+        return clone(srcObj, expKey, extra);
 
         /**
          * clone对象
@@ -32,48 +32,48 @@ export class Util{
          * @param extra clone附加参数
          * @returns     克隆后的对象
          */
-        function clone(src,expKey,extra?){
+        function clone(src, expKey, extra?) {
             //非对象或函数，直接返回            
-            if(!src || typeof src !== 'object' || Util.isFunction(src)){
+            if (!src || typeof src !== 'object' || Util.isFunction(src)) {
                 return src;
             }
             let dst;
             //带有clone方法，则直接返回clone值
-            if(src.clone && Util.isFunction(src.clone)){
+            if (src.clone && Util.isFunction(src.clone)) {
                 return src.clone(extra);
-            }else if(me.isObject(src)){
+            } else if (me.isObject(src)) {
                 dst = new Object();
                 //把对象加入map，如果后面有新克隆对象，则用新克隆对象进行覆盖
-                map.set(src,dst);
-                Object.getOwnPropertyNames(src).forEach((prop)=>{
+                map.set(src, dst);
+                Object.getOwnPropertyNames(src).forEach((prop) => {
                     //不克隆的键
-                    if(expKey){
-                        if(expKey.constructor === RegExp && (<RegExp>expKey).test(prop) //正则表达式匹配的键不复制
+                    if (expKey) {
+                        if (expKey.constructor === RegExp && (<RegExp>expKey).test(prop) //正则表达式匹配的键不复制
                             || Util.isArray(expKey) && (<any[]>expKey).includes(prop)                        //被排除的键不复制
-                            ){
+                        ) {
                             return;
                         }
                     }
-                    dst[prop] = getCloneObj(src[prop],expKey,extra);
+                    dst[prop] = getCloneObj(src[prop], expKey, extra);
                 });
-            } else if(me.isMap(src)){
+            } else if (me.isMap(src)) {
                 dst = new Map();
                 //把对象加入map，如果后面有新克隆对象，则用新克隆对象进行覆盖
-                src.forEach((value,key)=>{
+                src.forEach((value, key) => {
                     //不克隆的键
-                    if(expKey){
-                        if(expKey.constructor === RegExp && (<RegExp>expKey).test(key)       //正则表达式匹配的键不复制
-                            || (<any[]>expKey).includes(key)){     //被排除的键不复制
+                    if (expKey) {
+                        if (expKey.constructor === RegExp && (<RegExp>expKey).test(key)       //正则表达式匹配的键不复制
+                            || (<any[]>expKey).includes(key)) {     //被排除的键不复制
                             return;
                         }
                     }
-                    dst.set(key,getCloneObj(value,expKey,extra));
+                    dst.set(key, getCloneObj(value, expKey, extra));
                 });
-            }else if(me.isArray(src)){
+            } else if (me.isArray(src)) {
                 dst = new Array();
                 //把对象加入map，如果后面有新克隆对象，则用新克隆对象进行覆盖
-                src.forEach(function(item,i){
-                    dst[i] = getCloneObj(item,expKey,extra);
+                src.forEach(function (item, i) {
+                    dst[i] = getCloneObj(item, expKey, extra);
                 });
             }
             return dst;
@@ -85,12 +85,12 @@ export class Util{
          * @param expKey    排除键
          * @param extra     附加参数
          */
-        function getCloneObj(value,expKey,extra){
-            if(typeof value === 'object' && !Util.isFunction(value)){
+        function getCloneObj(value, expKey, extra) {
+            if (typeof value === 'object' && !Util.isFunction(value)) {
                 let co = null;
-                if(!map.has(value)){  //clone新对象
-                    co = clone(value,expKey,extra);
-                }else{                    //从map中获取对象
+                if (!map.has(value)) {  //clone新对象
+                    co = clone(value, expKey, extra);
+                } else {                    //从map中获取对象
                     co = map.get(value);
                 }
                 return co;
@@ -103,36 +103,36 @@ export class Util{
      * @param   参数数组
      * @returns 返回对象
      */
-    public static merge(o1?:Object,o2?:Object,o3?:Object,o4?:Object,o5?:Object,o6?:Object){
+    public static merge(o1?: Object, o2?: Object, o3?: Object, o4?: Object, o5?: Object, o6?: Object) {
         let me = this;
-        for(let i=0;i<arguments.length;i++){
-            if(!this.isObject(arguments[i])){
-                throw new NError('invoke','Util.merge',i+'','object');    
+        for (let i = 0; i < arguments.length; i++) {
+            if (!this.isObject(arguments[i])) {
+                throw new NError('invoke', 'Util.merge', i + '', 'object');
             }
         }
-        let retObj = Object.assign.apply(null,arguments);
+        let retObj = Object.assign.apply(null, arguments);
         subObj(retObj);
         return retObj;
         //处理子对象
-        function subObj(obj){
-            for(let o in obj){
-                if(me.isObject(obj[o]) || me.isArray(obj[o])){ //对象或数组
+        function subObj(obj) {
+            for (let o in obj) {
+                if (me.isObject(obj[o]) || me.isArray(obj[o])) { //对象或数组
                     retObj[o] = me.clone(retObj[o]);
                 }
             }
         }
     }
-    
+
     /**
      * 把obj2对象所有属性赋值给obj1
      */
-    public static assign(obj1,obj2){
-        if(Object.assign){
-            Object.assign(obj1,obj2);
-        }else{
-            this.getOwnProps(obj2).forEach(function(p){
+    public static assign(obj1, obj2) {
+        if (Object.assign) {
+            Object.assign(obj1, obj2);
+        } else {
+            this.getOwnProps(obj2).forEach(function (p) {
                 obj1[p] = obj2[p];
-            });    
+            });
         }
         return obj1;
     }
@@ -140,8 +140,8 @@ export class Util{
     /**
      * 获取对象自有属性
      */
-    public static getOwnProps(obj):Array<string>{
-        if(!obj){
+    public static getOwnProps(obj): Array<string> {
+        if (!obj) {
             return [];
         }
         return Object.getOwnPropertyNames(obj);
@@ -152,7 +152,7 @@ export class Util{
      * @param foo   检查的对象
      * @returns     true/false
      */
-    public static isFunction(foo):boolean{
+    public static isFunction(foo): boolean {
         return foo !== undefined && foo !== null && foo.constructor === Function;
     }
 
@@ -161,7 +161,7 @@ export class Util{
      * @param obj   检查的对象
      * @returns     true/false
      */
-    public static isArray(obj) :boolean{
+    public static isArray(obj): boolean {
         return Array.isArray(obj);
     }
 
@@ -169,7 +169,7 @@ export class Util{
      * 判断是否为map
      * @param obj 
      */
-    public static isMap(obj):boolean{
+    public static isMap(obj): boolean {
         return obj !== null && obj !== undefined && obj.constructor === Map;
     }
 
@@ -178,7 +178,7 @@ export class Util{
      * @param obj   检查的对象
      * @returns true/false
      */
-    public static isObject(obj):boolean {
+    public static isObject(obj): boolean {
         return obj !== null && obj !== undefined && obj.constructor === Object;
     }
 
@@ -187,7 +187,7 @@ export class Util{
      * @param v 检查的值
      * @returns true/false
      */
-    public static isInt(v):boolean {
+    public static isInt(v): boolean {
         return Number.isInteger(v);
     }
     /**
@@ -195,7 +195,7 @@ export class Util{
      * @param v 检查的值
      * @returns true/false
      */
-    public static isNumber(v):boolean{
+    public static isNumber(v): boolean {
         return typeof v === 'number';
     }
 
@@ -204,7 +204,7 @@ export class Util{
      * @param v 检查的值
      * @returns true/false
      */
-    public static isBoolean(v):boolean{
+    public static isBoolean(v): boolean {
         return typeof v === 'boolean';
     }
     /**
@@ -212,7 +212,7 @@ export class Util{
      * @param v 检查的值
      * @returns true/false
      */
-    public static isString(v):boolean{
+    public static isString(v): boolean {
         return typeof v === 'string';
     }
 
@@ -221,7 +221,7 @@ export class Util{
      * @param v 检查的值
      * @returns true/false
      */
-    public static isNumberString(v):boolean{
+    public static isNumberString(v): boolean {
         return /^\d+\.?\d*$/.test(v);
     }
 
@@ -230,16 +230,16 @@ export class Util{
      * @param obj   检查的对象
      * @returns     true/false
      */
-    public static isEmpty(obj):boolean{
-        if(obj === null || obj === undefined)
+    public static isEmpty(obj): boolean {
+        if (obj === null || obj === undefined)
             return true;
         let tp = typeof obj;
-        if(this.isObject(obj)){
+        if (this.isObject(obj)) {
             let keys = Object.keys(obj);
-            if(keys !== undefined){
+            if (keys !== undefined) {
                 return keys.length === 0;
             }
-        }else if(tp === 'string'){
+        } else if (tp === 'string') {
             return obj === '';
         }
         return false;
@@ -253,61 +253,61 @@ export class Util{
      * @param obj       待查询对象
      * @param props     属性值对象
      * @param one       是否满足一个条件就可以，默认false
-     */ 
-    public static findObjByProps(obj:Object,props:Object,one:boolean):Array<Object>|Object{
-        if(!this.isObject(obj)){
-            throw new NError('invoke','this.findObjByProps','0','Object');
+     */
+    public static findObjByProps(obj: Object, props: Object, one: boolean): Array<Object> | Object {
+        if (!this.isObject(obj)) {
+            throw new NError('invoke', 'this.findObjByProps', '0', 'Object');
         }
 
         //默认false
         one = one || false;
-        let ps:Array<string> = this.getOwnProps(props);
-        let find:boolean = false;
-        if(one === false){  //所有条件都满足
+        let ps: Array<string> = this.getOwnProps(props);
+        let find: boolean = false;
+        if (one === false) {  //所有条件都满足
             find = true;
-            for(let i=0;i<ps.length;i++){
+            for (let i = 0; i < ps.length; i++) {
                 let p = ps[i];
-                if(obj[p] !== props[p]){
+                if (obj[p] !== props[p]) {
                     find = false;
                     break;
                 }
             }
-        }else{              //一个条件满足
-            for(let i=0;i<ps.length;i++){
+        } else {              //一个条件满足
+            for (let i = 0; i < ps.length; i++) {
                 let p = ps[i];
-                if(obj[p] === props[p]){
+                if (obj[p] === props[p]) {
                     find = true;
                     break;
                 }
             }
         }
-        if(find){
+        if (find) {
             return obj;
         }
 
 
         //子节点查找
-        for(let p in obj){
+        for (let p in obj) {
             let o = obj[p];
-            if(o !== null){
-                if(this.isObject(o)){      //子对象
+            if (o !== null) {
+                if (this.isObject(o)) {      //子对象
                     //递归查找
                     let oprops = this.getOwnProps(o);
-                    for(let i=0;i<oprops.length;i++){
+                    for (let i = 0; i < oprops.length; i++) {
                         let item = o[oprops[i]];
-                        if(item !== null && this.isObject(item)){
-                            let r = this.findObjByProps(item,props,one);
-                            if(r !== null){
+                        if (item !== null && this.isObject(item)) {
+                            let r = this.findObjByProps(item, props, one);
+                            if (r !== null) {
                                 return r;
-                            }           
+                            }
                         }
                     }
-                }else if(this.isArray(o)){ //数组对象
-                    for(let i=0;i<o.length;i++){
+                } else if (this.isArray(o)) { //数组对象
+                    for (let i = 0; i < o.length; i++) {
                         let item = o[i];
-                        if(item !== null && this.isObject(item)){
-                            let r = this.findObjByProps(item,props,one);
-                            if(r !== null){
+                        if (item !== null && this.isObject(item)) {
+                            let r = this.findObjByProps(item, props, one);
+                            if (r !== null) {
                                 return r;
                             }
                         }
@@ -326,9 +326,9 @@ export class Util{
      * @param pview     父html element
      * @returns         html element/null 或 nodelist或[]
      */
-    public static get(selector:string,findAll?:boolean,pview?:HTMLElement|Document):Node|NodeList{
+    public static get(selector: string, findAll?: boolean, pview?: HTMLElement | Document): Node | NodeList {
         pview = pview || document;
-        if(findAll === true){
+        if (findAll === true) {
             return pview.querySelectorAll(selector);
         }
         return pview.querySelector(selector);
@@ -339,7 +339,7 @@ export class Util{
      * @param el    传入的对象
      * @returns     true/false
      */
-    public static isEl(el:any):boolean{
+    public static isEl(el: any): boolean {
         return el instanceof HTMLElement || el instanceof SVGElement;
     }
 
@@ -348,10 +348,10 @@ export class Util{
      * @param node 传入的对象
      * @returns true/false
      */
-    public static isNode(node:any):boolean{
-        return node !== undefined && node !== null && (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.DOCUMENT_FRAGMENT_NODE);  
+    public static isNode(node: any): boolean {
+        return node !== undefined && node !== null && (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.DOCUMENT_FRAGMENT_NODE);
     }
-    
+
     /**
      * 新建dom
      * @param tagName   标签名
@@ -359,15 +359,15 @@ export class Util{
      * @param text      innerText
      * @returns         新建的elelment
      */
-    public static newEl(tagName:string,config?:Object,text?:string):HTMLElement{
-        if(!this.isString(tagName) || this.isEmpty(tagName)){
-            throw new NError('invoke','this.newEl','0','string');   
+    public static newEl(tagName: string, config?: Object, text?: string): HTMLElement {
+        if (!this.isString(tagName) || this.isEmpty(tagName)) {
+            throw new NError('invoke', 'this.newEl', '0', 'string');
         }
         let el = document.createElement(tagName);
-        
-        if(this.isObject(config)){
-            this.attr(el,config);
-        }else if(this.isString(text)){
+
+        if (this.isObject(config)) {
+            this.attr(el, config);
+        } else if (this.isString(text)) {
             el.innerHTML = text;
         }
         return el;
@@ -377,10 +377,10 @@ export class Util{
      * @param tagName   标签名
      * @returns         svg element
      */
-    public static newSvgEl(tagName:string,config?:Object):SVGElement{
-        let el:SVGElement = document.createElementNS("http://www.w3.org/2000/svg",tagName);
-        if(this.isObject(config)){
-            this.attr(el,config);
+    public static newSvgEl(tagName: string, config?: Object): SVGElement {
+        let el: SVGElement = document.createElementNS("http://www.w3.org/2000/svg", tagName);
+        if (this.isObject(config)) {
+            this.attr(el, config);
         }
         return el;
     }
@@ -389,26 +389,26 @@ export class Util{
      * @param srcNode       源dom
      * @param nodes         替换的dom或dom数组
      */
-    public static replaceNode(srcNode:Node,nodes:Node|Array<Node>){
-        if(!this.isNode(srcNode)){
-            throw new NError('invoke','this.replaceNode','0','Node');
+    public static replaceNode(srcNode: Node, nodes: Node | Array<Node>) {
+        if (!this.isNode(srcNode)) {
+            throw new NError('invoke', 'this.replaceNode', '0', 'Node');
         }
-        
-        if(!this.isNode(nodes) && !this.isArray(nodes)){
-            throw new NError('invoke1','this.replaceNode','1','Node','Node Array');
+
+        if (!this.isNode(nodes) && !this.isArray(nodes)) {
+            throw new NError('invoke1', 'this.replaceNode', '1', 'Node', 'Node Array');
         }
-        let pnode:Node = srcNode.parentNode;
-        let bnode:Node = srcNode.nextSibling;
-        if(pnode === null){
+        let pnode: Node = srcNode.parentNode;
+        let bnode: Node = srcNode.nextSibling;
+        if (pnode === null) {
             return;
         }
         pnode.removeChild(srcNode);
-        const nodeArr:Array<Node> = this.isArray(nodes)?<Node[]>nodes:[<Node>nodes];
-        nodeArr.forEach(function(node){
-            if(bnode === undefined || bnode === null){
+        const nodeArr: Array<Node> = this.isArray(nodes) ? <Node[]>nodes : [<Node>nodes];
+        nodeArr.forEach(function (node) {
+            if (bnode === undefined || bnode === null) {
                 pnode.appendChild(node);
-            }else{
-                pnode.insertBefore(node,bnode);
+            } else {
+                pnode.insertBefore(node, bnode);
             }
         });
     }
@@ -416,13 +416,13 @@ export class Util{
      * 清空子节点
      * @param el
      */
-    public static empty(el:HTMLElement){
+    public static empty(el: HTMLElement) {
         const me = this;
-        if(!me.isEl(el)){
-            throw new NError('invoke','this.empty','0','Element');
+        if (!me.isEl(el)) {
+            throw new NError('invoke', 'this.empty', '0', 'Element');
         }
-        let nodes:NodeList = el.childNodes;
-        for(let i=nodes.length-1;i>=0;i--){
+        let nodes: NodeList = el.childNodes;
+        for (let i = nodes.length - 1; i >= 0; i--) {
             el.removeChild(nodes[i]);
         }
     }
@@ -430,18 +430,18 @@ export class Util{
      * 删除节点
      * @param node html node
      */
-    public static remove(node:Node){
+    public static remove(node: Node) {
         const me = this;
-        if(!me.isNode(node)){
-            throw new NError('invoke','this.remove','0','Node');
+        if (!me.isNode(node)) {
+            throw new NError('invoke', 'this.remove', '0', 'Node');
         }
 
-        if(node.parentNode !== null){
+        if (node.parentNode !== null) {
             node.parentNode.removeChild(node);
         }
     }
 
-    
+
     /**
      * 获取／设置属性
      * @param el    element
@@ -449,38 +449,38 @@ export class Util{
      * @param value 属性值，获取属性时不需要设置
      * @returns     属性值
      */
-    public static attr(el:Element,param:string|Object,value?:any):any{
+    public static attr(el: Element, param: string | Object, value?: any): any {
         const me = this;
-        if(!me.isEl(el)){
-            throw new NError('invoke','this.attr','0','Element');
+        if (!me.isEl(el)) {
+            throw new NError('invoke', 'this.attr', '0', 'Element');
         }
-        if(this.isEmpty(param)){
-            throw new NError('invoke','this.attr','1','string','object');   
+        if (this.isEmpty(param)) {
+            throw new NError('invoke', 'this.attr', '1', 'string', 'object');
         }
-        if(value === undefined || value === null){
-            if(this.isObject(param)){ //设置多个属性
-                this.getOwnProps(param).forEach(function(k){
-                    if(k === 'value'){
+        if (value === undefined || value === null) {
+            if (this.isObject(param)) { //设置多个属性
+                this.getOwnProps(param).forEach(function (k) {
+                    if (k === 'value') {
                         el[k] = param[k];
-                    }else{
-                        el.setAttribute(k,param[k]);
+                    } else {
+                        el.setAttribute(k, param[k]);
                     }
                 });
-            }else if(this.isString(param)){ //获取属性
-                if(param === 'value'){
+            } else if (this.isString(param)) { //获取属性
+                if (param === 'value') {
                     return param[value];
                 }
                 return el.getAttribute(<string>param);
             }
-        }else { //设置属性
-            if(param === 'value'){
-                    el[<string>param] = value;
-            }else{
-                el.setAttribute(<string>param,value);
+        } else { //设置属性
+            if (param === 'value') {
+                el[<string>param] = value;
+            } else {
+                el.setAttribute(<string>param, value);
             }
         }
     }
-    
+
 
     /******日期相关******/
     /**
@@ -489,52 +489,52 @@ export class Util{
      * @param format    日期格式
      * @returns          日期串
      */
-    public static formatDate(srcDate:string|number,format:string):string{
+    public static formatDate(srcDate: string | number, format: string): string {
         //时间戳
-        let timeStamp:number;
-        if(this.isString(srcDate)){
+        let timeStamp: number;
+        if (this.isString(srcDate)) {
             //排除日期格式串,只处理时间戳
             let reg = /^\d+$/;
-            if(reg.test(<string>srcDate) === true){
+            if (reg.test(<string>srcDate) === true) {
                 timeStamp = parseInt(<string>srcDate);
             }
-        }else if(this.isNumber(srcDate)){
+        } else if (this.isNumber(srcDate)) {
             timeStamp = <number>srcDate;
-        }else{
-            throw new NError('invoke','this.formatDate','0','date string','date');
+        } else {
+            throw new NError('invoke', 'this.formatDate', '0', 'date string', 'date');
         }
         //得到日期
-        let date:Date = new Date(timeStamp);
+        let date: Date = new Date(timeStamp);
         // invalid date
-        if(isNaN(date.getDay())){
+        if (isNaN(date.getDay())) {
             return '';
         }
 
         let o = {
-            "M+" : date.getMonth()+1, //月份
-            "d+" : date.getDate(), //日
-            "h+" : date.getHours()%12 === 0 ? 12 : date.getHours()%12, //小时
-            "H+" : date.getHours(), //小时
-            "m+" : date.getMinutes(), //分
-            "s+" : date.getSeconds(), //秒
-            "q+" : Math.floor((date.getMonth()+3)/3), //季度
-            "S" : date.getMilliseconds() //毫秒
+            "M+": date.getMonth() + 1, //月份
+            "d+": date.getDate(), //日
+            "h+": date.getHours() % 12 === 0 ? 12 : date.getHours() % 12, //小时
+            "H+": date.getHours(), //小时
+            "m+": date.getMinutes(), //分
+            "s+": date.getSeconds(), //秒
+            "q+": Math.floor((date.getMonth() + 3) / 3), //季度
+            "S": date.getMilliseconds() //毫秒
         };
-        
+
         //年
-        if(/(y+)/.test(format)){
-            format=format.replace(RegExp.$1, (date.getFullYear()+"").substr(4 - RegExp.$1.length));
+        if (/(y+)/.test(format)) {
+            format = format.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length));
         }
         //月日
-        this.getOwnProps(o).forEach(function(k){
-            if(new RegExp("("+ k +")").test(format)){
-                format = format.replace(RegExp.$1, (RegExp.$1.length==1) ? (o[k]) : (("00"+ o[k]).substr((""+ o[k]).length)));
+        this.getOwnProps(o).forEach(function (k) {
+            if (new RegExp("(" + k + ")").test(format)) {
+                format = format.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
             }
         });
 
         //星期
-        if(/(E+)/.test(format)){
-            format=format.replace(RegExp.$1, ((RegExp.$1.length>1) ? (RegExp.$1.length>2 ? "/u661f/u671f" : "/u5468") : "") + Nodom.tipMessage.WeekDays[date.getDay() + ""]);
+        if (/(E+)/.test(format)) {
+            format = format.replace(RegExp.$1, ((RegExp.$1.length > 1) ? (RegExp.$1.length > 2 ? "/u661f/u671f" : "/u5468") : "") + NodomMessage.WeekDays[date.getDay() + ""]);
         }
         return format;
     }
@@ -546,33 +546,33 @@ export class Util{
      * @param args1,args2,args3,... 待替换的参数
      * @returns 转换后的消息
      */
-    public static compileStr(src:string,p1?:any,p2?:any,p3?:any,p4?:any,p5?:any):string{
-        let reg:RegExp;
+    public static compileStr(src: string, p1?: any, p2?: any, p3?: any, p4?: any, p5?: any): string {
+        let reg: RegExp;
         let args = arguments;
         let index = 0;
-        for(;;){
-            if(src.indexOf('\{' + index + '\}') !== -1){
-                reg = new RegExp('\\{' + index + '\\}','g');
-                src = src.replace(reg,args[index+1]);
+        for (; ;) {
+            if (src.indexOf('\{' + index + '\}') !== -1) {
+                reg = new RegExp('\\{' + index + '\\}', 'g');
+                src = src.replace(reg, args[index + 1]);
                 index++;
-            }else{
+            } else {
                 break;
             }
         }
         return src;
     }
-    
+
     /**
      * 函数调用
      * @param foo   函数
      * @param obj   this指向
      * @param args  参数数组
      */
-    public static apply(foo:Function,obj:any,args?:Array<any>):any{
-        if(!foo){
+    public static apply(foo: Function, obj: any, args?: Array<any>): any {
+        if (!foo) {
             return;
         }
-        return Reflect.apply(foo,obj||null,args);
+        return Reflect.apply(foo, obj || null, args);
     }
 
     /**
@@ -580,7 +580,7 @@ export class Util{
      * @param paths 待合并路径数组
      * @returns     返回路径
      */
-    public static mergePath(paths:string[]):string{
-        return paths.join('/').replace(/(\/{2,})|\\\//g,'\/');
+    public static mergePath(paths: string[]): string {
+        return paths.join('/').replace(/(\/{2,})|\\\//g, '\/');
     }
 }

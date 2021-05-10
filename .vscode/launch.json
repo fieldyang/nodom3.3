@@ -1,17 +1,24 @@
 {
     "version": "0.2.0",
     "configurations": [
+        // {
+        //     "type": "node",
+        //     "request": "launch",
+        //     "name": "Launch Program",
+        //     "program":"${file}",
+        //     "preLaunchTask": "tsc: build - tsconfig.json",
+        //     "sourceMaps": true,
+        //     "outFiles": [
+        //         "${workspaceFolder}/**/*.js"
+        //     ],
+        //     "cwd": "${workspaceRoot}"
+        // },
         {
-            "type": "node",
+            "type": "pwa-msedge",
             "request": "launch",
-            "name": "Launch Program",
-            "program":"${file}",
-            "preLaunchTask": "tsc: build - tsconfig.json",
-            "sourceMaps": true,
-            "outFiles": [
-                "${workspaceFolder}/**/*.js"
-            ],
-            "cwd": "${workspaceRoot}"
+            "name": "Open index.html",
+            "url": "http://localhost:5500/index.html",
+            "webRoot": "${workspaceFolder}"
         }
     ]
 }

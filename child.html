@@ -1,0 +1,9 @@
+
+
+	<li
+		x-show="price|orderby:asc"
+		x-repeat="commodities"
+		x-class="{red:'price>100 &&(!rows||rows.length===0)',bold:'discount<0.8'}"
+	>
+		{{name}}的价格是{{price}}，折扣是{{discount}}
+	</li>

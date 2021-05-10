@@ -288,3 +288,59 @@ export interface ITipMessage{
         this.index = index;
     }
 }
+
+
+/**
+ *  AST对象约束
+ */
+export interface ASTObj {
+    /**
+     * 节点类型，如果是原生节点，如div则是div，如果是文本节点则是text。如果是注释则为comment
+     */
+    tagName: string;
+
+    /**
+     * 属性数组，里面为属性对象如{propName:'class',value:'myclass'}
+     */
+    attrs?: Array<{ propName: string, value: any }>;
+
+    /**
+     * 事件数组，里面为事件对象{eventName:'click',eventHandler:'change'}
+     */
+    events?: Array<{ eventName: string, exec: any }>;
+
+    /**
+     * 子节点数组，与textContent互斥
+     */
+    children?: Array<ASTObj>;
+
+    /**
+     * 表达式数组
+     */
+    expressions?: any[]
+
+    /**
+     * textContent 节点为text的时候才有的属性，与children属性互斥
+     */
+    textContent?: string;
+}
+
+
+export const selfClosingTag = [
+    "area",
+    "base",
+    "basefont",
+    "br",
+    "col",
+    "embed",
+    "frame",
+    "hr",
+    "img",
+    "input",
+    "keygen",
+    "link",
+    "meta",
+    "param",
+    "source",
+    "track",
+];
