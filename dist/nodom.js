@@ -3454,6 +3454,7 @@ var nodom = (function (exports) {
             }
             if (execStr) {
                 let v = this.fields.length > 0 ? ',' + this.fields.join(',') : '';
+                console.log(execStr);
                 execStr = 'function($module' + v + '){return ' + execStr + '}';
                 this.execFunc = eval('(' + execStr + ')');
             }
@@ -3706,6 +3707,7 @@ var nodom = (function (exports) {
              * @return          字段值
              */
             function getFieldValue(module, dataObj, field) {
+                console.log(dataObj, field);
                 if (dataObj.hasOwnProperty(field)) {
                     return dataObj[field];
                 }
@@ -4887,12 +4889,11 @@ var nodom = (function (exports) {
                 if (!eObj.handler) {
                     return;
                 }
-                //自有事件
                 //禁止冒泡
                 if (eObj.nopopo) {
                     e.stopPropagation();
                 }
-                Util.apply(eObj.handler, eObj, [dom, model, module, e, el]);
+                Util.apply(eObj.handler, dom.model, [dom, module, e, el]);
                 //事件只执行一次，则删除handler
                 if (eObj.once) {
                     delete eObj.handler;
@@ -6025,20 +6026,21 @@ var nodom = (function (exports) {
             let value = directive.value;
             //处理以.分割的字段，没有就是一个
             if (Util.isString(value)) {
-                //从根数据获取
-                if (value.startsWith('$$')) {
-                    directive.extra = 1;
-                    value = value.substr(2);
-                }
+                // //从根数据获取
+                // if(value.startsWith('$$')){
+                //     directive.extra = 1;
+                //     value = value.substr(2);
+                // }
                 directive.value = value;
             }
         }, (directive, dom, module, parent) => {
             let model = dom.model;
-            //从根获取数据,$$开始数据项
-            if (directive.extra === 1) {
-                model = module.model;
-            }
-            model = model[directive.value];
+            // //从根获取数据,$$开始数据项
+            // if (directive.extra===1) {
+            //     model = module.model;
+            //     startIndex = 1;
+            // }
+            model = model.$query(directive.value);
             if (model) {
                 dom.model = model;
             }
@@ -6063,21 +6065,21 @@ var nodom = (function (exports) {
                 }
             }
             //模块全局数据
-            if (modelName.startsWith('$$')) {
-                modelName = modelName.substr(2);
-            }
+            // if(modelName.startsWith('$$')){
+            //     modelName = modelName.substr(2);
+            // }
             directive.value = modelName;
         }, (directive, dom, module, parent) => {
             let model = dom.model;
             //可能数据不存在，先设置dontrender
             dom.dontRender = true;
             //得到rows数组的model
-            let rows = model[directive.value];
+            let rows = model.$query(directive.value);
             // 无数据，不渲染
             if (!Util.isArray(rows) || rows.length === 0) {
                 return;
             }
-            dom.dontRender = false;
+            console.log(rows);
             //有过滤器，处理数据集合
             if (directive.filters && directive.filters.length > 0) {
                 for (let f of directive.filters) {

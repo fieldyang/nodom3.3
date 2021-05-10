@@ -88,11 +88,11 @@ export default (function(){
             let value: string = < string > directive.value;
             //处理以.分割的字段，没有就是一个
             if (Util.isString(value)) {
-                //从根数据获取
-                if(value.startsWith('$$')){
-                    directive.extra = 1;
-                    value = value.substr(2);
-                }
+                // //从根数据获取
+                // if(value.startsWith('$$')){
+                //     directive.extra = 1;
+                //     value = value.substr(2);
+                // }
                 directive.value = value;
             }
         },
@@ -100,13 +100,13 @@ export default (function(){
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             let startIndex:number=0;
             let model:Model = dom.model;
-            //从根获取数据,$$开始数据项
-            if (directive.extra===1) {
-                model = module.model;
-                startIndex = 1;
-            }
+            // //从根获取数据,$$开始数据项
+            // if (directive.extra===1) {
+            //     model = module.model;
+            //     startIndex = 1;
+            // }
 
-            model = model[directive.value];
+            model = model.$query(directive.value);
             if(model){
                 dom.model = model;
             }
@@ -124,7 +124,7 @@ export default (function(){
             if (!value) {
                 throw new NError("paramException", "x-repeat");
             }
-
+            
             let modelName:string;
             let fa:string[] = value.split('|');
             modelName = fa[0];
@@ -137,9 +137,9 @@ export default (function(){
             }
             
             //模块全局数据
-            if(modelName.startsWith('$$')){
-                modelName = modelName.substr(2);
-            }
+            // if(modelName.startsWith('$$')){
+            //     modelName = modelName.substr(2);
+            // }
             directive.value = modelName;
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
@@ -147,12 +147,12 @@ export default (function(){
             //可能数据不存在，先设置dontrender
             dom.dontRender = true;
             //得到rows数组的model
-            let rows = model[directive.value];
+            let rows = model.$query(directive.value);
             // 无数据，不渲染
             if (!Util.isArray(rows) || rows.length === 0) {
                 return;
             }
-            dom.dontRender = false;
+            console.log(rows);
             //有过滤器，处理数据集合
             if (directive.filters && directive.filters.length>0) {
                 for(let f of directive.filters){
