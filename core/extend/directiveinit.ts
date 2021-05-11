@@ -142,6 +142,9 @@ export default (function(){
             let model = dom.model;
             //可能数据不存在，先设置dontrender
             dom.dontRender = true;
+            if(!model){
+                return;
+            }
             //得到rows数组的model
             let rows = model.$query(directive.value);
             // 无数据，不渲染

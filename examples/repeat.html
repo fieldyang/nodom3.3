@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>repeat</title>
-    <script type="text/javascript" src="../bin/nodom.js"></script>
+    <script type="text/javascript" src="../dist/nodom.js"></script>
 
     <style>
         .code {
@@ -41,7 +41,7 @@
             <div x-repeat="foods|select:odd">
                 菜名：{{name}}，价格：{{price}}
             </div>
-        </div> -->
+        </div>
          <div class="tip">过滤器使用-价格升序排序（编号从1开始）</div>
         <div class="code">
             菜单：
@@ -67,7 +67,7 @@
     </div>
 </body>
 <script>
-    nodom.newApp({
+    nodom.app({
         options:{},
         module:{
             el:'div',

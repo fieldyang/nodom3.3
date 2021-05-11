@@ -139,9 +139,7 @@ export class Compiler {
         }
         //处理属性
         for (let attr of directives) {
-            console.log(attr);
-            let dir = new Directive(attr.propName.substr(2), attr.value.trim(), oe, null, true);
-            console.log(dir);
+            new Directive(attr.propName.substr(2), attr.value.trim(), oe, null, true);
         }
         if (directives.length > 1) {
             //指令排序

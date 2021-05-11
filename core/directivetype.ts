@@ -31,7 +31,7 @@ export  class DirectiveType {
      */ 
     constructor(name:string, prio?:number,init?:Function,handle?:Function) {
         this.name = name;
-        this.prio = prio || 10;
+        this.prio = prio>=0?prio:10;
         this.init = init;
         this.handle = handle;
     }
