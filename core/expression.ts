@@ -232,6 +232,7 @@ export class Expression {
      * @returns 		计算结果
      */
     public val(model: Model) {
+        console.log(model);
         let module: Module = ModuleFactory.get(model.$moduleId);
         if (!model) {
             model = module.model;
