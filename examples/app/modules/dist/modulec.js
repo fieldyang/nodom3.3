@@ -11,17 +11,16 @@ class ModuleC extends nodom.Module {
                 msg1: '',
             },
             methods: {
-                sendMsg: function (dom, model, module) {
-                    console.log(model.data);
-                    module.broadcast(model.data.msg);
+                sendMsg: function (dom, module) {
+                    module.broadcast(this.msg);
                 },
-                sendParent: function (dom, model, module) {
-                    module.send('modb1', model.data.msg,2);
+                sendParent: function (dom, module) {
+                    module.send('modb1', this.msg,2);
                 },
-                onReceive: function (model, from, msg) {
-                    console.log(model);
-                    model.set('msg1', msg);
-                    model.set('from', from);
+                onReceive: function (module,from, msg) {
+                    console.log(msg);
+                    this.msg1 = msg;
+                    this.from = from;
                 }
             }
         });

@@ -58,7 +58,6 @@ export class ModuleFactory {
         }
         
         if(!cfg.instance){
-            let id = Util.genId();
             if(!cfg.initing){
                 cfg.initing = true;
                 this.initModule(cfg);
@@ -95,7 +94,6 @@ export class ModuleFactory {
                 return mdl;
             }
         }
-        
     }
     /**
      * 从工厂移除模块

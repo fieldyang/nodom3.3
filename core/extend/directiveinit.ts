@@ -106,7 +106,6 @@ export default (function(){
             if(model){
                 dom.model = model;
             }
-            console.log(directive.value,model);
         }
     );
 
@@ -385,7 +384,7 @@ export default (function(){
                         }
                     }
                     //修改字段值
-                    model.set(field,v);
+                    model[field] = v;
                     //修改value值，该节点不重新渲染
                     if (type !== 'radio') {
                         dom.setProp('value',v);
@@ -399,6 +398,9 @@ export default (function(){
             const type:string = dom.getProp('type');
             const tgname = dom.tagName.toLowerCase();
             const model = dom.model;
+            if(!model){
+                return;
+            }
             let dataValue = model[directive.value];
             //变为字符串
             if(dataValue !== undefined && dataValue !== null){
@@ -441,6 +443,7 @@ export default (function(){
                     }
                 }
             }else{
+                console.log(dataValue);
                 dom.assets.set('value',dataValue===undefined || dataValue===null ? '':dataValue);
             }
         }

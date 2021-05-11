@@ -260,7 +260,6 @@ export class Module {
                 this.addChild(mdl.id);
             }
         }
-
         changeState(this);
         delete this.initConfig;
         /**
@@ -293,7 +292,6 @@ export class Module {
         if (this.state !== 3 || !this.virtualDom || !this.getContainer()) {
             return false;
         }
-
         //克隆新的树
         let root: Element = this.virtualDom.clone();
 
@@ -380,7 +378,7 @@ export class Module {
     clone(moduleName: string): any {
         let me = this;
         let m: Module = new Module({ name: moduleName });
-        let excludes = ['id', 'name', 'model', 'virtualDom', 'container', 'containerKey', 'modelFactory', 'plugins'];
+        let excludes = ['id', 'name', 'virtualDom', 'container', 'containerKey', 'modelFactory', 'plugins'];
         Object.getOwnPropertyNames(this).forEach((item) => {
             if (excludes.includes(item)) {
                 return;
@@ -613,6 +611,12 @@ export class Module {
         const foo: Function = this.methodFactory.get(eventName);
         if (!foo) {
             return;
+        }
+        //模块作为第一个参数
+        if(param){
+            param.unshift(this);
+        }else{
+            param = [this];
         }
         //调用方法
         Util.apply(foo, this.model, param);
