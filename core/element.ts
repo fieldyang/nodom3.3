@@ -180,7 +180,6 @@ export class Element {
         delete this.parent;
         //删除model
         delete this.model;
-
         //删除dontRender
         delete this.dontRender;
     }
@@ -450,11 +449,11 @@ export class Element {
      */
     public handleDirectives(module:Module) {
         for(let d of this.directives.values()){
+            d.exec(module,this,this.parent);
             //指令可能改变render标志
             if (this.dontRender) {
                 return false;
             }
-            d.exec(module,this,this.parent);
         }
         return true;
     }

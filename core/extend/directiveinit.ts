@@ -88,28 +88,25 @@ export default (function(){
             let value: string = < string > directive.value;
             //处理以.分割的字段，没有就是一个
             if (Util.isString(value)) {
-                //从根数据获取
-                if(value.startsWith('$$')){
-                    directive.extra = 1;
-                    value = value.substr(2);
-                }
+                // //从根数据获取
+                // if(value.startsWith('$$')){
+                //     directive.extra = 1;
+                //     value = value.substr(2);
+                // }
                 directive.value = value;
             }
         },
 
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            let startIndex:number=0;
             let model:Model = dom.model;
-            //从根获取数据,$$开始数据项
-            if (directive.extra===1) {
-                model = module.model;
-                startIndex = 1;
+            model = model.$query(directive.value);
+            if(!model){
+                model = module.model.$query(directive.value);
             }
-
-            model = model[directive.value];
             if(model){
                 dom.model = model;
             }
+            console.log(directive.value,model);
         }
     );
 
@@ -135,19 +132,21 @@ export default (function(){
                     directive.filters.push(new Filter(fa[i]));
                 }
             }
-            
-            //模块全局数据
-            if(modelName.startsWith('$$')){
-                modelName = modelName.substr(2);
-            }
+            // //模块全局数据
+            // if(modelName.startsWith('$$')){
+            //     modelName = modelName.substr(2);
+            // }
             directive.value = modelName;
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             let model = dom.model;
             //可能数据不存在，先设置dontrender
             dom.dontRender = true;
+            if(!model){
+                return;
+            }
             //得到rows数组的model
-            let rows = model[directive.value];
+            let rows = model.$query(directive.value);
             // 无数据，不渲染
             if (!Util.isArray(rows) || rows.length === 0) {
                 return;
@@ -236,16 +235,13 @@ export default (function(){
                     break;
                 }
             }
-            if (v && v !== 'false') { //为真
-                let ind = 0;
-                //删除else
+            if (v && v !== 'false') { //为真,if节点显示，else节点隐藏
+                dom.dontRender = false;
                 if (indelse > 0) {
                     parent.children[indelse].dontRender = true;
                 }
             } else{
-                //替换if
                 dom.dontRender = true;
-                //为假则进入else渲染
                 if (indelse > 0) {
                     parent.children[indelse].dontRender = false;
                 }

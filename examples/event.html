@@ -40,15 +40,15 @@
 					]
 				},
 				methods:{
-					clickP:function(d,m,module){
-						console.log('parent');
+					clickP:function(d,module){
+						console.log(this);
 					},
 					clickItem:function(d,m,module){
-						console.log('item');
-					},
-					show:function(dom,model){
 						console.log(this);
-						model.set('show',!model.data['show']);
+					},
+					show:function(dom,module,e,el){
+						this.show = !this.show;
+						// model.set('show',!model.data['show']);
 						
 					}
 				}
