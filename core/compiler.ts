@@ -210,11 +210,12 @@ export class Compiler {
         let index = 0;
 
         // 开始标签的正则表达式 
-        let startRegExp = /^\<(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)((?:\s+.+?[\"\'](?:[\s\S]*?)[\"\']|\w+))?(\s*)\>/
+        let startRegExp = /^\<(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)((?:\s+.+?[\"\'](?:[\s\S]*?)[\"\']|\s+\w*))?(\s+\/)?(\s*)\>/
         // 匹配结束标签的正则表达式
         let endRegExp = /^\<(\s*)\/(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)(\s*)\>/;
         // 匹配开始标签和结束标签之间的文字的正则表达式 
-        let wordRegExp = /^([\s\S]+?)(?=\<(\s*)\/?(\s*)(?:[a-z]+[1-6]?|ui\-[a-z]+[1-6]?)((?:\s+.+?)*?)(\s*)\>)/;
+        let wordRegExp = /^([\s\S]+?)(?=\<(!--)?(?:(\s*)\/?(\s*)(?:[a-z]+[1-6]?|ui\-[a-z]+[1-6]?)(?:(?:\s+.+?[\"\'](?:[\s\S]*?)[\"\']|.*))?(\s*)|(?:[\s\S]+?))(--)?\>)/
+        // /^([\s\S]+?)(?=\<(\s*)\/?(\s*)(?:[a-z]+[1-6]?|ui\-[a-z]+[1-6]?)((?:\s+.+?)*?)(\s*)\>)/;
         // 匹配裸字符串，全字符匹配配合wordRegExp标签判断是不是裸字符串
         let onlyWordRegExp = /^([\s\S]+)/;
         // 匹配注释
@@ -245,11 +246,13 @@ export class Compiler {
                 // beforeSpaceString:左尖括号与标签名之间的空格
                 // tagName:标签名  
                 // attrString:标签里的属性字符串 
+                // selfCloseStr: 自闭合标签的反斜杠
                 // afterSpaceString:属性与右尖括号之间的空格
-                let [, beforeSpaceString, tagName, attrString, afterSpaceString] = rest.match(startRegExp);
+                let [, beforeSpaceString, tagName, attrString, selfCloseStr, afterSpaceString] = rest.match(startRegExp);
                 const beforeSpaceLenght = beforeSpaceString ? beforeSpaceString.length : 0;
                 const tagNameLenght = tagName ? tagName.length : 0;
                 const atttLenght = attrString ? attrString.length : 0;
+                const selfCloseLenght = selfCloseStr ? selfCloseStr.length : 0;
                 const afterSpaceLenght = afterSpaceString ? afterSpaceString.length : 0;
                 if (tagName === 'pre') {
                     // pre标签
@@ -275,8 +278,9 @@ export class Compiler {
                         attrs: this.parseAttrString(attrString)
                     });
                     // 需要跳过的长度 = 2个尖括号 + 左尖括号与标签名之间的空格长度 + 标签名长度 + 属性长度 + 属性与右尖括号之间的空格长度
-                    index += 2 + beforeSpaceLenght + tagNameLenght + atttLenght + afterSpaceLenght;
+
                 }
+                index += 2 + beforeSpaceLenght + tagNameLenght + atttLenght + selfCloseLenght + afterSpaceLenght;
             } else if (endRegExp.test(rest)) {
                 // 识别结束标记
                 // let tagName = rest.match(endRegExp)[1];

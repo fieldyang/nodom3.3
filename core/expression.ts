@@ -84,6 +84,7 @@ export class Expression {
                     r = r1;
                 }
             }
+<<<<<<< HEAD
             if(!r){
                 break;
             }
@@ -135,6 +136,41 @@ export class Expression {
                     //模块方法,挨着方法名的那个括号不需要
                     if (r.startsWith('$module')) {
                         opd = '';
+=======
+        });
+        exprStr = exprStr = exprStr.trim().replace(/([^w])\s+|instanceof|\s+/g, (w, index) => {
+            if (index) return index;
+            else {
+                if (w == 'instanceof')  return ' ' + w + ' ';
+                return '';
+            }
+        });
+        //首尾指针
+        let [first, last] = [0, 0];
+        let [braces, fields, funArr, filters] = [[], [], [], []];
+        //括号数组 字段数组 函数数组 存过滤器需要的值
+        let filterString = '';
+        //特殊字符
+        let special = /[\!\|\*\/\+\-><=&%]/;
+        //返回的串
+        let express = '';
+        //函数名
+        let funName;
+        let isInBrace = false;
+        let isInFun = false;
+        while (last < exprStr.length) {
+            let lastStr = exprStr[last];
+            if (lastStr == '(') {
+                if (isInFun) {
+                    //函数里存函数名
+                    funName = exprStr.substring(funArr.pop(), last);
+                    express += funName;
+                    first = last;
+                } else {
+                    if (!isInBrace) {//不在函数里外面也不在括号里
+                        express += exprStr.substring(first, last);
+                        first = last;
+>>>>>>> 9144f18ca7329562c8baf147e6177070430ca3a7
                     }
                     if (opr !== '' && !this.addField(opr)) {
                         opr = this.recoveryString(opr);
@@ -154,12 +190,39 @@ export class Expression {
                     retStr = (arrOperand.length>0?arrOperand.pop():'') + r + retStr;
                     handled = true;
                 }
+<<<<<<< HEAD
             }
             
             if(!handled){
                 if(!this.addField(opr)){
                     //还原字符串
                     opr = this.recoveryString(opr);
+=======
+                first = last++;
+            } else if (lastStr == '$') {
+                isInFun = true;
+                funArr.push(last++);
+            } else if (special.test(lastStr) && !isInBrace) {
+                express += exprStr.substring(first, last) + lastStr;
+                //特殊字符处理
+                fields = fields.concat(exprStr.substring(first, last).match(/[\w^\.]+/g));
+                if (lastStr == '=' || lastStr == '|' || lastStr == '&') {//处理重复字符，和表达式
+                    if (lastStr == '|' && exprStr[last + 1] != '|') {//表达式处理
+                        let str = filters[filters.length - 1] ? filters[filters.length - 1] : exprStr.substring(first, last);
+                        if (!filters.length) {
+                            filterString = str;
+                        }
+                        let res = handFilter();
+                        let index = express.indexOf(str);
+                        //')'和'|'
+                        express = express.substring(0, index) + res.str + express.substring(index + str.length + 2);
+                        first = last += res.length + 1;
+                        continue;
+                    }
+                    while (exprStr[last + 1] == lastStr) {//处理重复字符
+                        express += exprStr[++last];
+                    };
+>>>>>>> 9144f18ca7329562c8baf147e6177070430ca3a7
                 }
                 retStr = opd + opr + retStr;
             }
@@ -192,6 +255,7 @@ export class Expression {
                 str = str.replace(/\$\$NODOM_QUOT2/g,"\\'");
                 str = str.replace(/\$\$NODOM_QUOT3/g,'\\`');
             }
+<<<<<<< HEAD
         }
 
         return str;
@@ -226,6 +290,45 @@ export class Expression {
         //判断过滤器并处理
         if(srcOp.startsWith(Expression.REP_STR) || Util.isNumberString(srcOp)){
             return;
+=======
+            last++;
+            let tmpStr: string = exprStr.substr(last).split(/[\)\(\+\-\*><=&%]/)[0];
+            let args = [];
+            let value = filters.length > 0 ? filters.pop() + ')' : filterString;
+            let num = 0;
+            tmpStr.replace(/\:/g, function (m, i) {
+                num++;
+                return m;
+            });
+            if (tmpStr.indexOf(':') != -1) {//有过滤器格式
+                args = tmpStr.split(/[\:\+\-\*><=&%]/);
+            };
+            if (args.length == 0) {//如果没有过滤器参数
+                let filterName = tmpStr.match(/^\w+/)[0];
+                return {
+                    str: 'nodom.FilterManager.exec($module,"' + filterName + '",' + value + ')',
+                    length: filterName.length - 1,
+                }
+            }
+            let length = args[0].length + args[1].length;
+            if (args[1].startsWith('##TMP')) {//字符串还原
+                let deleteKey = args[1];
+                args[1] = replaceMap.get(args[1]);
+                replaceMap.delete(deleteKey);
+            }
+            let params = '';
+            for (let i = 1; i < num; i++) {//多个过滤器参数
+                params += /[\'\"\`]/.test(args[i]) ? args[i] : '\'' + args[i] + '\'' + ',';
+            }
+            params = /[\'\"\`]/.test(args[num]) ? args[num] : '\'' + args[num] + '\'';
+            return {
+                str: 'nodom.FilterManager.exec($module,"' + args[0] + '",' + value + ',' + params + ')',
+                length,
+            }
+        }
+        if (express.indexOf('instanceof') !== -1) {
+            fields.push(express.split(' ')[0]);
+>>>>>>> 9144f18ca7329562c8baf147e6177070430ca3a7
         }
         let sa:string[] = FilterManager.explain(srcOp);
         //过滤器

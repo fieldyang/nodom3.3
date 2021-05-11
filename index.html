@@ -3,68 +3,108 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-		<title>Document</title>
-		<script type="text/javascript" src="../dist/nodom.js"></script>
+		<title>filter</title>
+		<!-- <script type="text/javascript" src="../js/require.js"></script> -->
+		<script type="text/javascript" src="./dist/nodom.js"></script>
 
-		<style>
-			.introduce {
-				color: #666666;
-			}
-
-			.tip {
-				color: darkorange;
-			}
-
-			.code {
-				margin: 20px;
-			}
-		</style>
+		<style></style>
 	</head>
 
 	<body>
 		<div class="view">
-			<div x-if="show instanceof Boolean">hello</div>
-			<div class="tip">单个if指令</div>
-			<div class="code">
-				<div class="introduce">如果discount<0.8，显示价格</div>
-				<div x-if="discount<0.8">价格：{{price}}</div>
+			<div>价格：{{(Math.round((price * discount)))|currency + 'hello'}}</div>
+			<div>折扣：{{$cacDis(price*discount)}}</div>
+			<div>描述：{{30 +$addStr('hello' + desc) + 20}}</div>
+			<div>随机折扣:{{Math.random()*price}}</div>
+			<div x-if="price<30 && discount !== undefined">是否是低价商品并且还有折扣</div>
+			<div>当前日期是:{{date1|date:'yyyy/MM/dd'}}</div>
+			<div>{{date1|date:'yyyy-MM-dd HH:mm:ss'}}</div>
+			<div>当前时间是:{{date1|date:'HH:mm:ss'}}</div>
+			<div x-if="Object.keys(goods).length>0">判断商品列表是否存在</div>
+			<div>路径：{{'/'+'path'+'/'+url}}</div>
+			<ul>
+				排序过滤器：
+				<li x-repeat="rows|orderby:name:desc">{{name}}'s address is {{addr}}</li>
+			</ul>
+			<div>{{!true}}</div>
+			<div>小数点位数过滤器：{{progress|number:1}}</div>
+			<div>转换为小写字母:{{name|tolowercase}}</div>
+			<div>转换为大写字母:{{name|touppercase}}</div>
+			<div>数组求和:{{$sum(...arr)}}</div>
+			<div>
+				判断数组中有没有‘num’:
+				<div x-if="new Set(arr).has(num)">true</div>
 			</div>
-			<div class="tip">完整的if/else指令</div>
-			<div class="code">
-				<div class="introduce">如果age<18，显示未成年，否则显示成年</div>
-				<div class="red" x-if="age<18">年龄：{{age}}，未成年</div>
-				<div class="bold" x-else>年龄：{{age}}，成年</div>
+			<div>价格求和: {{$sum(1,2)+price}}</div>
+			<div>
+				是否为周末：
+				<div x-if="new Date().getDay()>6">true</div>
+				{{(new Date().getTime())|date:'yyyy-MM-dd'}}
 			</div>
-			<div class="tip">多个if/else</div>
-			<div class="code">
-				<div class="introduce">
-					根据不同分数显示不同等级，<60不及格，60-69及格，70-79中等，80-89良好，>=90优秀
-				</div>
-				<div>成绩：{{grade}}</div>
-				等级：<span x-if="grade<60">不及格</span>
-				<span x-else>
-					<span x-if="grade>=60 && grade<70"> 及格 </span>
-					<span x-else>
-						<span x-if="grade>=70 && grade<80"> 中等 </span>
-						<span x-else>
-							<span x-if="grade>=80 && grade<90"> 良好 </span>
-							<span x-else> 优秀 </span>
-						</span>
-					</span>
-				</span>
-			</div>
+			<div>货币过滤器：{{(price*discount)|currency:¥}}</div>
+			<div x-if="price<30 && discount !== undefined">是否是低价商品并且还有折扣</div>
+			<div>计算：{{$cac(1,2)+ (Math.round((price * discount)))|number:1 + 1}}</div>
+			<div>instanceof用法:{{arr instanceof Array}}</div>
+			{{desc}}
 		</div>
 	</body>
 	<script>
 		nodom.app({
 			module: {
 				el: ".view",
+				// template: "/child.html",
 				data: {
-					discount: 0.5,
-					price: 200,
-					age: 20,
-					grade: 73,
-					show: true,
+					rows: [
+						{
+							name: "yang",
+							addr: "chengdu",
+						},
+						{
+							name: "zhangs",
+							addr: "mianyang",
+						},
+						{
+							name: "NoDom",
+							addr: "luoyang",
+						},
+						{
+							name: "hallo",
+							addr: "beijing",
+						},
+					],
+					progress: 1.321,
+					name: "kyle",
+					str: "hello nodom!",
+					notime: "2021",
+					num: 1,
+					price: 236.83,
+					discount: 0.12,
+					desc: "this is expression",
+					goods: {
+						juice: ["orange"],
+					},
+					date1: new Date().getTime(),
+					url: "home",
+					arr: [1, 2, 3, 4, 5, 6, 2, 3, 1, 2, 5],
+				},
+				methods: {
+					cacDis: (data) => {
+						console.log(data);
+						return data * 10;
+					},
+					addStr: (data) => {
+						return data;
+					},
+					sum: function (arg) {
+						let sum = 0;
+						for (let i = 0; i < arguments.length; i++) {
+							sum += arguments[i];
+						}
+						return sum;
+					},
+					cac(a, b) {
+						return a + b;
+					},
 				},
 			},
 		});
