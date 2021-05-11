@@ -1,0 +1,12 @@
+.DS_Store
+
+#other
+.gitignore
+tsconfig.json
+.vscode/
+.tscache/
+./package-lock.json
+node_modules/
+dist/
+笔记
+/app

@@ -208,7 +208,7 @@ export class Compiler {
         let index = 0;
 
         // 开始标签的正则表达式 
-        let startRegExp = /^\<(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)((?:\s+.+?[\"\'](?:[\s\S]*?)[\"\']|\s+\w*))?(\s+\/)?(\s*)\>/
+        let startRegExp = /^\<(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)((?:\s+.+?[\"\'](?:[\s\S]*?)[\"\']|\s+\w*))?(\s*\/)?(\s*)\>/
         // 匹配结束标签的正则表达式
         let endRegExp = /^\<(\s*)\/(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)(\s*)\>/;
         // 匹配开始标签和结束标签之间的文字的正则表达式 
@@ -316,6 +316,7 @@ export class Compiler {
                 if (!rest.match(wordRegExp) && rest.match(onlyWordRegExp)) {
                     //这里要处理一下可能标签没闭合 如:<div>123
                     if (stack1.length !== 0) {
+                        let a = 111;
                         throw new Error(stack1[stack1.length - 1] + '标签没闭合');
                     }
                 }
