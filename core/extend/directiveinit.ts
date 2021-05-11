@@ -99,14 +99,10 @@ export default (function(){
 
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             let model:Model = dom.model;
-            // //从根获取数据,$$开始数据项
-            // let startIndex:number=0;
-            // if (directive.extra===1) {
-            //     model = module.model;
-            //     startIndex = 1;
-            // }
-
             model = model.$query(directive.value);
+            if(!model){
+                model = module.model.$query(directive.value);
+            }
             if(model){
                 dom.model = model;
             }
@@ -136,11 +132,10 @@ export default (function(){
                     directive.filters.push(new Filter(fa[i]));
                 }
             }
-            
-            //模块全局数据
-            if(modelName.startsWith('$$')){
-                modelName = modelName.substr(2);
-            }
+            // //模块全局数据
+            // if(modelName.startsWith('$$')){
+            //     modelName = modelName.substr(2);
+            // }
             directive.value = modelName;
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
