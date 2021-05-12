@@ -17,9 +17,6 @@ export class DefineElementManager{
      * @param cfg   配置
      */
     public static add(name:string,cfg:IDefineElementCfg){
-        if(this.elements.has(name)){
-            throw new NError('exist1',NodomMessage.TipWords['element'],name);
-        }
         this.elements.set(name,cfg);
     }
 

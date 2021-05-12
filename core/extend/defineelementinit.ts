@@ -8,7 +8,7 @@ import { NodomMessage } from "../nodom";
  * module 元素
  */
 DefineElementManager.add('MODULE',{
-    init:function(element:Element){
+    init:function(element:Element,parent?:Element){
         element.tagName = 'div';
         //类名
         let clazz = element.getProp('classname');
@@ -20,7 +20,7 @@ DefineElementManager.add('MODULE',{
         if(moduleName){
             clazz += '|' + moduleName;
         }
-        new Directive('module',clazz,element);
+        new Directive('module',clazz,element,parent);
     }
 });
 
@@ -28,14 +28,14 @@ DefineElementManager.add('MODULE',{
  * for 元素
  */
 DefineElementManager.add('FOR',{
-    init:function(element:Element){
+    init:function(element:Element,parent?:Element){
         element.tagName = 'div';
         //条件
         let cond = element.getProp('condition');
         if(!cond){
             throw new NError('itemnotempty',NodomMessage.TipWords['element'],'for','condition');
         }
-        new Directive('repeat',cond,element);
+        new Directive('repeat',cond,element,parent);
     }
 });
 
@@ -43,14 +43,14 @@ DefineElementManager.add('FOR',{
  * if 元素
  */
 DefineElementManager.add('IF',{
-    init:function(element:Element){
+    init:function(element:Element,parent?:Element){
         element.tagName = 'div';
         //条件
         let cond = element.getProp('condition');
         if(!cond){
             throw new NError('itemnotempty',NodomMessage.TipWords['element'],'IF','condition');
         }
-        new Directive('if',cond,element);
+        new Directive('if',cond,element,parent);
     }
 });
 
@@ -58,24 +58,34 @@ DefineElementManager.add('IF',{
  * else 元素
  */
 DefineElementManager.add('ELSE',{
-    init:function(element:Element){
+    init:function(element:Element,parent?:Element){
         element.tagName = 'div';
-        new Directive('else',null,element);
+        new Directive('else',null,element,parent);
     }
 });
 
 /**
  * elseif 元素
  */
-DefineElementManager.add('ELSE',{
-    init:function(element:Element){
+DefineElementManager.add('ELSEIF',{
+    init:function(element:Element,parent?:Element){
         element.tagName = 'div';
         //条件
         let cond = element.getProp('condition');
         if(!cond){
             throw new NError('itemnotempty',NodomMessage.TipWords['element'],'ELSEIF','condition');
         }
-        new Directive('elseif',cond,element);
+        new Directive('elseif',cond,element,parent);
+    }
+});
+
+/**
+ * endif 元素
+ */
+ DefineElementManager.add('ENDIF',{
+    init:function(element:Element,parent?:Element){
+        element.tagName = 'div';
+        new Directive('endif',null,element,parent);
     }
 });
 
@@ -83,14 +93,14 @@ DefineElementManager.add('ELSE',{
  * switch 元素
  */
 DefineElementManager.add('SWITCH',{
-    init:function(element:Element){
+    init:function(element:Element,parent?:Element){
         element.tagName = 'div';
         //条件
         let cond = element.getProp('condition');
         if(!cond){
             throw new NError('itemnotempty',NodomMessage.TipWords['element'],'switch','condition');
         }
-        new Directive('switch',cond,element);
+        new Directive('switch',cond,element,parent);
     }
 });
 
@@ -98,13 +108,13 @@ DefineElementManager.add('SWITCH',{
  * case 元素
  */
 DefineElementManager.add('CASE',{
-    init:function(element:Element){
+    init:function(element:Element,parent?:Element){
         element.tagName = 'div';
         //条件
         let cond = element.getProp('condition');
         if(!cond){
             throw new NError('itemnotempty',NodomMessage.TipWords['element'],'CASE','condition');
         }
-        new Directive('case',cond,element);
+        new Directive('case',cond,element,parent);
     }
 });

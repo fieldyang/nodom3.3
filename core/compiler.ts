@@ -1,3 +1,4 @@
+import { DefineElementManager } from "./defineelementmanager";
 import { Directive } from "./directive";
 import { Element } from "./element";
 import { NEvent } from "./event";
@@ -91,18 +92,26 @@ export class Compiler {
      * @param astObj 
      */
     private static handleAstNode(parent: Element, astObj: ASTObj) {
-        let de = PluginManager.get(astObj.tagName.toUpperCase());
+        // let de = PluginManager.get(astObj.tagName.toUpperCase());
+        let de = DefineElementManager.get(astObj.tagName.toUpperCase());
         let child = new Element(astObj.tagName);
-        // 处理属性
-        if (de) {
-            parent.children.push(
-                Reflect.construct(de, [child]).element
-            )
-        } else {
-            parent.children.push(child);
-        }
+        parent.add(child);
         this.handleAstAttrs(child, astObj.attrs,parent);
+        if(de){
+            de.init(child,parent);
+        }
         this.compileAST(child, astObj.children);
+        
+        // // 处理属性
+        // if (de) {
+        //     parent.children.push(
+        //         Reflect.construct(de, [child]).element
+        //     )
+        // } else {
+        //     parent.children.push(child);
+        // }
+        // this.handleAstAttrs(child, astObj.attrs,parent);
+        // this.compileAST(child, astObj.children);
     }
     /**
      * 编译ast 到虚拟dom

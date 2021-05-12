@@ -228,12 +228,20 @@ export default (function(){
                     }
                 }
             }
+            let tNode;
             if(target === 0){ //if 节点
                 dom.dontRender = false;
             }else if(target > 0){ //elseif 节点
-                parent.add(directive.extra.groups[target]);
+                tNode = directive.extra.groups[target];
             }else if(directive.extra.groups.length>1){  //else 节点
-                parent.add(directive.extra.groups[directive.extra.groups.length-1]);
+                tNode = directive.extra.groups[directive.extra.groups.length-1];
+            }
+            if(tNode){
+                //添加到指定位置
+                let index = parent.children.indexOf(dom);
+                if(index !== -1){
+                    parent.children.splice(index+1,0,tNode);
+                }
             }
         }
     );
@@ -316,9 +324,6 @@ export default (function(){
             if (!value) {
                 throw new NError("paramException", "x-switch");
             }
-            directive.extra = {
-                groups:[]
-            }
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             let hasTrue:boolean = false;
@@ -351,6 +356,7 @@ export default (function(){
                 return;
             }
             let dir = parent.getDirective('switch');
+            console.log(parent);
             //组合 switch 变量=case值
             let value = dir.value + ' == "' + directive.value + '"';
             let expr = new Expression(value);
