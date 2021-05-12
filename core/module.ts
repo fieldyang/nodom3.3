@@ -541,7 +541,6 @@ export class Module {
         this.state = 3;
         //添加到渲染器
         Renderer.add(this);
-        console.log(this.name,this.id);
         //孩子节点激活
         if (Util.isArray(this.children)) {
             this.children.forEach(async (item) => {
