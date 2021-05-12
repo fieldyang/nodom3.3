@@ -48,9 +48,16 @@
 					},
 					show:function(dom,module,e,el){
 						this.show = !this.show;
-						// model.set('show',!model.data['show']);
+					},
+					change:function(dom,module){
+						this.edus.push({
+							eduId:5,eduName:'博士后'
+						})
+					},
+					change1:function(dom,module){
+						this.edus[0].eduName = '幼儿园';
 						
-					}
+					},
 				}
 			}
 		});

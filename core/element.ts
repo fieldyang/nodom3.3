@@ -101,6 +101,10 @@ export class Element {
     public plugin:Plugin;
 
     /**
+     * 临时参数 map
+     */
+    private tmpParamMap:Map<string,any> = new Map();
+    /**
      * 是否为svg节点
      */
     public isSvgNode:boolean;
@@ -1012,5 +1016,31 @@ export class Element {
             c.doDontRender();
         }
         this.recover();
+    }
+
+    /**
+     * 设置临时参数
+     * @param key       参数名
+     * @param value     参数值
+     */
+    setTmpParam(key:string,value:any){
+        this.tmpParamMap.set(key,value);
+    }
+
+    /**
+     * 获取临时参数
+     * @param key       参数名
+     * @returns         参数值
+     */
+     getTmpParam(key:string):any{
+        return this.tmpParamMap.get(key);
+    }
+
+    /**
+     * 删除临时参数
+     * @param key       参数名
+     */
+    removeTmpParam(key:string){
+        this.tmpParamMap.delete(key);
     }
 }

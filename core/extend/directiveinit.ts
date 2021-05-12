@@ -1,5 +1,5 @@
 import { Module } from "../module";
-import { Element } from "../element"
+import { Element } from "../element";
 import { Directive } from "../directive";
 import { DirectiveManager } from "../directivemanager";
 import { ModuleFactory } from "../modulefactory";
@@ -12,7 +12,6 @@ import { Renderer } from "../renderer";
 import { NError } from "../error";
 import { NEvent } from "../event";
 import { NodomMessage } from "../nodom";
-import { groupCollapsed } from "console";
 
 export default (function(){
 
@@ -205,55 +204,36 @@ export default (function(){
             //value为一个表达式
             let expr = new Expression(value);
             directive.value = expr;
+            //设置if组
             directive.extra = {
                 groups:[dom]
             }
-            //遍历兄弟节点，找到与自己相关的elseif else节点，需要延迟执行
-            setTimeout(()=>{
-                //找到与自己相同的节点，表示开始
-                let start:boolean = false;
-                for (let chd of parent.children) {
-                    if(chd === dom){
-                        start = true;
-                        continue;
-                    }
-                    //未开始或为文本节点不处理
-                    if(!start || !chd.tagName){
-                        continue;
-                    }
-                    //不是else 或 elseif节点，则跳出循环
-                    let elseNode = chd.hasDirective('else');
-                    let elseifNode = chd.hasDirective('elseif');
-                    if(!elseNode && !elseifNode){
-                        break;
-                    }
-                    //添加到if组
-                    directive.extra.groups.push(chd);
-                    //到else，跳出循环
-                    if(elseNode){
-                        break;
-                    }
-                }
-            },0);
+            if(!parent){
+                return;
+            }
+            parent.setTmpParam('ifnode',dom);
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            
-            let hasTrue:boolean = false;
-            for(let node of directive.extra.groups){
+            dom.dontRender = true;
+            let target:number = -1;
+            console.log(directive.extra.groups);
+            for(let i=0;i<directive.extra.groups.length;i++){
+                let node = directive.extra.groups[i];
                 let dir = node.getDirective('if') || node.getDirective('elseif') || node.getDirective('else');
-                //已经出现为true的node，不用再计算条件值
-                if(hasTrue){
-                    node.dontRender = true;
-                    continue;
-                }
-                
                 if(dir.value){ //if elseif指令
                     let v = dir.value.val(dom.model);
-                    hasTrue = !v || v==='false';
-                    node.dontRender = !hasTrue;
-                }else{ //else指令，如果前面节点条件无true，则此节点显示
-                    node.dontRender = false;
+                    if(v && v!=='false'){
+                        target = i;
+                        break;
+                    }
                 }
+            }
+            if(target === 0){ //if 节点
+                dom.dontRender = false;
+            }else if(target > 0){ //elseif 节点
+                parent.add(directive.extra.groups[target]);
+            }else if(directive.extra.groups.length>1){  //else 节点
+                parent.add(directive.extra.groups[directive.extra.groups.length-1]);
             }
         }
     );
@@ -264,8 +244,16 @@ export default (function(){
      */
     DirectiveManager.addType('else',
         10,
-        (directive: Directive) => {
-            return;
+        (directive: Directive,dom:Element,parent:Element) => {
+            if(!parent){
+                return;
+            }
+            let ifNode = parent.getTmpParam('ifnode');
+            if(ifNode){
+                let dir = ifNode.getDirective('if');
+                dir.extra.groups.push(dom);
+                parent.removeChild(dom);
+            }
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             return;
@@ -276,8 +264,7 @@ export default (function(){
      * elseif 指令
      */
     DirectiveManager.addType('elseif',10,
-        (directive: Directive,dom:Element) => {
-            console.log(directive.value);
+        (directive: Directive,dom:Element,parent:Element) => {
             let value = directive.value;
             if (!value) {
                 throw new NError("paramException", "x-elseif");
@@ -285,13 +272,40 @@ export default (function(){
             //value为一个表达式
             let expr = new Expression(value);
             directive.value = expr;
-            
+            if(!parent){
+                return;
+            }
+            let ifNode = parent.getTmpParam('ifnode');
+            if(ifNode){
+                let dir = ifNode.getDirective('if');
+                dir.extra.groups.push(dom);
+                parent.removeChild(dom);
+            }
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
 
         }
     );
 
+    /**
+     * endif 指令
+     */
+     DirectiveManager.addType('endif',10,
+        (directive: Directive,dom:Element,parent:Element) => {
+            if(!parent){
+                return;
+            }
+            let ifNode = parent.getTmpParam('ifnode');
+            if(ifNode){
+                parent.removeChild(dom);
+                //移除ifnode临时参数
+                parent.removeTmpParam('ifnode');
+            }
+        },
+        (directive: Directive, dom: Element, module: Module, parent: Element) => {
+
+        }
+    );
     /**
      * switch指令
      */
@@ -302,76 +316,50 @@ export default (function(){
             if (!value) {
                 throw new NError("paramException", "x-switch");
             }
-            //value为一个表达式
-            let expr = new Expression(value);
-            directive.value = expr;
-
-            //处理子节点
-            setTimeout(()=>{
-                for(let i=0;i<this.children.length;i++){
-                    let chd = this.children[i];
-                    //移除文本节点
-                    if(!chd.tagName){
-                        this.children.splice(i--,1);
-                        continue;
-                    }
-
-                }
-            });
+            directive.extra = {
+                groups:[]
+            }
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            if(!directive.extra){
-                directive.extra = {
-                    groups:[dom]
-                }
-                //找到与自己相同的节点，表示开始
-                let start:boolean = false;
-                //遍历兄弟节点，找到与自己相关的elseif else节点
-                for (let chd of parent.children) {
-                    if(chd === dom){
-                        start = true;
-                        continue;
-                    }
-                    //未开始或为文本节点不处理
-                    if(!start || !chd.tagName){
-                        continue;
-                    }
-                    //不是else 或 elseif节点，则跳出循环
-                    let elseNode = chd.hasDirective('else');
-                    let elseifNode = chd.hasDirective('elseif');
-                    if(!elseNode && !elseifNode){
-                        break;
-                    }
-                    //添加到if组
-                    directive.extra.groups.push(chd);
-                    //到else，跳出循环
-                    if(elseNode){
-                        break;
-                    }
-                }
-            }
-            
             let hasTrue:boolean = false;
-            for(let node of directive.extra.groups){
-                let dir = node.getDirective('if') || node.getDirective('elseif') || node.getDirective('else');
+            for(let node of dom.children){
+                node.dontRender = true;
+                let dir = node.getDirective('case');
                 //已经出现为true的node，不用再计算条件值
                 if(hasTrue){
                     node.dontRender = true;
                     continue;
                 }
-                
-                if(dir.value){ //if elseif指令
-                    let v = dir.value.val(dom.model);
-                    hasTrue = !v || v==='false';
-                    node.dontRender = !hasTrue;
-                }else{ //else指令，如果前面节点条件无true，则此节点显示
-                    node.dontRender = false;
-                }
+                let v = dir.value.val(dom.model);
+                hasTrue = v && v !== 'false';
+                node.dontRender = !hasTrue;
             }
         }
     );
 
 
+    /**
+     *  case 指令
+     */
+     DirectiveManager.addType('case',
+        10,
+        (directive: Directive,dom:Element,parent:Element) => {
+            if (!directive.value) {
+                throw new NError("paramException", "x-case");
+            }
+            if(!parent){
+                return;
+            }
+            let dir = parent.getDirective('switch');
+            //组合 switch 变量=case值
+            let value = dir.value + ' == "' + directive.value + '"';
+            let expr = new Expression(value);
+            directive.value = expr;
+        },
+        (directive: Directive, dom: Element, module: Module, parent: Element) => {
+            return;
+        }
+    );
     /**
      * 指令名 show
      * 描述：显示指令

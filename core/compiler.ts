@@ -78,12 +78,12 @@ export class Compiler {
      */
     private static handleAstText(parent: Element, astObj: ASTObj) {
         let text = new Element();
+        parent.children.push(text);
         // 处理属性
-        this.handleAstAttrs(text, astObj.attrs);
+        this.handleAstAttrs(text, astObj.attrs,parent);
         // text 类型的节点不需要处理子节点。
         text.expressions = astObj.expressions;
         text.textContent = astObj.textContent;
-        parent.children.push(text);
     }
     /**
      * 
@@ -94,8 +94,6 @@ export class Compiler {
         let de = PluginManager.get(astObj.tagName.toUpperCase());
         let child = new Element(astObj.tagName);
         // 处理属性
-        this.handleAstAttrs(child, astObj.attrs);
-        this.compileAST(child, astObj.children);
         if (de) {
             parent.children.push(
                 Reflect.construct(de, [child]).element
@@ -103,13 +101,16 @@ export class Compiler {
         } else {
             parent.children.push(child);
         }
+        this.handleAstAttrs(child, astObj.attrs,parent);
+        this.compileAST(child, astObj.children);
     }
     /**
      * 编译ast 到虚拟dom
-     * @param oe 虚拟dom
-     * @param attrs 需要编译成虚拟dom的attrs
+     * @param oe        虚拟dom
+     * @param attrs     需要编译成虚拟dom的attrs
+     * @param parent    父虚拟dom节点
      */
-    private static handleAstAttrs(oe: Element, attrs: Array<{ propName: string, value: any }>) {
+    private static handleAstAttrs(oe: Element, attrs: Array<{ propName: string, value: any }>,parent:Element) {
         //指令数组 先处理普通属性在处理指令
         let directives = [];
         if (!attrs) { return }
@@ -139,7 +140,7 @@ export class Compiler {
         }
         //处理属性
         for (let attr of directives) {
-            new Directive(attr.propName.substr(2), attr.value.trim(), oe, null, true);
+            new Directive(attr.propName.substr(2), attr.value.trim(), oe,parent, null, true);
         }
         if (directives.length > 1) {
             //指令排序
