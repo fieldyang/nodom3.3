@@ -661,7 +661,6 @@ class RouterTree {
                     break;
                 }
             }
-            
             //路径叠加
             fullPath += '/' + v;
             //不是孩子节点,作为参数

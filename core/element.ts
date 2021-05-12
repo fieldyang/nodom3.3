@@ -602,6 +602,7 @@ export class Element {
      * @return true/false
      */
     public hasDirective(directiveType):boolean {
+        // console.log(this.directives,directiveType);
         return this.directives.findIndex(item=>item.type.name === directiveType) !== -1;
     }
 

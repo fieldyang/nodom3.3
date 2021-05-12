@@ -289,6 +289,19 @@ export interface ITipMessage{
     }
 }
 
+/**
+ * 自定义标签配置
+ */
+export interface IDefineElementCfg{
+    /**
+     * 初始化方法
+     */
+    init:Function,
+    /**
+     * 渲染时方法
+     */
+    handler?:Function
+}
 
 /**
  *  AST对象约束
@@ -324,6 +337,7 @@ export interface ASTObj {
      */
     textContent?: string;
 }
+
 
 
 export const selfClosingTag = [

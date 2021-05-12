@@ -49,7 +49,9 @@ export const NodomMessage_zh = {
 		jsonparse:"JSON解析错误",
 		timeout:"请求超时",
 		config:"{0}配置参数错误",
-		config1:"{0}配置参数'{1}'错误"
+		config1:"{0}配置参数'{1}'错误",
+		itemnotempty:"{0} '{1}' 配置项 '{2}' 不能为空",
+		itemincorrect:"{0} '{1}' 配置项 '{2}' 错误"
 	},
 
 	/**
