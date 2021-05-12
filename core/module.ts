@@ -24,7 +24,7 @@ export class Module {
     /**
      * 模块名(模块内(父模块的子模块之间)唯一)，如果不设置，则系统会自动生成Module+id
      */
-    private name: string;
+    public name: string;
 
     /**
      * 模型
@@ -260,7 +260,6 @@ export class Module {
                 this.addChild(mdl.id);
             }
         }
-
         changeState(this);
         delete this.initConfig;
         /**
@@ -293,7 +292,6 @@ export class Module {
         if (this.state !== 3 || !this.virtualDom || !this.getContainer()) {
             return false;
         }
-
         //克隆新的树
         let root: Element = this.virtualDom.clone();
 
@@ -380,14 +378,18 @@ export class Module {
     clone(moduleName: string): any {
         let me = this;
         let m: Module = new Module({ name: moduleName });
-        let excludes = ['id', 'name', 'model', 'virtualDom', 'container', 'containerKey', 'modelFactory', 'plugins'];
+        //克隆数据
+        if(this.model){
+            let data = Util.clone(this.model,/^\$\S+/);
+            m.model = new Model(data,m);
+        }
+        let excludes = ['id', 'name','model','virtualDom', 'container', 'containerKey', 'modelManager', 'plugins'];
         Object.getOwnPropertyNames(this).forEach((item) => {
             if (excludes.includes(item)) {
                 return;
             }
             m[item] = me[item];
         });
-
         //克隆虚拟dom树
         m.virtualDom = this.virtualDom.clone(true);
         return m;
@@ -455,45 +457,30 @@ export class Module {
      * 发送
      * @param toName 		接收模块名或模块id，如果为模块id，则直接发送，不需要转换
      * @param data 			消息内容
-     * @param type          0兄弟  1孩子 2父亲
      */
-    public send(toName: string | number, data: any, type?: number) {
+    public send(toName: string | number, data: any) {
         if (typeof toName === 'number') {
             MessageQueue.add(this.id, toName, data);
             return;
         }
 
-        //目标模块id
-        let toId: number;
-        //父模块id
-        let parentId;
         let m: Module;
-        switch (type) {
-            case 1:  //发送孩子
-                m = this.getChild(toName);
-                if (m) {
-                    toId = m.id;
-                }
-                parentId = this.id;
-                break;
-            case 2:  //发送给父亲
-                toId = this.parentId || 0;
-            default: //发送给兄弟
-                parentId = this.parentId || 0
-                //得到父模块
-                m = ModuleFactory.get(parentId);
-                if (m) {
-                    m = m.getChild(toName);
-                    if (m) {
-                        toId = m.id;
-                    }
-                }
+        let pm:Module = ModuleFactory.get(this.parentId);
+        //1 比对父节点名
+        //2 比对兄弟节点名
+        //3 比对孩子节点名
+        if(pm){
+            if(pm.name === toName){ //父亲
+                m = pm
+            }else{ //兄弟
+                m = pm.getChild(toName);
+            }
         }
-
-        if (toId) {
-            MessageQueue.add(this.id, toId, data);
-        } else {
-            MessageQueue.add(this.id, toName, data, parentId);
+        if(!m){ //孩子节点
+            m = this.getChild(toName);
+        }
+        if (m) {
+            MessageQueue.add(this.id, m.id, data);
         }
     }
 
@@ -554,6 +541,7 @@ export class Module {
         this.state = 3;
         //添加到渲染器
         Renderer.add(this);
+        console.log(this.name,this.id);
         //孩子节点激活
         if (Util.isArray(this.children)) {
             this.children.forEach(async (item) => {
@@ -613,6 +601,12 @@ export class Module {
         const foo: Function = this.methodFactory.get(eventName);
         if (!foo) {
             return;
+        }
+        //模块作为第一个参数
+        if(param){
+            param.unshift(this);
+        }else{
+            param = [this];
         }
         //调用方法
         Util.apply(foo, this.model, param);

@@ -139,6 +139,10 @@ export class Element {
             this.parent = parent;
             this.parentKey = parent.key;
         }
+        //设置model为模块model
+        if(!this.model){
+            this.model = module.model;
+        }
         
         //自定义元素的前置渲染
         if(this.plugin){
@@ -465,7 +469,6 @@ export class Element {
      */
     public handleExpression(exprArr:Array<Expression|string>, module:Module) {
         let model:Model = this.model;
-        
         let value = '';
         exprArr.forEach((v) => {
             if (v instanceof Expression) { //处理表达式
@@ -519,8 +522,7 @@ export class Element {
      */
     public handleTextContent(module) {
         if (this.expressions !== undefined && this.expressions.length>0) {
-            let v = this.handleExpression(this.expressions, module)||'';
-            this.textContent = this.handleExpression(this.expressions, module);
+            this.textContent = this.handleExpression(this.expressions, module) || '';
         }
     }
 
