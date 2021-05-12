@@ -157,6 +157,8 @@ export class Compiler {
     private static parseAttrString(attrString: string | undefined): Array<any> {
         if (attrString == undefined || attrString.length === 0) return [];
         attrString = attrString.trim();
+        // 引号栈处理引号嵌套
+        let yinghaoStack: string[] = [];
         //引号flag 当前是否在引号内
         let yinhaoFlag = false;
         // 断点
@@ -165,8 +167,25 @@ export class Compiler {
         let result = [];
         for (let i = 0; i < attrString.length; i++) {
             let s = attrString[i];
-            if (s == '"') {
-                yinhaoFlag = !yinhaoFlag;
+            if (/[\"\']/.test(s)) {
+                // 遇到引号
+                if (yinghaoStack.length != 0) {
+                    // 引号栈不空
+                    if (s === yinghaoStack[yinghaoStack.length - 1]) {
+                        // 判断是不是匹配栈顶
+                        yinghaoStack.pop();
+                        if (yinghaoStack.length == 0) yinhaoFlag = false;
+                    } else {
+                        // 不匹配栈顶直接入栈
+                        yinghaoStack.push(s);
+                    }
+                } else {
+                    // 引号栈空 入栈
+                    yinghaoStack.push(s);
+                    yinhaoFlag = true;
+                }
+
+                // yinhaoFlag = !yinhaoFlag;
             } else if (/\s/.test(s) && !yinhaoFlag) {
                 //遇到空格并且不在引号中
                 if (!/^\s*?$/.test(attrString.substring(point, i))) {
