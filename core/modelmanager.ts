@@ -6,7 +6,7 @@ import { Renderer } from "./renderer";
  * 模型工厂
  */
 export class ModelManager {
-    private module: Module;
+    public module: Module;
     /**
      * 数据对象与模型映射，key为数据对象，value为model
      */

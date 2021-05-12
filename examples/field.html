@@ -69,20 +69,20 @@
 					],
 				},
 				methods: {
-					watchSexy: function (model, field, value) {
-						console.log(model, field, value);
+					watchSexy: function (oldValue, value) {
+						console.log(this, oldValue, value);
 					},
 					watch: function (dom, model, module, e) {
-						model.watch("sexy", "watchSexy");
+						model.$watch("sexy", "watchSexy");
 					},
-					change: function (dom, model, module, e) {
-						model.data.married = 0;
-						model.data.sexy = "F";
-						model.data.edu = 3;
-						model.data.name = "aaaa";
+					change: function (dom, module, e) {
+						this.married = 0;
+						this.sexy = "F";
+						this.edu = 3;
+						this.name = "aaaa";
 					},
-					change1: function (dom, model, module, e) {
-						model.data.name = "yanglei123";
+					change1: function (dom, module, e) {
+						this.name = "yanglei123";
 					},
 					onFirstRender: function () {
 						console.log("dddd");

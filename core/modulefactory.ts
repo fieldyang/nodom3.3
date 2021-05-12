@@ -56,11 +56,10 @@ export class ModuleFactory {
         if(moduleName){
             cfg.name = moduleName;
         }
-        
         if(!cfg.instance){
             if(!cfg.initing){
                 cfg.initing = true;
-                this.initModule(cfg);
+                await this.initModule(cfg);
             }
 
             return new Promise((res,rej)=>{
@@ -76,7 +75,6 @@ export class ModuleFactory {
         }else{
             return get(cfg);
         }
-        
         function get(cfg:IMdlClassObj): Module{
             if(cfg.singleton){
                 return cfg.instance;
@@ -176,7 +174,7 @@ export class ModuleFactory {
                 this.modules.set(instance.id,instance);
             }
             //初始化完成
-            cfg.initing = false;
+            delete cfg.initing;
         }else{
             throw new NError('notexist1',NodomMessage.TipWords['moduleClass'],cfg.class);
         }

@@ -37,14 +37,12 @@ export default (function(){
             let value: string = < string > directive.value;
             let valueArr:string[] = value.split('|');
             directive.value = valueArr[0];
-
             //设置dom role
             dom.setProp('role','module');
             //设置module name
             if(valueArr.length>1){
                 dom.setProp('modulename',valueArr[1]); 
             }
-
             directive.extra = {};
         },
 
@@ -57,7 +55,6 @@ export default (function(){
                 subMdl = ModuleFactory.get(ext.moduleId);
                 needNew = subMdl.getContainerKey() !== dom.key;
             }
-            
             if(needNew){
                 let m:Module = await ModuleFactory.getInstance(directive.value,dom.getProp('modulename'),dom.getProp('data'));
                 if(m){
@@ -364,7 +361,7 @@ export default (function(){
             }
             
             dom.addEvent(new NEvent(eventName,
-                function (dom,model,module,e,el) {
+                function (dom,module,e,el) {
                     if(!el){
                         return;
                     }
@@ -384,7 +381,7 @@ export default (function(){
                         }
                     }
                     //修改字段值
-                    model[field] = v;
+                    this[field] = v;
                     //修改value值，该节点不重新渲染
                     if (type !== 'radio') {
                         dom.setProp('value',v);
@@ -443,7 +440,6 @@ export default (function(){
                     }
                 }
             }else{
-                console.log(dataValue);
                 dom.assets.set('value',dataValue===undefined || dataValue===null ? '':dataValue);
             }
         }
@@ -651,7 +647,7 @@ export default (function(){
             
             //添加click事件
             dom.addEvent(new NEvent('click',
-                (dom,model,module,e) => {
+                (dom,module,e) => {
                     let path:string = dom.getProp('path');
                     if (Util.isEmpty(path)) {
                         return;

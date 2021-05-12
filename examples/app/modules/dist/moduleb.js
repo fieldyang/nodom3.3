@@ -15,6 +15,9 @@ class ModuleB extends nodom.Module {
                     console.log(this.msg);
                     module.broadcast(this.msg);
                 },
+                setMsg:function(dom,module){
+                    this.msg = 'hahaha';
+                },
                 sendParent: function (dom, module) {
                     module.send('modb1', this.msg,2);
                 },

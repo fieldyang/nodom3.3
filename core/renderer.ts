@@ -14,7 +14,7 @@ export class Renderer {
      * @param module 模块
      */
     public static add(module:Module) {
-        //非激活状态
+        //非激活状态，不进入渲染列表
         if (module.state !== 3) {
             return;
         }
@@ -40,7 +40,6 @@ export class Renderer {
         //调用队列渲染
         for (let i=0; i<this.waitList.length; i++) {
             let m = ModuleFactory.get(this.waitList[i]);
-            
             //渲染成功，从队列移除
             if(!m || m.render()){
                 this.waitList.shift();

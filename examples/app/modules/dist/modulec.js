@@ -6,19 +6,18 @@ class ModuleC extends nodom.Module {
         let config = nodom.Util.merge(cfg, {
             template: 'c.html',
             data: {
-                from: '',
+                from: 'xx',
                 msg: '发送消息',
-                msg1: '',
+                msg1: 'yyy',
             },
             methods: {
                 sendMsg: function (dom, module) {
                     module.broadcast(this.msg);
                 },
                 sendParent: function (dom, module) {
-                    module.send('modb1', this.msg,2);
+                    module.send('modb1', this.msg);
                 },
                 onReceive: function (module,from, msg) {
-                    console.log(msg);
                     this.msg1 = msg;
                     this.from = from;
                 }
