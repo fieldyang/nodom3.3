@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<title>nodom-module</title>
 		<script type="text/javascript" src="./dist/nodom.js"></script>
-		<!-- <script src="./examples/config/module.js"></script> -->
+		<script src="./examples/config/module.js"></script>
 		<style>
 			.code {
 				margin: 20px;
@@ -16,7 +16,10 @@
 			}
 		</style>
 	</head>
-	<!-- 	<h3>普通模块</h3>
+
+	<body>
+		<div>
+			<h3>普通模块</h3>
 			<div x-module="ModuleA|mod0" data="/examples/data/data1.json"></div>
 
 			<h3>支持外部repeat的模块</h3>
@@ -34,15 +37,14 @@
 			</ul>
 
 			<p>模块1包含两个子模块</p>
-			<div x-module="ModuleB|modb1"></div> -->
-	<body>
-		<div></div>
+			<div x-module="ModuleB|modb1"></div>
+		</div>
 	</body>
 	<script>
 		nodom.app({
 			module: {
 				el: "div",
-				template: "/child.html",
+				// template: "/child.html",
 				data: {
 					users: [
 						{ name: "Yanglei", data: "/examples/data/data1.json" },
