@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<title>route</title>
 		<script type="text/javascript" src="./dist/nodom.js"></script>
-		<script src="/examples/config/route.js"></script>
+		<!-- <script src="/examples/config/route.js"></script> -->
 		<style>
 			.colorimp {
 				color: red;
@@ -14,14 +14,14 @@
 	</head>
 
 	<body>
-		<div>hello</div>
+		<div><span x-elseif="grade>=60 && grade<70"> 及格 </span></div>
 	</body>
 	<script>
 		nodom.app({
 			module: {
 				el: "div",
 				// template:'/child.html'
-				class: "MdlRouteMain",
+				// class: "MdlRouteMain",
 				// methods:{
 				//     onBeforeFirstRender:function(){
 				//         console.log('ddd')
