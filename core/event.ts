@@ -251,12 +251,11 @@ export class NEvent {
             if(!eObj.handler){
                 return;
             }
-            //自有事件
             //禁止冒泡
             if (eObj.nopopo) {
                 e.stopPropagation();
             }
-            Util.apply(<Function>eObj.handler, eObj, [dom,model,module,e,el]);
+            Util.apply(<Function>eObj.handler,dom.model, [dom,module,e,el]);
             //事件只执行一次，则删除handler
             if (eObj.once) {
                 delete eObj.handler;

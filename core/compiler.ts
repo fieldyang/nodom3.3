@@ -1,3 +1,4 @@
+import { DefineElementManager } from "./defineelementmanager";
 import { Directive } from "./directive";
 import { Element } from "./element";
 import { NEvent } from "./event";
@@ -78,12 +79,12 @@ export class Compiler {
      */
     private static handleAstText(parent: Element, astObj: ASTObj) {
         let text = new Element();
+        parent.children.push(text);
         // 处理属性
-        this.handleAstAttrs(text, astObj.attrs);
+        this.handleAstAttrs(text, astObj.attrs,parent);
         // text 类型的节点不需要处理子节点。
         text.expressions = astObj.expressions;
         text.textContent = astObj.textContent;
-        parent.children.push(text);
     }
     /**
      * 
@@ -91,25 +92,34 @@ export class Compiler {
      * @param astObj 
      */
     private static handleAstNode(parent: Element, astObj: ASTObj) {
-        let de = PluginManager.get(astObj.tagName.toUpperCase());
+        // let de = PluginManager.get(astObj.tagName.toUpperCase());
+        let de = DefineElementManager.get(astObj.tagName.toUpperCase());
         let child = new Element(astObj.tagName);
-        // 处理属性
-        this.handleAstAttrs(child, astObj.attrs);
-        this.compileAST(child, astObj.children);
-        if (de) {
-            parent.children.push(
-                Reflect.construct(de, [child]).element
-            )
-        } else {
-            parent.children.push(child);
+        parent.add(child);
+        this.handleAstAttrs(child, astObj.attrs,parent);
+        if(de){
+            de.init(child,parent);
         }
+        this.compileAST(child, astObj.children);
+        
+        // // 处理属性
+        // if (de) {
+        //     parent.children.push(
+        //         Reflect.construct(de, [child]).element
+        //     )
+        // } else {
+        //     parent.children.push(child);
+        // }
+        // this.handleAstAttrs(child, astObj.attrs,parent);
+        // this.compileAST(child, astObj.children);
     }
     /**
      * 编译ast 到虚拟dom
-     * @param oe 虚拟dom
-     * @param attrs 需要编译成虚拟dom的attrs
+     * @param oe        虚拟dom
+     * @param attrs     需要编译成虚拟dom的attrs
+     * @param parent    父虚拟dom节点
      */
-    private static handleAstAttrs(oe: Element, attrs: Array<{ propName: string, value: any }>) {
+    private static handleAstAttrs(oe: Element, attrs: Array<{ propName: string, value: any }>,parent:Element) {
         //指令数组 先处理普通属性在处理指令
         let directives = [];
         if (!attrs) { return }
@@ -139,9 +149,7 @@ export class Compiler {
         }
         //处理属性
         for (let attr of directives) {
-            console.log(attr);
-            let dir = new Directive(attr.propName.substr(2), attr.value.trim(), oe, null, true);
-            console.log(dir);
+            new Directive(attr.propName.substr(2), attr.value.trim(), oe,parent, null, true);
         }
         if (directives.length > 1) {
             //指令排序
@@ -159,6 +167,8 @@ export class Compiler {
     private static parseAttrString(attrString: string | undefined): Array<any> {
         if (attrString == undefined || attrString.length === 0) return [];
         attrString = attrString.trim();
+        // 引号栈处理引号嵌套
+        let yinghaoStack: string[] = [];
         //引号flag 当前是否在引号内
         let yinhaoFlag = false;
         // 断点
@@ -167,8 +177,25 @@ export class Compiler {
         let result = [];
         for (let i = 0; i < attrString.length; i++) {
             let s = attrString[i];
-            if (s == '"') {
-                yinhaoFlag = !yinhaoFlag;
+            if (/[\"\']/.test(s)) {
+                // 遇到引号
+                if (yinghaoStack.length != 0) {
+                    // 引号栈不空
+                    if (s === yinghaoStack[yinghaoStack.length - 1]) {
+                        // 判断是不是匹配栈顶
+                        yinghaoStack.pop();
+                        if (yinghaoStack.length == 0) yinhaoFlag = false;
+                    } else {
+                        // 不匹配栈顶直接入栈
+                        yinghaoStack.push(s);
+                    }
+                } else {
+                    // 引号栈空 入栈
+                    yinghaoStack.push(s);
+                    yinhaoFlag = true;
+                }
+
+                // yinhaoFlag = !yinhaoFlag;
             } else if (/\s/.test(s) && !yinhaoFlag) {
                 //遇到空格并且不在引号中
                 if (!/^\s*?$/.test(attrString.substring(point, i))) {
@@ -210,12 +237,14 @@ export class Compiler {
         let index = 0;
 
         // 开始标签的正则表达式 
-        let startRegExp = /^\<(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)((?:\s+.+?[\"\'](?:[\s\S]*?)[\"\']|.*))?(\s*)\>/
+        let startRegExp = /^\<(\s*)([a-z\-]*[0-9]?)((?:\s+\w+\-?\w+(?:\=[\"\'][\s\S]*?[\"\'])?)*)*(\s*\/)?(\s*)\>/
+        // /^\<(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)((?:\s+.+?[\"\'](?:[\s\S]*?)[\"\']|(?:\s+\w+\-?\w+)*))?(\s*\/)?(\s*)\>/
         // 匹配结束标签的正则表达式
-        let endRegExp = /^\<(\s*)\/(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)(\s*)\>/;
+        let endRegExp = /^\<(\s*)\/(\s*)([a-z\-]*[0-9]?)(\s*)\>/
+        // /^\<(\s*)\/(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)(\s*)\>/;
         // 匹配开始标签和结束标签之间的文字的正则表达式 
-        let wordRegExp = /^([\s\S]+?)(?=\<(!--)?(?:(\s*)\/?(\s*)(?:[a-z]+[1-6]?|ui\-[a-z]+[1-6]?)(?:(?:\s+.+?[\"\'](?:[\s\S]*?)[\"\']|.*))?(\s*)|(?:[\s\S]+?))(--)?\>)/
-        // /^([\s\S]+?)(?=\<(\s*)\/?(\s*)(?:[a-z]+[1-6]?|ui\-[a-z]+[1-6]?)((?:\s+.+?)*?)(\s*)\>)/;
+        let wordRegExp = /^([\s\S]+?)(?=\<(?:!--)?(?:\s*\/?\s*(?:[a-z\-]*[0-9]?)(?:(?:\s+\w+\-?\w+\=?[\"\']?[\s\S]*?[\"\']?)*)*|(?:[\s\S]+?))(?:--)?\>)/
+        // /^([\s\S]+?)(?=\<(!--)?(?:(\s*)\/?(\s*)(?:[a-z]+[1-6]?|ui\-[a-z]+[1-6]?)(?:(?:\s+.+?[\"\'](?:[\s\S]*?)[\"\']|.*))?(\s*)|(?:[\s\S]+?))(--)?\>)/
         // 匹配裸字符串，全字符匹配配合wordRegExp标签判断是不是裸字符串
         let onlyWordRegExp = /^([\s\S]+)/;
         // 匹配注释
@@ -246,11 +275,13 @@ export class Compiler {
                 // beforeSpaceString:左尖括号与标签名之间的空格
                 // tagName:标签名  
                 // attrString:标签里的属性字符串 
+                // selfCloseStr: 自闭合标签的反斜杠
                 // afterSpaceString:属性与右尖括号之间的空格
-                let [, beforeSpaceString, tagName, attrString, afterSpaceString] = rest.match(startRegExp);
+                let [, beforeSpaceString, tagName, attrString, selfCloseStr, afterSpaceString] = rest.match(startRegExp);
                 const beforeSpaceLenght = beforeSpaceString ? beforeSpaceString.length : 0;
                 const tagNameLenght = tagName ? tagName.length : 0;
                 const atttLenght = attrString ? attrString.length : 0;
+                const selfCloseLenght = selfCloseStr ? selfCloseStr.length : 0;
                 const afterSpaceLenght = afterSpaceString ? afterSpaceString.length : 0;
                 if (tagName === 'pre') {
                     // pre标签
@@ -278,7 +309,7 @@ export class Compiler {
                     // 需要跳过的长度 = 2个尖括号 + 左尖括号与标签名之间的空格长度 + 标签名长度 + 属性长度 + 属性与右尖括号之间的空格长度
 
                 }
-                index += 2 + beforeSpaceLenght + tagNameLenght + atttLenght + afterSpaceLenght;
+                index += 2 + beforeSpaceLenght + tagNameLenght + atttLenght + selfCloseLenght + afterSpaceLenght;
             } else if (endRegExp.test(rest)) {
                 // 识别结束标记
                 // let tagName = rest.match(endRegExp)[1];
@@ -316,6 +347,7 @@ export class Compiler {
                 if (!rest.match(wordRegExp) && rest.match(onlyWordRegExp)) {
                     //这里要处理一下可能标签没闭合 如:<div>123
                     if (stack1.length !== 0) {
+                        let a = 111;
                         throw new Error(stack1[stack1.length - 1] + '标签没闭合');
                     }
                 }

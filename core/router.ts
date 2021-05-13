@@ -408,7 +408,7 @@ export class Router {
         }
         //遍历router active view，设置或取消active class
         domArr.forEach((item) => {
-            let dom = module.getNElement(item);
+            let dom = module.getElement(item);
             if (!dom) {
                 return;
             }
@@ -661,7 +661,6 @@ class RouterTree {
                     break;
                 }
             }
-            
             //路径叠加
             fullPath += '/' + v;
             //不是孩子节点,作为参数

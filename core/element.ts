@@ -101,6 +101,10 @@ export class Element {
     public plugin:Plugin;
 
     /**
+     * 临时参数 map
+     */
+    private tmpParamMap:Map<string,any> = new Map();
+    /**
      * 是否为svg节点
      */
     public isSvgNode:boolean;
@@ -138,6 +142,10 @@ export class Element {
             }
             this.parent = parent;
             this.parentKey = parent.key;
+        }
+        //设置model为模块model
+        if(!this.model){
+            this.model = module.model;
         }
         
         //自定义元素的前置渲染
@@ -180,7 +188,6 @@ export class Element {
         delete this.parent;
         //删除model
         delete this.model;
-
         //删除dontRender
         delete this.dontRender;
     }
@@ -450,11 +457,11 @@ export class Element {
      */
     public handleDirectives(module:Module) {
         for(let d of this.directives.values()){
+            d.exec(module,this,this.parent);
             //指令可能改变render标志
             if (this.dontRender) {
                 return false;
             }
-            d.exec(module,this,this.parent);
         }
         return true;
     }
@@ -466,7 +473,6 @@ export class Element {
      */
     public handleExpression(exprArr:Array<Expression|string>, module:Module) {
         let model:Model = this.model;
-        
         let value = '';
         exprArr.forEach((v) => {
             if (v instanceof Expression) { //处理表达式
@@ -520,8 +526,7 @@ export class Element {
      */
     public handleTextContent(module) {
         if (this.expressions !== undefined && this.expressions.length>0) {
-            let v = this.handleExpression(this.expressions, module)||'';
-            this.textContent = this.handleExpression(this.expressions, module);
+            this.textContent = this.handleExpression(this.expressions, module) || '';
         }
     }
 
@@ -601,6 +606,7 @@ export class Element {
      * @return true/false
      */
     public hasDirective(directiveType):boolean {
+        // console.log(this.directives,directiveType);
         return this.directives.findIndex(item=>item.type.name === directiveType) !== -1;
     }
 
@@ -1010,5 +1016,31 @@ export class Element {
             c.doDontRender();
         }
         this.recover();
+    }
+
+    /**
+     * 设置临时参数
+     * @param key       参数名
+     * @param value     参数值
+     */
+    setTmpParam(key:string,value:any){
+        this.tmpParamMap.set(key,value);
+    }
+
+    /**
+     * 获取临时参数
+     * @param key       参数名
+     * @returns         参数值
+     */
+     getTmpParam(key:string):any{
+        return this.tmpParamMap.get(key);
+    }
+
+    /**
+     * 删除临时参数
+     * @param key       参数名
+     */
+    removeTmpParam(key:string){
+        this.tmpParamMap.delete(key);
     }
 }

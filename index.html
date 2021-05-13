@@ -3,41 +3,32 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-		<title>Document</title>
-		<script type="text/javascript" src="../dist/nodom.js"></script>
-
+		<title>route</title>
+		<script type="text/javascript" src="./dist/nodom.js"></script>
+		<!-- <script src="/examples/config/route.js"></script> -->
 		<style>
-			.introduce {
-				color: #666666;
-			}
-
-			.tip {
-				color: darkorange;
-			}
-
-			.code {
-				margin: 20px;
+			.colorimp {
+				color: red;
 			}
 		</style>
 	</head>
 
 	<body>
-		<div class="view"></div>
+		<div><span x-elseif="grade>=60 && grade<70"> 及格 </span></div>
 	</body>
 	<script>
 		nodom.app({
 			module: {
 				el: "div",
-				template: "/child.html",
-				data: {
-					start: 111,
-					price: 100,
-				},
-				methods: {
-					cac: function (v) {
-						return v + 10;
-					},
-				},
+				// template:'/child.html'
+				// class: "MdlRouteMain",
+				// methods:{
+				//     onBeforeFirstRender:function(){
+				//         console.log('ddd')
+				//         console.log($.RouterTree.get('/router/a/b/route1/aa/bb'));
+
+				//     }
+				// }
 			},
 		});
 	</script>

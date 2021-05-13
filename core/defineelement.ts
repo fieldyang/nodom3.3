@@ -7,7 +7,7 @@ import { Util } from "./util";
 /**
  * 插件，插件为自定义元素方式实现
  */
-export class Plugin {
+export class DefineElement {
     /**
      * tag name
      */
@@ -51,6 +51,11 @@ export class Plugin {
     constructor(params:HTMLElement|Object){
         
     }
+
+    /**
+     * 初始化
+     */
+    public init(dom:Element){}
     
     /**
      * 前置渲染方法(dom render方法中获取modelId和parentKey后执行)

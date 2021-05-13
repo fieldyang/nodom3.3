@@ -40,17 +40,24 @@
 					]
 				},
 				methods:{
-					clickP:function(d,m,module){
-						console.log('parent');
+					clickP:function(d,module){
+						console.log(this);
 					},
 					clickItem:function(d,m,module){
-						console.log('item');
-					},
-					show:function(dom,model){
 						console.log(this);
-						model.set('show',!model.data['show']);
+					},
+					show:function(dom,module,e,el){
+						this.show = !this.show;
+					},
+					change:function(dom,module){
+						this.edus.push({
+							eduId:5,eduName:'博士后'
+						})
+					},
+					change1:function(dom,module){
+						this.edus[0].eduName = '幼儿园';
 						
-					}
+					},
 				}
 			}
 		});

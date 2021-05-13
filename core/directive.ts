@@ -47,7 +47,7 @@ export  class Directive {
      * @param filters   过滤器字符串或过滤器对象,如果为过滤器串，则以｜分割
      * @param notSort   不排序
      */
-    constructor(type:string, value:string,dom?:Element, filters?:string|Filter[],notSort?:boolean) {
+    constructor(type:string, value:string,dom?:Element, parent?:Element, filters?:string|Filter[],notSort?:boolean) {
         this.id = Util.genId();
         this.type = DirectiveManager.getType(type);
         if (Util.isString(value)) {
@@ -73,7 +73,7 @@ export  class Directive {
             }
         }
         if (type !== undefined && dom) {
-            DirectiveManager.init(this,dom);
+            DirectiveManager.init(this,dom,parent);
             dom.addDirective(this,!notSort);
         }
     }

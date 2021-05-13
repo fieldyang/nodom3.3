@@ -1,5 +1,5 @@
 import { Module } from "../module";
-import { Element } from "../element"
+import { Element } from "../element";
 import { Directive } from "../directive";
 import { DirectiveManager } from "../directivemanager";
 import { ModuleFactory } from "../modulefactory";
@@ -37,14 +37,12 @@ export default (function(){
             let value: string = < string > directive.value;
             let valueArr:string[] = value.split('|');
             directive.value = valueArr[0];
-
             //设置dom role
             dom.setProp('role','module');
             //设置module name
             if(valueArr.length>1){
                 dom.setProp('modulename',valueArr[1]); 
             }
-
             directive.extra = {};
         },
 
@@ -57,7 +55,6 @@ export default (function(){
                 subMdl = ModuleFactory.get(ext.moduleId);
                 needNew = subMdl.getContainerKey() !== dom.key;
             }
-            
             if(needNew){
                 let m:Module = await ModuleFactory.getInstance(directive.value,dom.getProp('modulename'),dom.getProp('data'));
                 if(m){
@@ -88,25 +85,21 @@ export default (function(){
             let value: string = < string > directive.value;
             //处理以.分割的字段，没有就是一个
             if (Util.isString(value)) {
-                //从根数据获取
-                if(value.startsWith('$$')){
-                    directive.extra = 1;
-                    value = value.substr(2);
-                }
+                // //从根数据获取
+                // if(value.startsWith('$$')){
+                //     directive.extra = 1;
+                //     value = value.substr(2);
+                // }
                 directive.value = value;
             }
         },
 
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            let startIndex:number=0;
             let model:Model = dom.model;
-            //从根获取数据,$$开始数据项
-            if (directive.extra===1) {
-                model = module.model;
-                startIndex = 1;
+            model = model.$query(directive.value);
+            if(!model){
+                model = module.model.$query(directive.value);
             }
-
-            model = model[directive.value];
             if(model){
                 dom.model = model;
             }
@@ -135,19 +128,21 @@ export default (function(){
                     directive.filters.push(new Filter(fa[i]));
                 }
             }
-            
-            //模块全局数据
-            if(modelName.startsWith('$$')){
-                modelName = modelName.substr(2);
-            }
+            // //模块全局数据
+            // if(modelName.startsWith('$$')){
+            //     modelName = modelName.substr(2);
+            // }
             directive.value = modelName;
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             let model = dom.model;
             //可能数据不存在，先设置dontrender
             dom.dontRender = true;
+            if(!model){
+                return;
+            }
             //得到rows数组的model
-            let rows = model[directive.value];
+            let rows = model.$query(directive.value);
             // 无数据，不渲染
             if (!Util.isArray(rows) || rows.length === 0) {
                 return;
@@ -201,53 +196,51 @@ export default (function(){
      */
     DirectiveManager.addType('if',
         10,
-        (directive: Directive,dom:Element) => {
-            if(typeof directive.value === 'string'){
-                let value = directive.value;
-                if (!value) {
-                    throw new NError("paramException", "x-repeat");
-                }
-                //value为一个表达式
-                let expr = new Expression(value);
-                directive.value = expr;
+        (directive: Directive,dom:Element,parent:Element) => {
+            let value = directive.value;
+            if (!value) {
+                throw new NError("paramException", "x-if");
             }
+            //value为一个表达式
+            let expr = new Expression(value);
+            directive.value = expr;
+            //设置if组
+            directive.extra = {
+                groups:[dom]
+            }
+            if(!parent){
+                return;
+            }
+            parent.setTmpParam('ifnode',dom);
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            //设置forceRender
-            let model = dom.model;
-            let v = directive.value.val(model);
-            //找到并存储if和else在父对象中的位置
-            let indif = -1,
-                indelse = -1;
-            for (let i = 0; i < parent.children.length; i++) {
-                if (parent.children[i] === dom) {
-                    indif = i;
-                } else if (indelse === -1 && parent.children[i].hasDirective('else')) {
-                    indelse = i;
-                }
-
-                //if后的第一个element带else才算，否则不算
-                if (i !== indif && indif !== -1 && indelse === -1 && parent.children[i].tagName !== undefined) {
-                    indelse = -2;
-                }
-
-                //都找到了
-                if (indif !== -1 && indelse !== -1) {
-                    break;
+            dom.dontRender = true;
+            let target:number = -1;
+            console.log(directive.extra.groups);
+            for(let i=0;i<directive.extra.groups.length;i++){
+                let node = directive.extra.groups[i];
+                let dir = node.getDirective('if') || node.getDirective('elseif') || node.getDirective('else');
+                if(dir.value){ //if elseif指令
+                    let v = dir.value.val(dom.model);
+                    if(v && v!=='false'){
+                        target = i;
+                        break;
+                    }
                 }
             }
-            if (v && v !== 'false') { //为真
-                let ind = 0;
-                //删除else
-                if (indelse > 0) {
-                    parent.children[indelse].dontRender = true;
-                }
-            } else{
-                //替换if
-                dom.dontRender = true;
-                //为假则进入else渲染
-                if (indelse > 0) {
-                    parent.children[indelse].dontRender = false;
+            let tNode;
+            if(target === 0){ //if 节点
+                dom.dontRender = false;
+            }else if(target > 0){ //elseif 节点
+                tNode = directive.extra.groups[target];
+            }else if(directive.extra.groups.length>1){  //else 节点
+                tNode = directive.extra.groups[directive.extra.groups.length-1];
+            }
+            if(tNode){
+                //添加到指定位置
+                let index = parent.children.indexOf(dom);
+                if(index !== -1){
+                    parent.children.splice(index+1,0,tNode);
                 }
             }
         }
@@ -259,8 +252,16 @@ export default (function(){
      */
     DirectiveManager.addType('else',
         10,
-        (directive: Directive) => {
-            return;
+        (directive: Directive,dom:Element,parent:Element) => {
+            if(!parent){
+                return;
+            }
+            let ifNode = parent.getTmpParam('ifnode');
+            if(ifNode){
+                let dir = ifNode.getDirective('if');
+                dir.extra.groups.push(dom);
+                parent.removeChild(dom);
+            }
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             return;
@@ -268,10 +269,108 @@ export default (function(){
     );
 
     /**
+     * elseif 指令
+     */
+    DirectiveManager.addType('elseif',10,
+        (directive: Directive,dom:Element,parent:Element) => {
+            let value = directive.value;
+            if (!value) {
+                throw new NError("paramException", "x-elseif");
+            }
+            //value为一个表达式
+            let expr = new Expression(value);
+            directive.value = expr;
+            if(!parent){
+                return;
+            }
+            let ifNode = parent.getTmpParam('ifnode');
+            if(ifNode){
+                let dir = ifNode.getDirective('if');
+                dir.extra.groups.push(dom);
+                parent.removeChild(dom);
+            }
+        },
+        (directive: Directive, dom: Element, module: Module, parent: Element) => {
+
+        }
+    );
+
+    /**
+     * endif 指令
+     */
+     DirectiveManager.addType('endif',10,
+        (directive: Directive,dom:Element,parent:Element) => {
+            if(!parent){
+                return;
+            }
+            let ifNode = parent.getTmpParam('ifnode');
+            if(ifNode){
+                parent.removeChild(dom);
+                //移除ifnode临时参数
+                parent.removeTmpParam('ifnode');
+            }
+        },
+        (directive: Directive, dom: Element, module: Module, parent: Element) => {
+
+        }
+    );
+    /**
+     * switch指令
+     */
+    DirectiveManager.addType('switch',
+        10,
+        (directive: Directive,dom:Element) => {
+            let value = directive.value;
+            if (!value) {
+                throw new NError("paramException", "x-switch");
+            }
+        },
+        (directive: Directive, dom: Element, module: Module, parent: Element) => {
+            let hasTrue:boolean = false;
+            for(let node of dom.children){
+                node.dontRender = true;
+                let dir = node.getDirective('case');
+                //已经出现为true的node，不用再计算条件值
+                if(hasTrue){
+                    node.dontRender = true;
+                    continue;
+                }
+                let v = dir.value.val(dom.model);
+                hasTrue = v && v !== 'false';
+                node.dontRender = !hasTrue;
+            }
+        }
+    );
+
+
+    /**
+     *  case 指令
+     */
+     DirectiveManager.addType('case',
+        10,
+        (directive: Directive,dom:Element,parent:Element) => {
+            if (!directive.value) {
+                throw new NError("paramException", "x-case");
+            }
+            if(!parent){
+                return;
+            }
+            let dir = parent.getDirective('switch');
+            console.log(parent);
+            //组合 switch 变量=case值
+            let value = dir.value + ' == "' + directive.value + '"';
+            let expr = new Expression(value);
+            directive.value = expr;
+        },
+        (directive: Directive, dom: Element, module: Module, parent: Element) => {
+            return;
+        }
+    );
+    /**
      * 指令名 show
      * 描述：显示指令
      */
-    DirectiveManager.addType('show', 
+    DirectiveManager.addType('show',
         10,
         (directive: Directive,dom:Element) => {
             if(typeof directive.value === 'string'){
@@ -355,7 +454,7 @@ export default (function(){
      * 指令名 field
      * 描述：字段指令
      */
-    DirectiveManager.addType('field', 
+    DirectiveManager.addType('field',
         10,
         (directive: Directive,dom:Element) => {
             dom.setProp('name',directive.value);
@@ -369,7 +468,7 @@ export default (function(){
             }
             
             dom.addEvent(new NEvent(eventName,
-                function (dom,model,module,e,el) {
+                function (dom,module,e,el) {
                     if(!el){
                         return;
                     }
@@ -389,7 +488,7 @@ export default (function(){
                         }
                     }
                     //修改字段值
-                    model.set(field,v);
+                    this[field] = v;
                     //修改value值，该节点不重新渲染
                     if (type !== 'radio') {
                         dom.setProp('value',v);
@@ -403,6 +502,9 @@ export default (function(){
             const type:string = dom.getProp('type');
             const tgname = dom.tagName.toLowerCase();
             const model = dom.model;
+            if(!model){
+                return;
+            }
             let dataValue = model[directive.value];
             //变为字符串
             if(dataValue !== undefined && dataValue !== null){
@@ -570,7 +672,6 @@ export default (function(){
                 dom.dontRender = true;
             }
 
-
             /**
              * 设置提示
              * @param vd    虚拟dom节点
@@ -652,7 +753,7 @@ export default (function(){
             
             //添加click事件
             dom.addEvent(new NEvent('click',
-                (dom,model,module,e) => {
+                (dom,module,e) => {
                     let path:string = dom.getProp('path');
                     if (Util.isEmpty(path)) {
                         return;
