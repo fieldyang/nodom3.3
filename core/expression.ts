@@ -1,4 +1,3 @@
-import { FilterManager } from "./filtermanager";
 import { Model } from "./model";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
@@ -52,7 +51,6 @@ export class Expression {
      * @param exprStr 	表达式串
      */
     public compile(exprStr: string): string {
-        // let copyStr = exprStr;
         //替代字符串的正则数组
         let stringReg = [/\\"/g, /\\'/g, /\\`/g, /\".*?\"/g, /'.*?'/g, /`.*?`/g];
         let replaceMap = new Map();
