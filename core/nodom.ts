@@ -54,7 +54,6 @@ export async function app(config?: IAppCfg): Promise<Module> {
         module = await ModuleFactory.getInstance(config.module.class, config.module.name, config.module.data);
         module.setSelector(config.module.el);
     } else {
-        let module: Module;
         module = new Module(config.module);
     }
 

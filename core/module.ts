@@ -240,6 +240,7 @@ export class Module {
         } else { //空数据
             this.model = new Model({}, this);
         }
+
         //批量请求文件
         if (urlArr.length > 0) {
             let rets: IResourceObj[] = await ResourceManager.getResources(urlArr);
@@ -252,6 +253,10 @@ export class Module {
             }
         }
 
+
+
+
+        
         //处理子模块
         if (this.initConfig.modules) {
             for (let cfg of this.initConfig.modules) {

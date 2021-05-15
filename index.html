@@ -4,8 +4,7 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<title>filter</title>
-		<!-- <script type="text/javascript" src="../js/require.js"></script> -->
-		<script type="text/javascript" src="../dist/nodom.js"></script>
+		<script type="text/javascript" src="./dist/nodom.js"></script>
 
 		<style></style>
 	</head>
@@ -13,7 +12,8 @@
 	<body>
 		<div>
 			<button e-click="change">change</button>
-			<h1>{{data.data1}}</h1>
+			<h1>{{data}}</h1>
+			<for condition="data1">{{name}}+++++{{age}}</for>
 		</div>
 	</body>
 	<script>
@@ -21,13 +21,24 @@
 			module: {
 				el: "div",
 				data: {
-					data: {
-						data1: 1,
-					},
+					data: 1,
+					data1: [
+						{ name: "name1", age: "age1" },
+						{ name: "name2", age: "age2" },
+						{ name: "name3", age: "age3" },
+						{ name: "name4", age: "age4" },
+						{ name: "name5", age: "age5" },
+					],
 				},
 				methods: {
 					change: function (dom, module) {
-						this.data.data1++;
+						this.data1[0].name = "changed";
+					},
+					onBeforeFirstRender: function (module) {
+						this.$watch("data.data1", "watch");
+					},
+					watch: function (a, b) {
+						console.log(a, b);
 					},
 				},
 			},
