@@ -5,72 +5,72 @@ import { Route } from "./router";
 /**
  * module class obj
  */
-export interface IMdlClassObj{
+export interface IMdlClassObj {
     /**
      * class名或class
      */
-    class:any;
+    class: any;
 
     /**
      * 模块名
      */
-    name?:string;
+    name?: string;
 
     /**
      * class文件路径
      */
-    path:string;
+    path: string;
     /**
      * 实例
      */
-    instance?:Module;
+    instance?: Module;
     /**
      * 数据
      */
-    data?:string|Object;
+    data?: string | Object;
     /**
      * 是否单例
      */
-    singleton?:boolean;
+    singleton?: boolean;
     /**
      * 懒加载
      */
-    lazy?:boolean;
+    lazy?: boolean;
 
     /**
      * 是否正在初始化
      */
-    initing:boolean;
+    initing: boolean;
 
     /**
      * 等待模块初始化的id列表
      */
-    waitList:number[];
+    waitList: number[];
 }
 
 /**
  * 应用初始化配置类型
  */
-export interface IAppCfg{
+export interface IAppCfg {
     /**
      * 路径参数，请参阅NApplication path属性
      */
-    path?:any;
+    path?: any;
 
     /**
      * 语言，默认 zh
      */
-    language:string;
+    language: string;
 
     /**
      * 调度器间隔时间(ms)，如果支持requestAnimationFrame，则不需要
      */
-    scheduleCircle?:number;
+    scheduleCircle?: number;
 
     /**
      * 主模块配置
      */
-    module:IModuleCfg;
+    module: IModuleCfg;
 
     /**
      * 模块配置数组，数组元素包括
@@ -80,7 +80,7 @@ export interface IAppCfg{
      *      singleton:单例(全应用公用同一个实例，默认true),
      *      lazy:懒加载(默认false)
      */
-    modules:IMdlClassObj[];
+    modules: IMdlClassObj[];
 
     /**
      * 路由配置
@@ -91,57 +91,57 @@ export interface IAppCfg{
      * onEnter:路由进入事件
      * onLeave:路由离开事件
      */
-    routes:IRouteCfg[];
+    routes: IRouteCfg[];
 }
 
 
 /**
  * 路由配置
  */
-export interface IRouteCfg{
+export interface IRouteCfg {
     /**
      * 路由路径，可以带通配符*，可以带参数 /:
      */
-    path:string;
+    path: string;
     /**
      * 路由模块id或模块类名，id为数字，类名为string
      */
-    module?:number|string;
-    
+    module?: number | string;
+
     /**
      * 模块名
      */
-    moduleName?:string;
+    moduleName?: string;
 
     /**
      * 数据url
      */
-    dataUrl?:string;
+    dataUrl?: string;
     /**
      * 子路由数组
      */
-    routes?:Array<IRouteCfg>;
+    routes?: Array<IRouteCfg>;
 
     /**
      * 进入路由事件方法
      */
-    onEnter?:Function;
+    onEnter?: Function;
     /**
      * 离开路由方法
      */
-    onLeave?:Function;
+    onLeave?: Function;
     /**
      * 是否使用父路由路径
      */
-    useParentPath?:boolean;
+    useParentPath?: boolean;
     /**
      * 不添加到路由树
      */
-    notAdd?:boolean;
+    notAdd?: boolean;
     /**
      * 父路由
      */
-    parent?:Route;
+    parent?: Route;
 }
 
 /**
@@ -152,25 +152,25 @@ export interface IModuleCfg {
      * 模块名(模块内(父模块的子模块之间)唯一)，如果不设置，则系统会自动生成Module+id
      */
     name?: string;
-    
+
     /**
      * 容器选择器
      */
-    el?:string;
+    el?: string;
     /**
      * 是否单例，如果为true，则整个应用中共享一个模块实例，默认false
      */
-    singleton?:boolean;
+    singleton?: boolean;
 
     /**
      * 模块类名
      */
-    class?:string;
+    class?: string;
 
     /**
      * 模块路径(相对于app module路径)
      */
-    path?:string;
+    path?: string;
 
     /**
      * 模版字符串，如果以“<”开头，则表示模版字符串，否则表示模版url
@@ -191,56 +191,56 @@ export interface IModuleCfg {
      * 	}
      * ```
      */
-    methods ? : Object;
-    
+    methods?: Object;
+
     /**
      * 子模块配置
      */
     modules?: IModuleCfg[];
-    
+
     /**
      * 先于模块初始化加载的文件集合
      * 如果为string，则表示资源路径，type为js
      * 如果为object，则格式为{type:'js'/'css',url:路径}
      */
-    requires?:Array<string|Object>;
+    requires?: Array<string | Object>;
 }
 
 /**
  * 资源对象
  */
-export interface IResourceObj{
+export interface IResourceObj {
     /**
      * 资源内容 字符串或数据对象或element
      */
-    content?:any;
+    content?: any;
 
     /**
      * 类型js、template(html,htm), nd(编译后的模版文件)，data(不保存资源)
      */
-    type?:string;
+    type?: string;
 
     /**
      * 需要加载
      */
-    needLoad?:boolean;
+    needLoad?: boolean;
 }
 
 /**
  * 提示消息接口
  */
-export interface ITipMessage{
-    TipWords:Object;
-    ErrorMsgs:Object;
-    FormMsgs:Object; 
-    WeekDays:Object;
+export interface ITipMessage {
+    TipWords: Object;
+    ErrorMsgs: Object;
+    FormMsgs: Object;
+    WeekDays: Object;
 }
 
 /**
  * 改变的dom类型
  * 用于比较需要修改渲染的节点属性存储
  */
- export class ChangedDom{
+export class ChangedDom {
     /**
      * 改变方式
      */
@@ -256,23 +256,23 @@ export interface ITipMessage{
     /**
      * 在父节点中的位置
      */
-    public index:number;
+    public index: number;
 
     /**
      * 改变的属性数组
      * [{prop1:value1},...]
      */
-    public changeProps:Array<Object>;
+    public changeProps: Array<Object>;
 
     /**
      * 改变的asset
      */
-    public changeAssets:Array<Object>;
+    public changeAssets: Array<Object>;
 
     /**
      * 移除的属性名数组
      */
-    public removeProps:Array<string>;
+    public removeProps: Array<string>;
 
     /**
      * 
@@ -281,7 +281,7 @@ export interface ITipMessage{
      * @param parent    父虚拟dom
      * @param index     在父节点中的位置索引
      */
-    constructor(node?:Element,type?:string,parent?:Element,index?:number){
+    constructor(node?: Element, type?: string, parent?: Element, index?: number) {
         this.node = node;
         this.type = type;
         this.parent = parent;
@@ -292,15 +292,15 @@ export interface ITipMessage{
 /**
  * 自定义标签配置
  */
-export interface IDefineElementCfg{
+export interface IDefineElementCfg {
     /**
      * 初始化方法
      */
-    init:Function,
+    init: Function,
     /**
      * 渲染时方法
      */
-    handler?:Function
+    handler?: Function
 }
 
 /**
