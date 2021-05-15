@@ -27,9 +27,9 @@ export class Model{
                 //不处理原型属性
                 let excludes = ['__proto__','constructor'];
                 //数组不处理长度
-                if(Array.isArray(src)){
-                    excludes.push('length');
-                }
+                // if(Array.isArray(src)){
+                //     excludes.push('length');
+                // }
                 if(excludes.includes(<string>key)){
                     return true;
                 }
@@ -71,11 +71,17 @@ export class Model{
      * @param cancel    取消观察
      */
     public $watch(key:string,operate:string|Function,cancel?:boolean){
-        let model = this.$query(key);
+        let model = this;
+        let index = -1;
+        //如果带'.'，则只取最里面那个对象
+        if((index = key.lastIndexOf('.')) !== -1){
+            model = this.$query(key.substr(0,index));
+        }
+        
         if(!model){
             return;
         }
-        let mod = ModuleFactory.get(this.$moduleId);
+        const mod = ModuleFactory.get(this.$moduleId);
         if(cancel){
             mod.modelManager.removeWatcherFromModelMap(model,key,operate);
         }else{
