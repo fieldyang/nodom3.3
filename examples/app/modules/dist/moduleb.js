@@ -11,19 +11,16 @@ class ModuleB extends nodom.Module {
                 msg1: ''
             },
             methods: {
-                sendMsg: function (dom, module) {
-                    console.log(this.msg);
-                    module.broadcast(this.msg);
+                sendMsg: function (dom, model, module) {
+                    module.broadcast(model.data.msg);
                 },
-                setMsg:function(dom,module){
-                    this.msg = 'hahaha';
+                sendParent: function (dom, model, module) {
+                    module.send('modb1', model.data.msg,2);
                 },
-                sendParent: function (dom, module) {
-                    module.send('modb1', this.msg,2);
-                },
-                onReceive: function (module, from, msg) {
-                    this.msg1 = msg;
-                    this.from = from;
+                onReceive: function (model, from, msg) {
+                    console.log(this,msg,model);
+                    model.set('msg1',msg);
+                    model.set('from',from);
                 }
             }
         });
