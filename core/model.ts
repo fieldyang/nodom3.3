@@ -77,7 +77,6 @@ export class Model{
         if((index = key.lastIndexOf('.')) !== -1){
             model = this.$query(key.substr(0,index));
         }
-        
         if(!model){
             return;
         }
