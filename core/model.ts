@@ -76,6 +76,7 @@ export class Model{
         //如果带'.'，则只取最里面那个对象
         if((index = key.lastIndexOf('.')) !== -1){
             model = this.$query(key.substr(0,index));
+            key = key.substr(index+1);
         }
         if(!model){
             return;
