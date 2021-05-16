@@ -143,6 +143,8 @@ export default (function(){
             }
             //得到rows数组的model
             let rows = model.$query(directive.value);
+            console.log(rows.left);
+            
             // 无数据，不渲染
             if (!Util.isArray(rows) || rows.length === 0) {
                 return;
@@ -156,14 +158,18 @@ export default (function(){
             }
             let chds = [];
             let key = dom.key;
+            // console.log(key);
+            
             // 移除指令
             dom.removeDirectives(['repeat']);
-            for (let i = 0; i < rows.length; i++) {
+            for (let i = 0; i <rows.length; i++) {
                 let node = dom.clone();
                 //设置modelId
                 node.model = rows[i];
                 //设置key
-                setKey(node, key, i);
+                // if(rows[i].key)
+                // setKey(node, key, i);
+                setKey(node, key, rows[i].key);
                 rows[i].$index = i;
                 chds.push(node);
             }

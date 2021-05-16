@@ -1,7 +1,7 @@
 import { ModelManager } from "./modelmanager";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
-
+import {Util}   from "./util";
 /**
  * 模型类
  */
@@ -18,6 +18,7 @@ export class Model{
     constructor(data: any, module: Module){
         //模型管理器
         let mm:ModelManager = module.modelManager;
+        let key  = Util.genId();
         let proxy = new Proxy(data,{
             set:(src:any,key:string,value:any,receiver:any)=>{
                 //值未变,proxy 不处理
@@ -28,6 +29,9 @@ export class Model{
                 let excludes = ['__proto__','constructor'];
                 //数组不处理长度
                 if(Array.isArray(src)){
+                    console.log(src[key]===value);
+                    
+                   Reflect.set(src,'left',src.indexOf(src[key]));                   
                     excludes.push('length');
                 }
                 if(excludes.includes(<string>key)){
@@ -59,6 +63,7 @@ export class Model{
         proxy.$watch = this.$watch;
         proxy.$moduleId = module.id;
         proxy.$query = this.$query;
+        proxy.key=key;
         mm.addToDataMap(data,proxy);
         mm.addModelToModelMap(proxy,data);
         return proxy;
@@ -103,5 +108,22 @@ export class Model{
             key = arr[arr.length-1];
         }
         return model[key];
+    }
+    deepCopy(src:object){
+        if(!(typeof(src)=='object'&&src!=null)) return undefined;
+        const target = new Array();
+    for (const i in src) {
+        if (Object.prototype.hasOwnProperty.call(src, i)) {
+            
+                const element = src[i];
+                if(typeof(src)=='object'&&src!=null){
+                    target[i]   = this.deepCopy(element) ;
+                }else{
+                    target[i]   = element;
+                }
+            
+        };
+    };
+    return target;
     }
 }

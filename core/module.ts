@@ -323,7 +323,9 @@ export class Module {
                 this.clearDontRender(root);
                 this.doModuleEvent('onBeforeRenderToHtml');
                 // 比较节点
+                console.time('1');
                 root.compare(oldTree, this.renderDoms);
+                console.timeEnd('1');
                 // 删除
                 for (let i = this.renderDoms.length - 1; i >= 0; i--) {
                     let item: ChangedDom = this.renderDoms[i];

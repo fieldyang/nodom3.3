@@ -26,6 +26,7 @@
 <body>
     <div class="view">
         <div class="tip">过滤器</div>
+        <button e-click="change">render</button>
         <div class="code">
             <p>其中date、currency、number、tolowercase、touppercase主要用于表达式过滤，orderby主要用于配合数组排序，select用于数组元素过滤</p>
         </div>
@@ -127,7 +128,7 @@
             methods: {
                 selectArr: function (arr) {
                     return arr.filter(item=>item.name === 'yang');
-                }
+                },
             }
         }
     });

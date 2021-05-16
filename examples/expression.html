@@ -15,6 +15,7 @@
 
 <body>
     <div class="view">
+        {{ac.age.as}}
         <div>价格：{{(Math.round((price * discount)))|currency + 'hello'}}</div>
         <div>折扣：{{$cacDis(price*discount)}}</div>
         <div>描述：{{30 +$addStr('hello' + desc) + 20}}</div>
@@ -79,7 +80,12 @@
                 },
                 date1: (new Date()).getTime(),
                 url: 'home',
-                arr: [1, 2, 3, 4, 5, 6, 2, 3, 1, 2, 5]
+                arr: [1, 2, 3, 4, 5, 6, 2, 3, 1, 2, 5],
+                ac:{
+                    age:{
+                        as:1
+                    }
+                }
             },
             methods: {
                 cacDis: (data) => {
