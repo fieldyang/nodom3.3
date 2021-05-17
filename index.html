@@ -19,10 +19,11 @@
 		<button e-click="change">render</button>
 		<ul>
 			<li x-repeat="rows">{{name}}'s address is {{addr}}</li>
-			<li x-repeat="rows">{{name}}'s address is {{addr}}</li>
-			<li x-repeat="rows">{{name}}'s address is {{addr}}</li>
-			<li x-repeat="rows">{{name}}'s address is {{addr}}</li>
 		</ul>
+		<div x-if='show'>asd</div>
+		<div x-show='show'>asd</div>
+
+
 		<div><span x-elseif="grade>=60 && grade<70"> 及格 </span></div>
 	</div>
 
@@ -36,7 +37,12 @@
 			methods: {
 				onBeforeFirstRender: function () {},
 				change: function (dom, model, module, e, el) {
-					let arr =[];
+					this.rows.push({
+						name: 'zhang',
+						addr: 'mianyang'
+					});
+					this.show = false;
+					// let arr =[];
 					// for(let i=0;i<500;i++){
 					// 	arr=arr.concat(	{
 					// 			name: 'tang',
@@ -54,18 +60,16 @@
 					// 		})
 					// };
 					// console.log(arr);
-				// this.rows.push({
-				// 		name: 'gao',
-				// 		addr: 'chengdu'
-				// 	});
-				console.log(	this.rows.unshift());
-				console.log(this.rows);
+					// this.rows.unshift({
 
-					// ];
+					// 	name: 'gao',
+					// 	addr: 'chengdu'
 
+					// });
 				},
 			},
 			data: {
+				show: true,
 				rows: [{
 						name: 'yang',
 						addr: 'chengdu'
@@ -82,27 +86,59 @@
 						name: 'tang',
 						addr: 'beijing'
 					},
-					// {
-					// 	name: 'li',
-					// 	addr: 'shanghai'
-					// }, {
-					// 	name: 'yang',
-					// 	addr: 'chengdu'
-					// },
-					// {
-					// 	name: 'zhang',
-					// 	addr: 'mianyang'
-					// },
-					// {
-					// 	name: 'chen',
-					// 	addr: 'luoyang'
-					// },
-					// {
-					// 	name: 'tang',
-					// 	addr: 'beijing'
-					// }
+					{
+						name: 'li',
+						addr: 'shanghai'
+					}, {
+						name: 'yang',
+						addr: 'chengdu'
+					},
+					{
+						name: 'zhang',
+						addr: 'mianyang'
+					},
+					{
+						name: 'chen',
+						addr: 'luoyang'
+					},
+					{
+						name: 'tang',
+						addr: 'beijing'
+					}, {
+						name: 'zhang',
+						addr: 'mianyang'
+					},
+					{
+						name: 'chen',
+						addr: 'luoyang'
+					},
+					{
+						name: 'tang',
+						addr: 'beijing'
+					},
+					{
+						name: 'li',
+						addr: 'shanghai'
+					}, {
+						name: 'yang',
+						addr: 'chengdu'
+					},
+					{
+						name: 'zhang',
+						addr: 'mianyang'
+					},
+					{
+						name: 'chen',
+						addr: 'luoyang'
+					},
+					{
+						name: 'tang',
+						addr: 'beijing'
+					}
 				]
-				}
+
+
+			}
 		},
 	});
 </script>

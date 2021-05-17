@@ -606,7 +606,7 @@ export class Element {
      * @return true/false
      */
     public hasDirective(directiveType): boolean {
-       
+
         return this.directives.findIndex(item => item.type.name === directiveType) !== -1;
     }
 
@@ -939,24 +939,15 @@ export class Element {
                     retArr.push(new ChangedDom(item, 'add', this));
                 });
             } else { //都有子节点
-console.log(this.children,dst);
-
-                let oldStartIdx = 0;
-                let oldStartNode = dst.children[0];
-                let oldEndIdx = dst.children.length - 1;
-                let oldEndNode = dst.children[dst.children.length - 1];
-
-                let newStartIdx = 0;
-                let newStartNode = this.children[0];
-                let newEndIdx = this.children.length - 1;
-                let newEndNode = this.children[this.children.length - 1];
-                let newMap = new Map();
+                //子节点对比策略
+                let [oldStartIdx, oldStartNode, oldEndIdx, oldEndNode] = [0, dst.children[0], dst.children.length - 1, dst.children[dst.children.length - 1]];
+                let [newStartIdx, newStartNode, newEndIdx, newEndNode] = [0, this.children[0], this.children.length - 1, this.children[this.children.length - 1]];
+                let [newMap, newKeyMap] = [new Map(), new Map()];
                 while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
                     if (sameKey(oldStartNode, newStartNode)) {
                         newStartNode.compare(oldStartNode, retArr, this);
                         newStartNode = this.children[++newStartIdx];
                         oldStartNode = dst.children[++oldStartIdx];
-                        
                     } else if (sameKey(oldEndNode, newEndNode)) {
                         newEndNode.compare(oldEndNode, retArr, this);
                         newEndNode = this.children[--newEndIdx];
@@ -970,59 +961,33 @@ console.log(this.children,dst);
                         newEndNode = this.children[--newEndIdx];
                         oldStartNode = dst.children[++oldStartIdx];
                     } else {
-                        // if (newMap.size) {
-                        //     if (newMap.has(oldStartNode.key)) {
-                        //         newMap.get(oldStartNode.key).compare(oldStartNode, retArr, this);
-                        //         newMap.delete(oldStartNode.key);
-                        //         oldStartNode = dst.children[++oldStartIdx];
-                        //     } else if (newMap.has(oldEndNode.key)) {
-                        //         newMap.get(oldEndNode.key).compare(oldEndNode, retArr, this);
-                        //         newMap.delete(oldEndNode.key);
-                        //         oldEndNode = dst.children[--oldEndIdx];
-                        //     }
-                        // }
                         newMap.set(newStartIdx, newStartNode);
-                        newStartNode   = this.children[++newStartIdx];
+                        newKeyMap.set(newStartNode.key, newStartIdx);
+                        newStartNode = this.children[++newStartIdx];
                     }
                 }
                 if (oldStartIdx <= oldEndIdx || newStartIdx <= newEndIdx) {
-                    console.log(newMap);
-                    
                     if (newStartIdx <= newEndIdx) {//新增节点
-                        for (let i = newStartIdx; i <= newEndIdx; i++)  retArr.push(new ChangedDom(this.children[i], 'add', this, i));
-                        newMap.forEach((v,k)=>{
-                            retArr.push(new ChangedDom(v, 'add', this, k));
-                        })
-                    } else {
-                        let index = [];
-                        if(newMap.size){
-                            let keys=[];
-                            let compare:Array<number> =  new Array();
-                            for (let i = oldStartIdx; i <= oldEndIdx; i++) {
-                               keys.push(dst.children[i].key);
-                               compare.push(i);
-                            }
-                            newMap.forEach((v,k)=>{
-                                if(keys.indexOf(v.key)!== -1){
-                                    v.compare(dst.children[compare[keys.indexOf(v.key)]],retArr,this);
-                                    index.push(compare[keys.indexOf(v.key)]);
-                                }else{
-                                    retArr.push(new ChangedDom(v, 'add', this,k));
-                                }
-                            });
-                        }
+                        for (let i = newStartIdx; i <= newEndIdx; i++)  retArr.push(new ChangedDom(this.children[i], 'add', this, i)); 
+                    } else {//有老节点
                         for (let i = oldStartIdx; i <= oldEndIdx; i++) {
-                            if(index.includes(i)) continue;
-                           else{
+                            let oldKey = dst.children[i].key;
+                            if (newKeyMap.has(oldKey)) {
+                                newMap.get(newKeyMap.get(oldKey)).compare(dst.children[i], retArr, this);
+                                newMap.delete(newKeyMap.get(oldKey));
+                                newKeyMap.delete(oldKey);
+                            }
+                            else {
                                 retArr.push(new ChangedDom(dst.children[i], 'del', dst));
                             }
-                        }
+                        };
                     }
-                }else{
-                    newMap.forEach((v,k)=>{
+                } 
+                if (newMap.size) {
+                    newMap.forEach((v, k) => {
                         retArr.push(new ChangedDom(v, 'add', this, k));
                     })
-                }
+                };
 
                 // this.children.forEach((dom1, ind) => {
                 //     let dom2: Element = dst.children[ind];
@@ -1061,9 +1026,7 @@ console.log(this.children,dst);
         function sameKey(newElement, oldElement) {
             return newElement.key === oldElement.key;
         }
-        console.log(retArr);
-        
-        
+
     }
 
     /**

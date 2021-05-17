@@ -18,7 +18,6 @@ export class Model{
     constructor(data: any, module: Module){
         //模型管理器
         let mm:ModelManager = module.modelManager;
-        let key  = Util.genId();
         let proxy = new Proxy(data,{
             set:(src:any,key:string,value:any,receiver:any)=>{
                 //值未变,proxy 不处理
@@ -29,10 +28,10 @@ export class Model{
                 let excludes = ['__proto__','constructor'];
                 //数组不处理长度
                 if(Array.isArray(src)){
-                    console.log(src[key]===value);
-                    
-                   Reflect.set(src,'left',src.indexOf(src[key]));                   
-                    excludes.push('length');
+                  if(key==='length'){
+                    src[key] = value;
+                    return true;
+                  }
                 }
                 if(excludes.includes(<string>key)){
                     return true;
@@ -40,6 +39,7 @@ export class Model{
                 //yi不进行赋值
                 if(typeof value !== 'object' || !value.$watch){
                     //更新渲染
+                    if(typeof(value)!='function'&&!key.startsWith('$'))
                     mm.update(proxy,key,src[key],value);
                     src[key] = value;
                 }
@@ -63,7 +63,7 @@ export class Model{
         proxy.$watch = this.$watch;
         proxy.$moduleId = module.id;
         proxy.$query = this.$query;
-        proxy.key=key;
+        proxy.$key=Util.genId();;
         mm.addToDataMap(data,proxy);
         mm.addModelToModelMap(proxy,data);
         return proxy;
@@ -76,11 +76,17 @@ export class Model{
      * @param cancel    取消观察
      */
     public $watch(key:string,operate:string|Function,cancel?:boolean){
-        let model = this.$query(key);
+        let model = this;
+        let index = -1;
+        //如果带'.'，则只取最里面那个对象
+        if((index = key.lastIndexOf('.')) !== -1){
+            model = this.$query(key.substr(0,index));
+            key = key.substr(index+1);
+        }
         if(!model){
             return;
         }
-        let mod = ModuleFactory.get(this.$moduleId);
+        const mod = ModuleFactory.get(this.$moduleId);
         if(cancel){
             mod.modelManager.removeWatcherFromModelMap(model,key,operate);
         }else{
@@ -108,22 +114,5 @@ export class Model{
             key = arr[arr.length-1];
         }
         return model[key];
-    }
-    deepCopy(src:object){
-        if(!(typeof(src)=='object'&&src!=null)) return undefined;
-        const target = new Array();
-    for (const i in src) {
-        if (Object.prototype.hasOwnProperty.call(src, i)) {
-            
-                const element = src[i];
-                if(typeof(src)=='object'&&src!=null){
-                    target[i]   = this.deepCopy(element) ;
-                }else{
-                    target[i]   = element;
-                }
-            
-        };
-    };
-    return target;
     }
 }
