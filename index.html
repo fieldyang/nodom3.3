@@ -12,8 +12,8 @@
 	<body>
 		<div>
 			<button e-click="change">change</button>
-			<h1>{{data}}</h1>
-			<h1>{{data2.data3}}</h1>
+			<h1>{{data2.data4.data5}}</h1>
+			{{data1}}
 			<for condition="data1">{{name}}+++++{{age}}</for>
 		</div>
 	</body>
@@ -25,6 +25,9 @@
 					data: 1,
 					data2: {
 						data3: "123",
+						data4: {
+							data5: "111",
+						},
 					},
 					data1: [
 						{ name: "name1", age: "age1" },
@@ -36,13 +39,13 @@
 				},
 				methods: {
 					change: function (dom, module) {
-						this.data2.data3 = "changed";
+						this.data2.data4.data5 = "change";
+						this.data1.unshift({ name: "change", age: "change" });
+						console.log(this);
+						console.log(this.data1);
 					},
 					onBeforeFirstRender: function (module) {
-						this.$watch("data2.data3", "watch");
-					},
-					watch: function (a, b) {
-						console.log(a, b);
+						console.log(this);
 					},
 				},
 			},

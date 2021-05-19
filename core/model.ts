@@ -19,42 +19,55 @@ export class Model {
     constructor(data: any, module: Module) {
         //模型管理器
         let mm: ModelManager = module.modelManager;
+
         let proxy = new Proxy(data, {
             set: (src: any, key: string, value: any, receiver: any) => {
+                // console.log('set', src, key, value);
                 //值未变,proxy 不处理
                 if (src[key] === value) {
                     return true;
                 }
-                //不处理原型属性
+                //不处理原型属性 
                 let excludes = ['__proto__', 'constructor'];
-                //数组不处理长度
-                // if(Array.isArray(src)){
-                //     excludes.push('length');
-                // }
+
                 if (excludes.includes(<string>key)) {
                     return true;
                 }
-                //yi不进行赋值
+                //不进行赋值
                 if (typeof value !== 'object' || !value.$watch) {
                     //更新渲染
                     mm.update(proxy, key, src[key], value);
-                    src[key] = value;
+                    return Reflect.set(src, key, value, receiver)
+                    // src[key] = value;
                 }
-                return true;
+                return Reflect.set(src, key, value, receiver)
             },
             get: (src: any, key: string | symbol, receiver) => {
-                //如果是对象，则返回代理，便于后续激活get set方法
-                if (typeof src[key] === 'object') {
-                    //判断是否已经代理，如果未代理，则增加代理
-                    if (!src[key].$watch) {
-                        let p = new Model(src[key], module);
-                        receiver[key] = p;
-                        return p;
-                    } else {
-                        return module.modelManager.getFromDataMap(src[key]);
-                    }
+                // console.log('get', src, key);
+                // vue 的做法是变异 push 等方法避免追踪length 
+                // 但是我测试之后发现他还是会去追踪length
+                // if (Array.isArray(src) && arrayFunc.hasOwnProperty(key)) {
+                //     return Reflect.get(arrayFunc, key, receiver)
+                // }
+                let res = Reflect.get(src, key, receiver);
+                let data = module.modelManager.getFromDataMap(src[key])
+                if (data) {
+                    return data
                 }
-                return src[key];
+                if (typeof res === 'object') {
+                    //如果是的对象，则返回代理，便于后续激活get set方法                   
+                    // 判断是否已经代理，如果未代理，则增加代理
+                    if (!src[key].$watch) {
+                        let p = new Model(res, module);
+                        // receiver[key] = p;
+                        return p;
+                    }
+                    // else {
+                    //     let data = module.modelManager.getFromDataMap(src[key]);
+                    //     return data ? data : res;
+                    // }
+                }
+                return res;
             }
         });
         proxy.$watch = this.$watch;
@@ -64,6 +77,7 @@ export class Model {
         mm.addModelToModelMap(proxy, data);
         return proxy;
     }
+
 
     /**
      * 观察(取消观察)某个数据项
@@ -76,7 +90,8 @@ export class Model {
         let index = -1;
         //如果带'.'，则只取最里面那个对象
         if ((index = key.lastIndexOf('.')) !== -1) {
-            model = this.$query(key.substr(index + 1));
+            model = this.$query(key.substr(0, index));
+            key = key.substr(index + 1);
         }
         if (!model) {
             return;

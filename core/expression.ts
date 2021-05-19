@@ -35,7 +35,8 @@ export class Expression {
         if (execStr) {
             let v: string = this.fields.length > 0 ? ',' + this.fields.join(',') : '';
             execStr = 'function($module' + v + '){return ' + execStr + '}';
-            this.execFunc = eval('(' + execStr + ')');
+            this.execFunc = eval('(' + execStr + ')')
+
         }
     }
 
@@ -155,8 +156,9 @@ export class Expression {
             }
         }
         let endStr = exprStr.substring(first);
-        if (/^([A-Za-z0-9]+|[A-Za-z0-9]+\.[A-Za-z0-9]+)$/.test(endStr)) {
-            fields.push(endStr);
+        if (/^[A-Za-z0-9]+/.test(endStr) && endStr.indexOf('instanceof') === -1) {
+            let str = endStr.match(/\w+/)[0];
+            fields.push(str);
         }
         express += endStr;
 
@@ -248,7 +250,7 @@ export class Expression {
         } catch (e) {
 
         }
-        return v === undefined || v === null ? '' : v;
+        return v === undefined || v === null ? '' : JSON.stringify(v);
         /**
          * 获取字段值
          * @param module    模块
