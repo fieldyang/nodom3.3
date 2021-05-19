@@ -1,7 +1,7 @@
 import { ModuleFactory } from "../index";
 import { ModelManager } from "./modelmanager";
 import { Module } from "./module";
-
+import { Util } from "./util";
 /**
  * 模型类
  */
@@ -36,9 +36,10 @@ export class Model {
                 //不进行赋值
                 if (typeof value !== 'object' || !value.$watch) {
                     //更新渲染
-                    mm.update(proxy, key, src[key], value);
-                    return Reflect.set(src, key, value, receiver)
                     // src[key] = value;
+                    if (typeof (value) != 'function' && !key.startsWith('$'))
+                        mm.update(proxy, key, src[key], value);
+                    return Reflect.set(src, key, value, receiver)
                 }
                 return Reflect.set(src, key, value, receiver)
             },
@@ -73,6 +74,7 @@ export class Model {
         proxy.$watch = this.$watch;
         proxy.$moduleId = module.id;
         proxy.$query = this.$query;
+        proxy.$key = Util.genId();;
         mm.addToDataMap(data, proxy);
         mm.addModelToModelMap(proxy, data);
         return proxy;

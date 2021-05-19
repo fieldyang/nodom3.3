@@ -35,8 +35,9 @@ export class Expression {
         if (execStr) {
             let v: string = this.fields.length > 0 ? ',' + this.fields.join(',') : '';
             execStr = 'function($module' + v + '){return ' + execStr + '}';
-            this.execFunc = eval('(' + execStr + ')')
-
+            this.execFunc = eval('(' + execStr + ')');
+            // console.log(this.execFunc);
+            
         }
     }
 
@@ -66,10 +67,12 @@ export class Expression {
                 })
             }
         });
-        exprStr = exprStr = exprStr.trim().replace(/([^w])\s+|instanceof|\s+/g, (w, index) => {
+        exprStr =exprStr.trim().replace(/([w]\s)|instanceof|\s+/g, (w, index) => {
             if (index) return index;
             else {
-                if (w == 'instanceof') return ' ' + w + ' ';
+                if (w === 'instanceof') {
+                    return ' ' + w + ' ';
+                }
                 return '';
             }
         });
@@ -156,8 +159,8 @@ export class Expression {
             }
         }
         let endStr = exprStr.substring(first);
-        if (/^[A-Za-z0-9]+/.test(endStr) && endStr.indexOf('instanceof') === -1) {
-            let str = endStr.match(/\w+/)[0];
+        if (/^[A-Za-z0-9]+/.test(endStr)&&endStr.indexOf(' ')===-1) {
+            let str=endStr.match(/\w+/)[0];
             fields.push(str);
         }
         express += endStr;

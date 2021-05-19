@@ -15,6 +15,7 @@
 
 <body>
     <div class="view">
+        <div>多级数据：{{ac.age.as}}</div>
         <div>价格：{{(Math.round((price * discount)))|currency + 'hello'}}</div>
         <div>折扣：{{$cacDis(price*discount)}}</div>
         <div>描述：{{30 +$addStr('hello' + desc) + 20}}</div>
@@ -24,8 +25,8 @@
         <div>当前时间是:{{date1|date:'HH:mm:ss'}}</div>
         <div x-if='Object.keys(goods).length>0'>判断商品列表是否存在</div>
         <div>路径：{{'/'+'path'+'/'+url}}</div>
+        排序过滤器：
         <ul>
-            排序过滤器：
             <li x-repeat='rows|orderby:name:desc'>{{name}}'s address is {{addr}}</li>
         </ul>
         <div>{{!true}}</div>
@@ -33,10 +34,9 @@
         <div>转换为小写字母:{{name|tolowercase}}</div>
         <div>转换为大写字母:{{name|touppercase}}</div>
         <div>数组求和:{{$sum(...arr)}}</div>
-        <div>判断数组中有没有‘num’: <div x-if="new Set(arr).has(num)">true</div>
-        </div>
+        <div>判断数组中有没有‘num’: <span x-if="new Set(arr).has(num)">true</span></div>
         <div>价格求和: {{$sum(1,2)+price}}</div>
-        <div>{{(new Date().getTime())|date:'yyyy-MM-dd'}} 是否为工作日：<div x-if="new Date().getDay()<6">true</div></div>
+        <div>{{(new Date().getTime())|date:'yyyy-MM-dd'}} 是否为工作日：<span x-if="new Date().getDay()<6">true</span></div>
         <div>货币过滤器：{{(price*discount)|currency:¥}}</div>
         <div x-if="price>30 && discount !== undefined">是否是低价商品并且还有折扣</div>
         <div>计算：{{$cac(1,2)+ (Math.round((price * discount)))|number:1 + 1}}</div>
@@ -79,7 +79,12 @@
                 },
                 date1: (new Date()).getTime(),
                 url: 'home',
-                arr: [1, 2, 3, 4, 5, 6, 2, 3, 1, 2, 5]
+                arr: [1, 2, 3, 4, 5, 6, 2, 3, 1, 2, 5],
+                ac:{
+                    age:{
+                        as:1
+                    }
+                }
             },
             methods: {
                 cacDis: (data) => {
