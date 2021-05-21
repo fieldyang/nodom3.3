@@ -69,12 +69,14 @@ export default (function(){
      * 转换为小写字母
      */
     FilterManager.addType('tolowercase', (value) => {
+        
         if (Util.isEmpty(value)) {
             return '';
         }
         if (!Util.isString(value) || Util.isEmpty(value)) {
             throw new NError('invoke1', NodomMessage.TipWords['filter'] + ' tolowercase', '0', 'string');
         }
+        
         return value.toLowerCase();
     });
 

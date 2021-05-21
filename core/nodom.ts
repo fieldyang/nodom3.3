@@ -7,7 +7,7 @@ import { ModuleFactory } from "./modulefactory";
 import { Renderer } from "./renderer";
 import { Route } from "./router";
 import { Scheduler } from "./scheduler";
-import { IAppCfg, IMdlClassObj, IRouteCfg, ITipMessage } from "./types";
+import { IAppCfg, IMdlClassObj, IRouteCfg } from "./types";
 import { Util } from "./util";
 
 /**
@@ -56,6 +56,7 @@ export async function app(config?: IAppCfg): Promise<Module> {
     } else {
         module = new Module(config.module);
     }
+
     //设置主模块
     ModuleFactory.setMain(module);
     await module.active();

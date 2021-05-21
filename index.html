@@ -3,32 +3,51 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-		<title>route</title>
+		<title>filter</title>
 		<script type="text/javascript" src="./dist/nodom.js"></script>
-		<!-- <script src="/examples/config/route.js"></script> -->
-		<style>
-			.colorimp {
-				color: red;
-			}
-		</style>
+		<link rel="stylesheet" href="./css/nodomui.css" />
 	</head>
 
 	<body>
-		<div><span x-elseif="grade>=60 && grade<70"> 及格 </span></div>
+		<div>
+			<ui-text x-field="data" icon="nd-icon-minus" iconPos="right"></ui-text>
+			<!-- <button e-click="change">change</button>
+			<h1>{{data2.data4.data5}}</h1>
+			{{data1}}
+			<for condition="data1">{{name}}+++++{{age}}</for> -->
+		</div>
 	</body>
 	<script>
 		nodom.app({
 			module: {
 				el: "div",
-				// template:'/child.html'
-				// class: "MdlRouteMain",
-				// methods:{
-				//     onBeforeFirstRender:function(){
-				//         console.log('ddd')
-				//         console.log($.RouterTree.get('/router/a/b/route1/aa/bb'));
-
-				//     }
-				// }
+				data: {
+					data: 1,
+					data2: {
+						data3: "123",
+						data4: {
+							data5: "111",
+						},
+					},
+					data1: [
+						{ name: "name1", age: "age1" },
+						{ name: "name2", age: "age2" },
+						{ name: "name3", age: "age3" },
+						{ name: "name4", age: "age4" },
+						{ name: "name5", age: "age5" },
+					],
+				},
+				methods: {
+					change: function (dom, module) {
+						this.data2.data4.data5 = "change";
+						this.data1.unshift({ name: "change", age: "change" });
+						console.log(this);
+						console.log(this.data1);
+					},
+					onBeforeFirstRender: function (module) {
+						console.log(this);
+					},
+				},
 			},
 		});
 	</script>

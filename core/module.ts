@@ -240,6 +240,7 @@ export class Module {
         } else { //空数据
             this.model = new Model({}, this);
         }
+
         //批量请求文件
         if (urlArr.length > 0) {
             let rets: IResourceObj[] = await ResourceManager.getResources(urlArr);
@@ -252,6 +253,10 @@ export class Module {
             }
         }
 
+
+
+
+        
         //处理子模块
         if (this.initConfig.modules) {
             for (let cfg of this.initConfig.modules) {
@@ -323,7 +328,7 @@ export class Module {
                 this.clearDontRender(root);
                 this.doModuleEvent('onBeforeRenderToHtml');
                 // 比较节点
-                root.compare(oldTree, this.renderDoms);
+                    root.compare(oldTree, this.renderDoms);
                 // 删除
                 for (let i = this.renderDoms.length - 1; i >= 0; i--) {
                     let item: ChangedDom = this.renderDoms[i];
@@ -379,11 +384,11 @@ export class Module {
         let me = this;
         let m: Module = new Module({ name: moduleName });
         //克隆数据
-        if(this.model){
-            let data = Util.clone(this.model,/^\$\S+/);
-            m.model = new Model(data,m);
+        if (this.model) {
+            let data = Util.clone(this.model, /^\$\S+/);
+            m.model = new Model(data, m);
         }
-        let excludes = ['id', 'name','model','virtualDom', 'container', 'containerKey', 'modelManager', 'plugins'];
+        let excludes = ['id', 'name', 'model', 'virtualDom', 'container', 'containerKey', 'modelManager', 'plugins'];
         Object.getOwnPropertyNames(this).forEach((item) => {
             if (excludes.includes(item)) {
                 return;
@@ -465,18 +470,18 @@ export class Module {
         }
 
         let m: Module;
-        let pm:Module = ModuleFactory.get(this.parentId);
+        let pm: Module = ModuleFactory.get(this.parentId);
         //1 比对父节点名
         //2 比对兄弟节点名
         //3 比对孩子节点名
-        if(pm){
-            if(pm.name === toName){ //父亲
+        if (pm) {
+            if (pm.name === toName) { //父亲
                 m = pm
-            }else{ //兄弟
+            } else { //兄弟
                 m = pm.getChild(toName);
             }
         }
-        if(!m){ //孩子节点
+        if (!m) { //孩子节点
             m = this.getChild(toName);
         }
         if (m) {
@@ -602,9 +607,9 @@ export class Module {
             return;
         }
         //模块作为第一个参数
-        if(param){
+        if (param) {
             param.unshift(this);
-        }else{
+        } else {
             param = [this];
         }
         //调用方法
