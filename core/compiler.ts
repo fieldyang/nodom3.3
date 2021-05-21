@@ -3,7 +3,6 @@ import { Directive } from "./directive";
 import { Element } from "./element";
 import { NEvent } from "./event";
 import { Expression } from "./expression";
-import { PluginManager } from "./pluginmanager";
 import { ASTObj, selfClosingTag } from "./types";
 import { Util } from "./util";
 
@@ -81,7 +80,7 @@ export class Compiler {
         let text = new Element();
         parent.children.push(text);
         // 处理属性
-        this.handleAstAttrs(text, astObj.attrs,parent);
+        this.handleAstAttrs(text, astObj.attrs, parent);
         // text 类型的节点不需要处理子节点。
         text.expressions = astObj.expressions;
         text.textContent = astObj.textContent;
@@ -96,12 +95,12 @@ export class Compiler {
         let de = DefineElementManager.get(astObj.tagName.toUpperCase());
         let child = new Element(astObj.tagName);
         parent.add(child);
-        this.handleAstAttrs(child, astObj.attrs,parent);
-        if(de){
-            de.init(child,parent);
+        this.handleAstAttrs(child, astObj.attrs, parent);
+        if (de) {
+            de.init(child, parent);
         }
         this.compileAST(child, astObj.children);
-        
+
         // // 处理属性
         // if (de) {
         //     parent.children.push(
@@ -119,7 +118,7 @@ export class Compiler {
      * @param attrs     需要编译成虚拟dom的attrs
      * @param parent    父虚拟dom节点
      */
-    private static handleAstAttrs(oe: Element, attrs: Array<{ propName: string, value: any }>,parent:Element) {
+    private static handleAstAttrs(oe: Element, attrs: Array<{ propName: string, value: any }>, parent: Element) {
         //指令数组 先处理普通属性在处理指令
         let directives = [];
         if (!attrs) { return }
@@ -149,7 +148,7 @@ export class Compiler {
         }
         //处理属性
         for (let attr of directives) {
-            new Directive(attr.propName.substr(2), attr.value.trim(), oe,parent, null, true);
+            new Directive(attr.propName.substr(2), attr.value.trim(), oe, parent, null, true);
         }
         if (directives.length > 1) {
             //指令排序
