@@ -48,14 +48,14 @@ export class DefineElement {
      */
     extraDataName:string;
 
-    constructor(params:HTMLElement|Object){
+    constructor(params:HTMLElement|Object|Element){
         
     }
 
     /**
      * 初始化
      */
-    public init(dom:Element){}
+    public init(dom:Element,parent?:Element){}
     
     /**
      * 前置渲染方法(dom render方法中获取modelId和parentKey后执行)
