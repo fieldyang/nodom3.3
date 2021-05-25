@@ -1,3 +1,5 @@
+import { Set } from "../node_modules/typescript/lib/typescript";
+import { Element } from "./element";
 import { ModelManager } from "./modelmanager";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
@@ -10,6 +12,7 @@ export class Model{
      * 模块id
      */
     $moduleId:number;
+    $ob:Map<String,Array<Element>>;
     /**
      * @param data 		数据
      * @param module 	模块对象
@@ -38,16 +41,20 @@ export class Model{
                 }
                 //yi不进行赋值
                 if(typeof value !== 'object' || !value.$watch){
+                  
                     //更新渲染
-                    if(typeof(value)!='function'&&!key.startsWith('$'))
-                    mm.update(proxy,key,src[key],value);
+                    if(typeof value !='function'&&!key.startsWith('$')){
+                        mm.update(proxy,key,src[key],value);
+                    }
                     src[key] = value;
+                    // if(typeof value !='function'&&!key.startsWith('$'))
+                    // mm.dataRender(proxy,key);
                 }
                 return true;
             },
             get:(src:any,key:string|symbol,receiver)=>{
                 //如果是对象，则返回代理，便于后续激活get set方法
-                if(typeof src[key] === 'object'){
+                if(typeof src[key] === 'object'&&src[key]!='$ob'){
                     //判断是否已经代理，如果未代理，则增加代理
                     if(!src[key].$watch){
                         let p = new Model(src[key],module);
@@ -63,7 +70,8 @@ export class Model{
         proxy.$watch = this.$watch;
         proxy.$moduleId = module.id;
         proxy.$query = this.$query;
-        proxy.$key=Util.genId();;
+        proxy.$key=Util.genId();
+        mm.addObserveMap(proxy);
         mm.addToDataMap(data,proxy);
         mm.addModelToModelMap(proxy,data);
         return proxy;

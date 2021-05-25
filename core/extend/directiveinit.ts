@@ -67,10 +67,44 @@ export default (function () {
                         dir.extra.moduleId = m.id;
                     }
                     module.addChild(m.id);
+                    //插槽
+                    if (dom.children.length > 0) {
+                        let slotMap: Map<string, Element> = new Map();
+                        dom.children.forEach((v) => {
+                            if (v.hasProp('slotName')) {
+                                slotMap.set(v.getProp('slotName'), v.clone(true));
+                            }
+                        });
+                        //有指令
+                        if (slotMap.size > 0) {
+                            let oldMap = findSlot(m.virtualDom);
+                            //原模块
+                            oldMap.forEach(slot => {
+                                let pd:Element = m.getElement(slot.parentKey, true);
+                                let index = pd.children.findIndex((v: Element) => { return v.key === slot.key; });
+                                if (index >= 0) {
+                                    if (slotMap.has(slot.slotName)) {
+                                        pd.children.splice(index, 1, slotMap.get(slot.slotName));
+                                    }
+                                }
+                            })
+                        }
+                    }
+
                     await m.active();
                 }
             } else if (subMdl && subMdl.state !== 3) {
                 await subMdl.active();
+            }
+            function findSlot(dom: Element, res = new Map()) {
+                if (dom.slotName != undefined) {
+                    res.set(dom.slotName, dom);
+                    return;
+                }
+                dom.children.forEach(v => {
+                    findSlot(v, res);
+                })
+                return res;
             }
         }
     );
@@ -166,9 +200,12 @@ export default (function () {
                 //设置modelId
                 node.model = rows[i];
                 //设置key
-                // if(rows[i].key)
-                // setKey(node, key, i);
-                setKey(node, key, rows[i].$key);
+                if (rows[i].$key) {
+                    setKey(node, key, rows[i].$key);
+                }
+                else {
+                    setKey(node, key, Util.genId());
+                }
                 rows[i].$index = i;
                 chds.push(node);
             }
@@ -226,7 +263,8 @@ export default (function () {
                 let node = directive.extra.groups[i];
                 let dir = node.getDirective('if') || node.getDirective('elseif') || node.getDirective('else');
                 if (dir.value) { //if elseif指令
-                    let v = dir.value.val(dom.model);
+                    let v = dir.value.val(dom.model, dom);
+
                     if (v && v !== 'false') {
                         target = i;
                         break;
@@ -248,6 +286,7 @@ export default (function () {
                     parent.children.splice(index + 1, 0, tNode);
                 }
             }
+
         }
     );
 
@@ -340,7 +379,7 @@ export default (function () {
                     node.dontRender = true;
                     continue;
                 }
-                let v = dir.value.val(dom.model);
+                let v = dir.value.val(dom.model, dom);
                 hasTrue = v && v !== 'false';
                 node.dontRender = !hasTrue;
             }
@@ -389,7 +428,7 @@ export default (function () {
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             let model = dom.model;
-            let v = directive.value.val(model);
+            let v = directive.value.val(model, dom);
             //渲染
             if (v && v !== 'false') {
                 dom.dontRender = false;
@@ -438,7 +477,7 @@ export default (function () {
                 let r = obj[key];
 
                 if (r instanceof Expression) {
-                    r = r.val(model);
+                    r = r.val(model, dom);
                 }
                 let ind = clsArr.indexOf(key);
                 if (!r || r === 'false') {
@@ -816,5 +855,13 @@ export default (function () {
         (directive, dom, module, parent) => {
 
         }
-    )
+    );
+    DirectiveManager.addType('slot',
+        3,
+        (directive, dom:Element) => {
+            dom.setProp('slotName', directive.value);
+        },
+        (directive, dom, module, parent) => {
+
+        })
 }())

@@ -7,6 +7,8 @@ class ModuleA extends nodom.Module{
             template:`
                 <button e-click='sendMsg'>发送</button>
                 <button e-click='addData'>添加</button>
+               
+
                 <ul>
                     <li x-repeat='foods'>{{name}}</li>
                 </ul>

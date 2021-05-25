@@ -1,3 +1,5 @@
+import { ClassDeclaration, ClassElement, ClassExpression } from "../node_modules/typescript/lib/typescript";
+import { DefineElement } from "./defineelement";
 import { Element } from "./element";
 import { Module } from "./module";
 import { Route } from "./router";
@@ -300,7 +302,9 @@ export interface IDefineElementCfg{
     /**
      * 渲染时方法
      */
-    handler?:Function
+    handler?:Function,
+
+    target?:Object,
 }
 
 /**

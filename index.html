@@ -11,20 +11,27 @@
 		.colorimp {
 			color: red;
 		}
+		.red{
+			color: red;
+		}
 	</style>
 </head>
 
 <body>
 	<div>
+		{{$time.a}}
+		<div x-slot='name'></div>
 		<button e-click="change">render</button>
 		<ul>
 			<li x-repeat="rows">{{name}}'s address is {{addr}}</li>
 		</ul>
 		<div x-if='show'>asd</div>
 		<div x-show='show'>asd</div>
-
-
+		{{show}}
+		<div>{{name}}</div>
 		<div><span x-elseif="grade>=60 && grade<70"> 及格 </span></div>
+		<div x-class="{red:'red'}">test</div>
+		<input type="text" x-field='text'>
 	</div>
 
 </body>
@@ -41,25 +48,10 @@
 						name: 'zhang',
 						addr: 'mianyang'
 					});
+					// this.rows[0].name='asd';
 					this.show = false;
-					// let arr =[];
-					// for(let i=0;i<500;i++){
-					// 	arr=arr.concat(	{
-					// 			name: 'tang',
-					// 			addr: 'beijing'
-					// 		},
-					// 		{
-					// 			name: 'chen',
-					// 			addr: 'luoyang'
-					// 		},{
-					// 			name: 'zhang',
-					// 			addr: 'mianyang'
-					// 		},{
-					// 			name: 'yang',
-					// 			addr: 'chengdu'
-					// 		})
-					// };
-					// console.log(arr);
+					this.name ='gg';
+					this.red =false;
 					// this.rows.unshift({
 
 					// 	name: 'gao',
@@ -70,6 +62,12 @@
 			},
 			data: {
 				show: true,
+				name:'kyle',
+				red:true,
+				text:'',
+				$time:{
+					a:1
+				},
 				rows: [{
 						name: 'yang',
 						addr: 'chengdu'
@@ -136,8 +134,6 @@
 						addr: 'beijing'
 					}
 				]
-
-
 			}
 		},
 	});
