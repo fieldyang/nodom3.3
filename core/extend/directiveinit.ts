@@ -196,6 +196,44 @@ export default (function () {
     );
 
     /**
+     * 递归指令
+     * 作用：在dom内部递归，即根据数据层复制节点作为前一层的子节点
+     * 数据格式：
+     * data:{
+     *     recurItem:{
+    *          title:'第一层',
+    *          recurItem:{
+    *              title:'第二层',
+    *              recurItem:{...}
+    *          }
+    *      }
+     * }
+     * 模版格式：
+     * <div x-recursion='items'><span>{{title}}</span></div>
+     */
+    DirectiveManager.addType('recur',
+        2,
+        (directive:Directive,dom:Element,parent:Element) => {
+        },
+        (directive: Directive, dom: Element, module: Module, parent: Element) => {
+            let model = dom.model;
+            if (!model) {
+                return;
+            }
+            //得到rows数组的model
+            let data = model.$query(directive.value);
+            dom.model = data;
+            //处理内部递归节点
+            if(data[directive.value]){
+                let node = dom.clone();
+                node.model = data;
+                //作为当前节点子节点
+                dom.add(node);
+            }
+        }
+    );
+
+    /**
      * 指令名 if
      * 描述：条件指令
      */

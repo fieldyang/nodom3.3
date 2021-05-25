@@ -253,7 +253,8 @@ export class Expression {
         } catch (e) {
 
         }
-        return v === undefined || v === null ? '' : JSON.stringify(v);
+        // return v === undefined || v === null ? '' : JSON.stringify(v);
+        return v === undefined || v === null ? '':v;
         /**
          * 获取字段值
          * @param module    模块
