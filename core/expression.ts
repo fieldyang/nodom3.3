@@ -37,7 +37,7 @@ export class Expression {
             execStr = 'function($module' + v + '){return ' + execStr + '}';
             this.execFunc = eval('(' + execStr + ')');
             // console.log(this.execFunc);
-            
+
         }
     }
 
@@ -67,7 +67,7 @@ export class Expression {
                 })
             }
         });
-        exprStr =exprStr.trim().replace(/([w]\s)|instanceof|\s+/g, (w, index) => {
+        exprStr = exprStr.trim().replace(/([w]\s)|instanceof|\s+/g, (w, index) => {
             if (index) return index;
             else {
                 if (w === 'instanceof') {
@@ -159,8 +159,12 @@ export class Expression {
             }
         }
         let endStr = exprStr.substring(first);
-        if (/^[A-Za-z0-9]+/.test(endStr)&&endStr.indexOf(' ')===-1) {
-            let str=endStr.match(/\w+/)[0];
+        // if (/^[A-Za-z0-9]+/.test(endStr) && endStr.indexOf(' ') === -1) {
+        //     let str = endStr.match(/\w+/)[0];
+        //     fields.push(str);
+        // }
+        if (endStr.indexOf(' ') === -1 && !endStr.startsWith('##TMP') && !endStr.startsWith(')')) {
+            let str = endStr.indexOf('.') != -1 ? endStr.substring(0, endStr.indexOf('.')) : endStr;
             fields.push(str);
         }
         express += endStr;
@@ -253,7 +257,7 @@ export class Expression {
         } catch (e) {
 
         }
-        return v === undefined || v === null ? '' : JSON.stringify(v);
+        return v === undefined || v === null ? '' : v;
         /**
          * 获取字段值
          * @param module    模块

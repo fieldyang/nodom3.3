@@ -1,13 +1,13 @@
-import { Module } from "./module";
+import { DefineElement } from "./defineelement";
 import { Directive } from "./directive";
-import { Expression } from "./expression";
-import { Model } from "./model";
-import { ModuleFactory } from "./modulefactory";
 import { NError } from "./error";
 import { NEvent } from "./event";
-import { Util } from "./util";
+import { Expression } from "./expression";
+import { Model } from "./model";
+import { Module } from "./module";
+import { ModuleFactory } from "./modulefactory";
 import { ChangedDom } from "./types";
-import { Plugin } from "./plugin";
+import { Util } from "./util";
 
 /**
  * 虚拟dom
@@ -98,7 +98,12 @@ export class Element {
     /**
      * 绑定插件
      */
-    public plugin: Plugin;
+    // public plugin: Plugin;
+
+    /**
+     * 自定义元素(插件，自定义标签)
+     */
+    public defineEl: DefineElement;
 
     /**
      * 临时参数 map
@@ -149,8 +154,8 @@ export class Element {
         }
 
         //自定义元素的前置渲染
-        if (this.plugin) {
-            this.plugin.beforeRender(module, this);
+        if (this.defineEl) {
+            this.defineEl.beforeRender(module, this);
         }
 
         if (this.tagName !== undefined) { //element
@@ -174,8 +179,8 @@ export class Element {
             }
         }
         //自定义元素的后置渲染
-        if (this.plugin) {
-            this.plugin.afterRender(module, this);
+        if (this.defineEl) {
+            this.defineEl.afterRender(module, this);
         }
         return true;
     }
@@ -369,7 +374,7 @@ export class Element {
 
         //不直接拷贝的属性
         // let notCopyProps:string[] = ['parent','directives','props','exprProps','events','children'];
-        let notCopyProps: string[] = ['parent', 'directives', 'children'];
+        let notCopyProps: string[] = ['parent', 'directives', 'children', 'defineEl'];
         //简单属性
         Util.getOwnProps(this).forEach((p) => {
             if (notCopyProps.includes(p)) {
@@ -388,11 +393,11 @@ export class Element {
         }
 
         //define element复制
-        if (this.plugin) {
+        if (this.defineEl) {
             if (changeKey) {
-                dst.plugin = this.plugin.clone(dst);
+                dst.defineEl = this.defineEl.clone(dst);
             } else {
-                dst.plugin = this.plugin;
+                dst.defineEl = this.defineEl;
             }
         }
 
@@ -968,7 +973,7 @@ export class Element {
                 }
                 if (oldStartIdx <= oldEndIdx || newStartIdx <= newEndIdx) {
                     if (newStartIdx <= newEndIdx) {//新增节点
-                        for (let i = newStartIdx; i <= newEndIdx; i++)  retArr.push(new ChangedDom(this.children[i], 'add', this, i)); 
+                        for (let i = newStartIdx; i <= newEndIdx; i++)  retArr.push(new ChangedDom(this.children[i], 'add', this, i));
                     } else {//有老节点
                         for (let i = oldStartIdx; i <= oldEndIdx; i++) {
                             let oldKey = dst.children[i].key;
@@ -982,7 +987,7 @@ export class Element {
                             }
                         };
                     }
-                } 
+                }
                 if (newMap.size) {
                     newMap.forEach((v, k) => {
                         retArr.push(new ChangedDom(v, 'add', this, k));

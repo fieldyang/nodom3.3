@@ -297,6 +297,7 @@ export interface IDefineElementCfg {
      * 初始化方法
      */
     init: Function,
+
     /**
      * 渲染时方法
      */
@@ -306,7 +307,7 @@ export interface IDefineElementCfg {
 /**
  *  AST对象约束
  */
-export interface ASTObj {
+export interface ASTObj extends Object {
     /**
      * 节点类型，如果是原生节点，如div则是div，如果是文本节点则是text。如果是注释则为comment
      */
@@ -337,7 +338,6 @@ export interface ASTObj {
      */
     textContent?: string;
 }
-
 
 
 export const selfClosingTag = [

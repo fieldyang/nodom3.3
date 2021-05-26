@@ -22,7 +22,6 @@ export class Model {
 
         let proxy = new Proxy(data, {
             set: (src: any, key: string, value: any, receiver: any) => {
-                // console.log('set', src, key, value);
                 //值未变,proxy 不处理
                 if (src[key] === value) {
                     return true;
@@ -34,22 +33,17 @@ export class Model {
                     return true;
                 }
                 //不进行赋值
+                const excArr = ['$watch', "$moduleId", "$query", "$key"]
                 if (typeof value !== 'object' || !value.$watch) {
                     //更新渲染
                     // src[key] = value;
-                    if (typeof (value) != 'function' && !key.startsWith('$'))
+                    if (typeof (value) != 'function' && excArr.indexOf(value) == -1)
                         mm.update(proxy, key, src[key], value);
                     return Reflect.set(src, key, value, receiver)
                 }
                 return Reflect.set(src, key, value, receiver)
             },
             get: (src: any, key: string | symbol, receiver) => {
-                // console.log('get', src, key);
-                // vue 的做法是变异 push 等方法避免追踪length 
-                // 但是我测试之后发现他还是会去追踪length
-                // if (Array.isArray(src) && arrayFunc.hasOwnProperty(key)) {
-                //     return Reflect.get(arrayFunc, key, receiver)
-                // }
                 let res = Reflect.get(src, key, receiver);
                 let data = module.modelManager.getFromDataMap(src[key])
                 if (data) {
@@ -69,7 +63,8 @@ export class Model {
                     // }
                 }
                 return res;
-            }
+            },
+
         });
         proxy.$watch = this.$watch;
         proxy.$moduleId = module.id;

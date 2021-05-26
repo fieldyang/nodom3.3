@@ -1,5 +1,6 @@
 import { Application } from "./application";
 import { Compiler } from "./compiler";
+import { DefineElement } from "./defineelement";
 import { Element } from "./element";
 import { MessageQueue } from "./messagequeue";
 import { MethodFactory } from "./methodfactory";
@@ -7,7 +8,6 @@ import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
 import { ModuleFactory } from "./modulefactory";
 import { request } from "./nodom";
-import { Plugin } from "./plugin";
 import { Renderer } from "./renderer";
 import { ResourceManager } from "./resourcemanager";
 import { ChangedDom, IModuleCfg, IResourceObj } from "./types";
@@ -129,7 +129,7 @@ export class Module {
     /**
      * 插件集合
      */
-    private plugins: Map<string, Plugin> = new Map();
+    private defineElements: Map<string, DefineElement> = new Map();
 
     /**
      * 构造器
@@ -256,7 +256,7 @@ export class Module {
 
 
 
-        
+
         //处理子模块
         if (this.initConfig.modules) {
             for (let cfg of this.initConfig.modules) {
@@ -328,7 +328,7 @@ export class Module {
                 this.clearDontRender(root);
                 this.doModuleEvent('onBeforeRenderToHtml');
                 // 比较节点
-                    root.compare(oldTree, this.renderDoms);
+                root.compare(oldTree, this.renderDoms);
                 // 删除
                 for (let i = this.renderDoms.length - 1; i >= 0; i--) {
                     let item: ChangedDom = this.renderDoms[i];
@@ -362,6 +362,7 @@ export class Module {
         if (this.model) {
             root.model = this.model;
         }
+
         root.render(this, null);
         this.clearDontRender(root);
         this.doModuleEvent('onBeforeFirstRenderToHTML');
@@ -388,7 +389,7 @@ export class Module {
             let data = Util.clone(this.model, /^\$\S+/);
             m.model = new Model(data, m);
         }
-        let excludes = ['id', 'name', 'model', 'virtualDom', 'container', 'containerKey', 'modelManager', 'plugins'];
+        let excludes = ['id', 'name', 'model', 'virtualDom', 'container', 'containerKey', 'modelManager', 'defineElements'];
         Object.getOwnPropertyNames(this).forEach((item) => {
             if (excludes.includes(item)) {
                 return;
@@ -708,9 +709,9 @@ export class Module {
      * @param name      插件名
      * @param plugin    插件
      */
-    public addNPlugin(name: string, plugin: Plugin) {
+    public addNPlugin(name: string, defineEl: DefineElement) {
         if (name) {
-            this.plugins.set(name, plugin);
+            this.defineElements.set(name, defineEl);
         }
     }
 
@@ -719,8 +720,8 @@ export class Module {
      * @param name  插件名 
      * @returns     插件实例
      */
-    public getNPlugin(name: string): Plugin {
-        return this.plugins.get(name);
+    public getNPlugin(name: string): DefineElement {
+        return this.defineElements.get(name);
     }
 
     /**

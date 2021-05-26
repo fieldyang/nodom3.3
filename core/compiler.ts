@@ -95,10 +95,12 @@ export class Compiler {
         let de = DefineElementManager.get(astObj.tagName.toUpperCase());
         let child = new Element(astObj.tagName);
         parent.add(child);
-        this.handleAstAttrs(child, astObj.attrs, parent);
         if (de) {
-            de.init(child, parent);
+            // 如果是自定义标签则把AST传给他的处理函数，内部的编译过程由他自己处理
+            de.init(child, parent, astObj);
+            return;
         }
+        this.handleAstAttrs(child, astObj.attrs, parent);
         this.compileAST(child, astObj.children);
 
         // // 处理属性

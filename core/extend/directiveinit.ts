@@ -1,17 +1,17 @@
-import { Module } from "../module";
-import { Element } from "../element";
 import { Directive } from "../directive";
 import { DirectiveManager } from "../directivemanager";
-import { ModuleFactory } from "../modulefactory";
-import { Router } from "../router";
-import { Util } from "../util";
+import { Element } from "../element";
+import { NError } from "../error";
+import { NEvent } from "../event";
 import { Expression } from "../expression";
 import { Filter } from "../filter";
 import { Model } from "../model";
-import { Renderer } from "../renderer";
-import { NError } from "../error";
-import { NEvent } from "../event";
+import { Module } from "../module";
+import { ModuleFactory } from "../modulefactory";
 import { NodomMessage } from "../nodom";
+import { Renderer } from "../renderer";
+import { Router } from "../router";
+import { Util } from "../util";
 
 export default (function () {
 
@@ -136,6 +136,7 @@ export default (function () {
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             let model = dom.model;
+
             //可能数据不存在，先设置dontrender
             dom.dontRender = true;
             if (!model) {

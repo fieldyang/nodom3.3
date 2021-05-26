@@ -10,10 +10,9 @@
 
 	<body>
 		<div>
-			<ui-text x-field="data" icon="nd-icon-minus" iconPos="right"></ui-text>
-			<!-- <button e-click="change">change</button>
-			<h1>{{data2.data4.data5}}</h1>
-			{{data1}}
+			<button e-click="change">change</button>
+			<h1 x-show="$data10">{{data2.data4.data5}}</h1>
+			<!-- {{data1}}
 			<for condition="data1">{{name}}+++++{{age}}</for> -->
 		</div>
 	</body>
@@ -22,7 +21,7 @@
 			module: {
 				el: "div",
 				data: {
-					data: 1,
+					data: true,
 					data2: {
 						data3: "123",
 						data4: {
@@ -30,19 +29,17 @@
 						},
 					},
 					data1: [
-						{ name: "name1", age: "age1" },
-						{ name: "name2", age: "age2" },
-						{ name: "name3", age: "age3" },
-						{ name: "name4", age: "age4" },
-						{ name: "name5", age: "age5" },
+						{ name: "name1", age: "1" },
+						{ name: "name2", age: "2" },
+						{ name: "name3", age: "3" },
+						{ name: "name4", age: "4" },
+						{ name: "name5", age: "5" },
 					],
 				},
 				methods: {
 					change: function (dom, module) {
-						this.data2.data4.data5 = "change";
-						this.data1.unshift({ name: "change", age: "change" });
 						console.log(this);
-						console.log(this.data1);
+						this.$data10 = true;
 					},
 					onBeforeFirstRender: function (module) {
 						console.log(this);
