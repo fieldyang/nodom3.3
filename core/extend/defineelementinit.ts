@@ -9,7 +9,8 @@ import { NodomMessage } from "../nodom";
  * module 元素
  */
 DefineElementManager.add('MODULE', {
-    init: function (element: Element, parent?: Element) {
+    init: function (element: Element, parent: Element) {
+        // 自定义元素的处理逻辑
         element.tagName = 'div';
         //类名
         let clazz = element.getProp('classname');
@@ -22,6 +23,7 @@ DefineElementManager.add('MODULE', {
             clazz += '|' + moduleName;
         }
         new Directive('module', clazz, element, parent);
+
     }
 });
 
@@ -118,5 +120,20 @@ DefineElementManager.add('CASE', {
             throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'CASE', 'condition');
         }
         new Directive('case', cond, element, parent);
+    }
+});
+
+DefineElementManager.add('SLOT', {
+    init: function (element: Element, parent?: Element) {
+        element.tagName = 'div';
+        element.slotName = element.getProp('name');
+        console.log(element.slotName);
+
+        // setTimeout(() => {
+        //     element.children=[];
+        // }, 0);
+        // if(element.getProp('name'))
+
+        // new Directive('case',cond,element,parent);
     }
 });

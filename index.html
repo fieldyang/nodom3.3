@@ -3,47 +3,27 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-		<title>filter</title>
+		<title>route</title>
 		<script type="text/javascript" src="./dist/nodom.js"></script>
-		<link rel="stylesheet" href="./css/nodomui.css" />
+		<!-- <script src="/examples/config/route.js"></script> -->
+		<style>
+			.a-icon {
+				width: 100px;
+				height: 100px;
+				background-color: black;
+			}
+		</style>
 	</head>
 
 	<body>
-		<div>
-			<button e-click="change">change</button>
-			<h1 x-show="$data10">{{data2.data4.data5}}</h1>
-			<!-- {{data1}}
-			<for condition="data1">{{name}}+++++{{age}}</for> -->
-		</div>
+		<div x-class="a-{{data}}"></div>
 	</body>
 	<script>
 		nodom.app({
 			module: {
 				el: "div",
 				data: {
-					data: true,
-					data2: {
-						data3: "123",
-						data4: {
-							data5: "111",
-						},
-					},
-					data1: [
-						{ name: "name1", age: "1" },
-						{ name: "name2", age: "2" },
-						{ name: "name3", age: "3" },
-						{ name: "name4", age: "4" },
-						{ name: "name5", age: "5" },
-					],
-				},
-				methods: {
-					change: function (dom, module) {
-						console.log(this);
-						this.$data10 = true;
-					},
-					onBeforeFirstRender: function (module) {
-						console.log(this);
-					},
+					data: "icon",
 				},
 			},
 		});

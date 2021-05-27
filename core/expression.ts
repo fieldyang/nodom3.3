@@ -1,3 +1,4 @@
+import { Element } from "./element";
 import { Model } from "./model";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
@@ -36,8 +37,6 @@ export class Expression {
             let v: string = this.fields.length > 0 ? ',' + this.fields.join(',') : '';
             execStr = 'function($module' + v + '){return ' + execStr + '}';
             this.execFunc = eval('(' + execStr + ')');
-            // console.log(this.execFunc);
-
         }
     }
 
@@ -159,10 +158,7 @@ export class Expression {
             }
         }
         let endStr = exprStr.substring(first);
-        // if (/^[A-Za-z0-9]+/.test(endStr) && endStr.indexOf(' ') === -1) {
-        //     let str = endStr.match(/\w+/)[0];
-        //     fields.push(str);
-        // }
+        ///[A-Za-z0-9]+/.test(endStr)&&
         if (endStr.indexOf(' ') === -1 && !endStr.startsWith('##TMP') && !endStr.startsWith(')')) {
             let str = endStr.indexOf('.') != -1 ? endStr.substring(0, endStr.indexOf('.')) : endStr;
             fields.push(str);
@@ -222,7 +218,7 @@ export class Expression {
             fields.push(express.split(' ')[0]);
         }
         fields = [...(new Set(fields))].filter((v) => {
-            return v != null && !v.startsWith('.') && !v.startsWith('$module') && !v.startsWith('TMP');
+            return v != null && !v.startsWith('.') && !v.startsWith('$module') && !v.startsWith('##TMP');
         });
         if (replaceMap.size) {
             replaceMap.forEach((value, key) => {
@@ -240,7 +236,7 @@ export class Expression {
      * @param model 	模型 或 fieldObj对象 
      * @returns 		计算结果
      */
-    public val(model: Model) {
+    public val(model: Model, dom: Element) {
         let module: Module = ModuleFactory.get(model.$moduleId);
         if (!model) {
             model = module.model;
@@ -248,6 +244,12 @@ export class Expression {
         let valueArr = [];
         this.fields.forEach((field) => {
             valueArr.push(getFieldValue(module, model, field));
+            if (!model.hasOwnProperty('$index')) {
+                module.modelManager.addObserveMap(model, field, dom);
+            } else if (field.startsWith('$$')) {
+                module.modelManager.addObserveMap(module.model, field, dom);
+            }
+
         });
         //module作为第一个参数
         valueArr.unshift(module);

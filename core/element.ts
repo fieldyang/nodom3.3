@@ -115,6 +115,16 @@ export class Element {
     public isSvgNode: boolean;
 
     /**
+     * 是否是自定义元素
+     */
+    public defineElement: string;
+
+    /**
+     * 插槽名
+     */
+    public slotName: any;
+
+    /**
      * @param tag 标签名
      */
     constructor(tag?: string) {
@@ -152,6 +162,7 @@ export class Element {
         if (!this.model) {
             this.model = module.model;
         }
+
 
         //自定义元素的前置渲染
         if (this.defineEl) {
@@ -195,6 +206,64 @@ export class Element {
         delete this.model;
         //删除dontRender
         delete this.dontRender;
+    }
+
+    /**
+     * 
+     * @param module 模块
+     * @param key domkey
+     * @param dom element节点
+     * @returns element
+     */
+    public getElement(module: Module, key: string, dom?: Element) {
+        let newDom = dom ? dom : module.virtualDom.clone();
+        let res;
+        function judge(dom) {
+            if (dom.key === key) {
+                res = dom;
+                return dom;
+            }
+            if (dom.children.length > 0) {
+                dom.children.forEach(element => {
+                    let res = judge(element);
+                    if (res != undefined)
+                        return res;
+                });
+            };
+            return undefined;
+        };
+        judge(newDom);
+        return res;
+    }
+
+    public dataRender(dom: Element, module: Module) {
+        let newDom: Element = dom.getElement(module, dom.key);
+        let retARR: ChangedDom[] = new Array();
+        let flag: Boolean = true;
+        if (newDom === undefined) {
+            newDom = module.virtualDom.clone();
+            newDom.render(module, null);
+            newDom = dom.getElement(module, dom.key, newDom);
+        } else {
+            flag = newDom.render(module, null);
+        }
+        if (!flag) {
+            retARR.push(new ChangedDom(newDom, 'rep', dom.getParent(module)));
+
+        } else {
+            newDom.compare(dom, retARR, dom.getParent(module));
+        }
+        // 删除
+        for (let i = retARR.length - 1; i >= 0; i--) {
+            let item: ChangedDom = retARR[i];
+            if (item.type === 'del') {
+                item.node.removeFromHtml(module);
+                retARR.splice(i, 1);
+            }
+        }
+        retARR.forEach((item) => {
+            item.node.renderToHtml(module, item);
+        });
     }
 
     /**
@@ -243,8 +312,12 @@ export class Element {
                 if (!parent || !parent.children) {
                     break;
                 }
-
-                let ind = parent.children.indexOf(this);
+                let indexArr = [];
+                parent.children.forEach(v => [
+                    indexArr.push(v.key)
+                ])
+                // let ind = parent.children.indexOf(this);
+                let ind = indexArr.indexOf(this.key);
                 if (ind !== -1) {
                     //element或fragment
                     if (this.type === 'html') {
@@ -481,7 +554,7 @@ export class Element {
         let value = '';
         exprArr.forEach((v) => {
             if (v instanceof Expression) { //处理表达式
-                let v1 = v.val(model);
+                let v1 = v.val(model, this);
                 value += v1 !== undefined ? v1 : '';
             } else {
                 value += v;
@@ -844,6 +917,8 @@ export class Element {
      * @returns		虚拟dom/undefined
      */
     public query(key: string) {
+
+
         if (this.key === key) {
             return this;
         }

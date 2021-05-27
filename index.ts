@@ -9,7 +9,6 @@ export { Element } from "./core/element";
 export { NError } from "./core/error";
 export { ExternalNEvent, NEvent } from "./core/event";
 export { Expression } from "./core/expression";
-export { arrayFunc } from './core/extend/arrayFunctioninit';
 export * from "./core/extend/defineelementinit";
 export * from "./core/extend/directiveinit";
 export * from "./core/extend/filterinit";
@@ -25,15 +24,14 @@ export { ModelManager } from "./core/modelmanager";
 export { Module } from "./core/module";
 export { ModuleFactory } from "./core/modulefactory";
 export * from "./core/nodom";
-export { Plugin } from "./core/plugin";
-export { PluginManager } from "./core/pluginmanager";
+// export { Plugin } from "./core/plugin";
+// export { PluginManager } from "./core/pluginmanager";
 export { Renderer } from "./core/renderer";
 export { ResourceManager } from "./core/resourcemanager";
 export { Route, Router } from "./core/router";
 export { Scheduler } from "./core/scheduler";
 export { Serializer } from "./core/serializer";
-export { ChangedDom, IAppCfg, IExtraParmas, IMdlClassObj, IModuleCfg, IResourceObj, IRouteCfg, ITipMessage } from "./core/types";
-export { UITool, UIEventRegister } from './core/uibase';
+export { ChangedDom, IAppCfg, IMdlClassObj, IModuleCfg, IResourceObj, IRouteCfg, ITipMessage } from "./core/types";
 export { Util } from "./core/util";
 
 

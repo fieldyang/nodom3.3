@@ -1,3 +1,4 @@
+import { Element } from "./element";
 import { Model } from "./model";
 import { Module } from "./module";
 import { Renderer } from "./renderer";
@@ -18,10 +19,36 @@ export class ModelManager {
      * 每个数据对象，可有多个监听器
      */
     private modelMap: WeakMap<Model, any> = new WeakMap();
+    private observeMap:WeakMap<Model,Map<String,Array<Element>>>= new WeakMap();
 
     constructor(module: Module) {
         this.module = module;
     }
+
+
+    public addObserveMap(model:Model,key?:string,element?:any){
+        let keyMap= this.observeMap.get(model)?this.observeMap.get(model):new Map();
+        //添加依赖  
+        if(key !=undefined&&element!=undefined){
+            let elements= keyMap.get(key)?keyMap.get(key):new Array();
+            let flag=true;
+            if(elements.length>0){
+                elements.forEach((item,index)=> {
+                    if(item.key===element.key){
+                        Array.prototype.splice(index,1,element);
+                        flag=false;
+                    }
+                });
+            }
+            if(flag) elements.push(element);
+            keyMap.set(key,elements);
+        }
+        this.observeMap.set(model,keyMap);
+        
+        
+    }
+
+
     /**
      * 添加到 dataNModelMap
      * @param data      数据对象
@@ -149,7 +176,8 @@ export class ModelManager {
      * @param oldValue  旧值
      * @param newValue  新值
      */
-    public update(model: Model, key: string, oldValue: any, newValue: any) {        
+    public update(model: Model, key: string, oldValue: any, newValue: Element) {
+            
         Renderer.add(this.module);
         //处理观察器函数
         let watcher = this.getWatcherFromModelMap(model, key);
@@ -169,4 +197,19 @@ export class ModelManager {
             }
         }
     }
+
+    // public dataRender(model: Model, key: string){
+    //     let renderElements =this.observeMap.get(model).get(key);
+    //     if(renderElements!==undefined){
+    //         renderElements.forEach((v)=>{
+    //             console.log('dataRender');
+                
+    //               v.dataRender(v,this.module);
+    //          })
+    //     }else{
+    //         console.log('render');
+            
+    //         Renderer.add(this.module);
+    //     } 
+    // }
 }

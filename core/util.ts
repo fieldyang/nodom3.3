@@ -435,7 +435,6 @@ export class Util {
         if (!me.isNode(node)) {
             throw new NError('invoke', 'this.remove', '0', 'Node');
         }
-
         if (node.parentNode !== null) {
             node.parentNode.removeChild(node);
         }

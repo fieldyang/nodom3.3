@@ -1,3 +1,5 @@
+import { ClassDeclaration, ClassElement, ClassExpression } from "../node_modules/typescript/lib/typescript";
+import { DefineElement } from "./defineelement";
 import { Element } from "./element";
 import { Module } from "./module";
 import { Route } from "./router";
