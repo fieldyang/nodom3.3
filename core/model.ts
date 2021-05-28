@@ -69,6 +69,15 @@ export class Model {
                     // }
                 }
                 return res;
+            },
+            deleteProperty: function (target, key) {
+                //如果删除对象，从mm中同步删除
+                if (target[key] != null && typeof target[key] == 'object') {
+                    mm.delToDataMap(target[key]);
+                    mm.delModelToModelMap(target[key]);
+                }
+                delete target[key];
+                return true;
             }
         });
         proxy.$watch = this.$watch;

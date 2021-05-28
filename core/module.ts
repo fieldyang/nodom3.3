@@ -1,5 +1,7 @@
 import { Application } from "./application";
 import { Compiler } from "./compiler";
+import { DefineElementManager } from "./defineelementmanager";
+import { Directive } from "./directive";
 import { Element } from "./element";
 import { MessageQueue } from "./messagequeue";
 import { MethodFactory } from "./methodfactory";
@@ -10,7 +12,7 @@ import { request } from "./nodom";
 import { Plugin } from "./plugin";
 import { Renderer } from "./renderer";
 import { ResourceManager } from "./resourcemanager";
-import { ChangedDom, IModuleCfg, IResourceObj } from "./types";
+import { ChangedDom, IModuleCfg, IResourceObj, RegisterOps } from "./types";
 import { Util } from "./util";
 
 /**
@@ -223,6 +225,23 @@ export class Module {
         }
         //删除template
         delete this.template;
+
+        //注册自定义标签模块
+        if(this.methodFactory.has('registerModule')){
+           let registers:Array<RegisterOps> =  Reflect.apply(this.methodFactory.get('registerModule'),null,[]);
+           if(Array.isArray(registers)&&registers.length>0){
+              registers.forEach(v=>{
+                  DefineElementManager.add(v.name.toUpperCase(),{
+                      init:function(element:Element,parent?:Element){
+                        element.tagName='div';
+                        element.setProp('modulename',v.name);
+                        new Directive('module',v.class,element,parent);
+                      }
+                  })
+              })
+           }
+        }
+        
         //如果已存在templateStr，则直接编译
         if (!Util.isEmpty(templateStr)) {
             this.virtualDom = Compiler.compile(templateStr);

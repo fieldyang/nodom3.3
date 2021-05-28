@@ -125,13 +125,5 @@ DefineElementManager.add('SLOT',{
     init:function(element:Element,parent?:Element){
         element.tagName = 'div';
         element.slotName=element.getProp('name');
-        console.log(element.slotName);
-        
-        // setTimeout(() => {
-        //     element.children=[];
-        // }, 0);
-        // if(element.getProp('name'))
-      
-        // new Directive('case',cond,element,parent);
     }
 });

@@ -80,7 +80,7 @@ export default (function () {
                             let oldMap = findSlot(m.virtualDom);
                             //原模块
                             oldMap.forEach(slot => {
-                                let pd:Element = m.getElement(slot.parentKey, true);
+                                let pd: Element = m.getElement(slot.parentKey, true);
                                 let index = pd.children.findIndex((v: Element) => { return v.key === slot.key; });
                                 if (index >= 0) {
                                     if (slotMap.has(slot.slotName)) {
@@ -856,12 +856,17 @@ export default (function () {
 
         }
     );
+    /**
+     * 插槽指令
+     * 配合slot标签使用
+     */
     DirectiveManager.addType('slot',
         3,
-        (directive, dom:Element) => {
+        (directive, dom: Element) => {
             dom.setProp('slotName', directive.value);
         },
         (directive, dom, module, parent) => {
 
-        })
+        }
+    );
 }())
