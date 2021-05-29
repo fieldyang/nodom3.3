@@ -22,7 +22,6 @@ export class Model {
 
         let proxy = new Proxy(data, {
             set: (src: any, key: string, value: any, receiver: any) => {
-                // console.log('set', src, key, value);
                 //值未变,proxy 不处理
                 if (src[key] === value) {
                     return true;
@@ -44,7 +43,6 @@ export class Model {
                 return Reflect.set(src, key, value, receiver)
             },
             get: (src: any, key: string | symbol, receiver) => {
-                // console.log('get', src, key);
                 // vue 的做法是变异 push 等方法避免追踪length 
                 // 但是我测试之后发现他还是会去追踪length
                 // if (Array.isArray(src) && arrayFunc.hasOwnProperty(key)) {
@@ -72,7 +70,7 @@ export class Model {
             },
             deleteProperty: function (target, key) {
                 //如果删除对象，从mm中同步删除
-                if (target[key] != null && typeof target[key] == 'object') {
+                if (target[key] != null && typeof target[key] === 'object') {
                     mm.delToDataMap(target[key]);
                     mm.delModelToModelMap(target[key]);
                 }

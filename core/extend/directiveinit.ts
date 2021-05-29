@@ -81,10 +81,10 @@ export default (function () {
                             //原模块
                             oldMap.forEach(slot => {
                                 let pd: Element = m.getElement(slot.parentKey, true);
-                                let index = pd.children.findIndex((v: Element) => { return v.key === slot.key; });
+                                let index = pd.children.findIndex((v: Element) =>  {return v.key === slot.key;} );
                                 if (index >= 0) {
-                                    if (slotMap.has(slot.slotName)) {
-                                        pd.children.splice(index, 1, slotMap.get(slot.slotName));
+                                    if (slotMap.has(slot.getTmpParam('slotName'))) {
+                                        pd.children.splice(index, 1, slotMap.get(slot.getTmpParam('slotName')));
                                     }
                                 }
                             })
@@ -97,8 +97,8 @@ export default (function () {
                 await subMdl.active();
             }
             function findSlot(dom: Element, res = new Map()) {
-                if (dom.slotName != undefined) {
-                    res.set(dom.slotName, dom);
+                if (dom.hasTmpParam('slotName') ) {
+                    res.set( dom.getTmpParam('slotName'), dom);
                     return;
                 }
                 dom.children.forEach(v => {

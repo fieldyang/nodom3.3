@@ -142,8 +142,6 @@ export class ModuleFactory {
             }
             //自定义标签名
             if(cfg.className){
-                console.log(cfg.className.toLocaleUpperCase(),cfg.class);
-                
                 DefineElementManager.add(cfg.className.toLocaleUpperCase(),{
                     init:function(element:Element,parent?:Element){
                         element.tagName = 'div';

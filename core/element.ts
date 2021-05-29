@@ -8,8 +8,6 @@ import { NEvent } from "./event";
 import { Util } from "./util";
 import { ChangedDom } from "./types";
 import { Plugin } from "./plugin";
-import { NodeFlags } from "../node_modules/typescript/lib/typescript";
-import { DefineElementManager} from "./defineelementmanager";
 
 /**
  * 虚拟dom
@@ -114,11 +112,11 @@ export class Element {
     /**
      * 插槽名
      */
-    public slotName: any;
+    // public slotName: any;
        /**
      * 临时参数 map
      */
-        private tmpParamMap: Map<string, any> = new Map();
+    private tmpParamMap: Map<string, any> = new Map();
 
     /**
      * @param tag 标签名
@@ -1115,6 +1113,15 @@ export class Element {
      */
     removeTmpParam(key: string) {
         this.tmpParamMap.delete(key);
+    }
+
+    
+    /**
+     * 是否有临时参数
+     * @param key       参数名
+     */
+     hasTmpParam(key: string) {
+       return  this.tmpParamMap.has(key);
     }
 
 }
