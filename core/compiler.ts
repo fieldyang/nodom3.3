@@ -354,7 +354,7 @@ export class Compiler {
      * @param exprStr   含表达式的串
      * @return          处理后的字符串和表达式数组
      */
-    private static compileExpression(exprStr: string) {
+    public static compileExpression(exprStr: string) {
         if (/\{\{.+?\}\}/.test(exprStr) === false) {
             return exprStr;
         }

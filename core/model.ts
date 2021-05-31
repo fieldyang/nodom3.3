@@ -64,7 +64,6 @@ export class Model {
                 }
                 return res;
             },
-
         });
         proxy.$watch = this.$watch;
         proxy.$moduleId = module.id;

@@ -24,8 +24,6 @@ export { ModelManager } from "./core/modelmanager";
 export { Module } from "./core/module";
 export { ModuleFactory } from "./core/modulefactory";
 export * from "./core/nodom";
-// export { Plugin } from "./core/plugin";
-// export { PluginManager } from "./core/pluginmanager";
 export { Renderer } from "./core/renderer";
 export { ResourceManager } from "./core/resourcemanager";
 export { Route, Router } from "./core/router";

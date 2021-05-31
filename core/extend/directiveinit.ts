@@ -476,7 +476,6 @@ export default (function () {
 
             Util.getOwnProps(obj).forEach(function (key) {
                 let r = obj[key];
-
                 if (r instanceof Expression) {
                     r = r.val(model, dom);
                 }
