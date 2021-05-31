@@ -12,42 +12,16 @@ export class ModelManager {
      * 数据对象与模型映射，key为数据对象，value为model
      */
     private dataMap: WeakMap<object, Model> = new WeakMap();
-
     /**
      * 模型模块映射
      * key:model proxy, value:{model:model,watchers:{key:[监听器1,监听器2,...]}}
      * 每个数据对象，可有多个监听器
      */
     private modelMap: WeakMap<Model, any> = new WeakMap();
-    private observeMap:WeakMap<Model,Map<String,Array<Element>>>= new WeakMap();
 
     constructor(module: Module) {
         this.module = module;
     }
-
-
-    public addObserveMap(model:Model,key?:string,element?:any){
-        let keyMap= this.observeMap.get(model)?this.observeMap.get(model):new Map();
-        //添加依赖  
-        if(key !=undefined&&element!=undefined){
-            let elements= keyMap.get(key)?keyMap.get(key):new Array();
-            let flag=true;
-            if(elements.length>0){
-                elements.forEach((item,index)=> {
-                    if(item.key===element.key){
-                        Array.prototype.splice(index,1,element);
-                        flag=false;
-                    }
-                });
-            }
-            if(flag) elements.push(element);
-            keyMap.set(key,elements);
-        }
-        this.observeMap.set(model,keyMap);
-        
-        
-    }
-
 
     /**
      * 添加到 dataNModelMap
@@ -58,6 +32,14 @@ export class ModelManager {
         this.dataMap.set(data, model);
     }
 
+       /**
+     * 删除从 dataNModelMap
+     * @param data      数据对象
+     * @param model     模型
+     */
+        public delToDataMap(data: Object) {
+            this.dataMap.delete(data);
+        }
 
     /**
      * 从dataNModelMap获取model
@@ -90,7 +72,16 @@ export class ModelManager {
             this.modelMap.get(model).model = srcNModel;
         }
     }
-
+      /**
+     * 删除源模型到到模型map
+     * @param model     模型代理
+     * @param srcNModel  源模型
+     */
+       public delModelToModelMap(model: any) {
+     
+            this.modelMap.delete(model)
+        
+    }
     /**
      * 从模型Map获取源模型
      * @param model     模型代理
@@ -198,18 +189,4 @@ export class ModelManager {
         }
     }
 
-    // public dataRender(model: Model, key: string){
-    //     let renderElements =this.observeMap.get(model).get(key);
-    //     if(renderElements!==undefined){
-    //         renderElements.forEach((v)=>{
-    //             console.log('dataRender');
-                
-    //               v.dataRender(v,this.module);
-    //          })
-    //     }else{
-    //         console.log('render');
-            
-    //         Renderer.add(this.module);
-    //     } 
-    // }
 }

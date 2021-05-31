@@ -44,6 +44,11 @@ export class Model {
                 return Reflect.set(src, key, value, receiver)
             },
             get: (src: any, key: string | symbol, receiver) => {
+                // vue 的做法是变异 push 等方法避免追踪length 
+                // 但是我测试之后发现他还是会去追踪length
+                // if (Array.isArray(src) && arrayFunc.hasOwnProperty(key)) {
+                //     return Reflect.get(arrayFunc, key, receiver)
+                // }
                 let res = Reflect.get(src, key, receiver);
                 let data = module.modelManager.getFromDataMap(src[key])
                 if (data) {
@@ -64,6 +69,15 @@ export class Model {
                 }
                 return res;
             },
+            deleteProperty: function (target, key) {
+                //如果删除对象，从mm中同步删除
+                if (target[key] != null && typeof target[key] === 'object') {
+                    mm.delToDataMap(target[key]);
+                    mm.delModelToModelMap(target[key]);
+                }
+                delete target[key];
+                return true;
+            }
         });
         proxy.$watch = this.$watch;
         proxy.$moduleId = module.id;

@@ -244,12 +244,6 @@ export class Expression {
         let valueArr = [];
         this.fields.forEach((field) => {
             valueArr.push(getFieldValue(module, model, field));
-            if (!model.hasOwnProperty('$index')) {
-                module.modelManager.addObserveMap(model, field, dom);
-            } else if (field.startsWith('$$')) {
-                module.modelManager.addObserveMap(module.model, field, dom);
-            }
-
         });
         //module作为第一个参数
         valueArr.unshift(module);
