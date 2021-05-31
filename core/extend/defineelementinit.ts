@@ -1,7 +1,9 @@
+import { DefineElement } from "../defineelement";
 import { DefineElementManager } from "../defineelementmanager";
 import { Directive } from "../directive";
 import { Element } from "../element";
 import { NError } from "../error";
+import { Module } from "../module";
 import { NodomMessage } from "../nodom";
 
 /**
@@ -185,5 +187,20 @@ DefineElementManager.add('NCASE',{
             throw new NError('itemnotempty',NodomMessage.TipWords['element'],'NCASE','condition');
         }
         new Directive('case',cond,element,parent);
+    }
+});
+
+DefineElementManager.add('SLOT',{
+    init:function(element:Element,parent?:Element){
+        element.tagName = 'div';
+        element.slotName=element.getProp('name');
+        console.log(element.slotName);
+        
+        // setTimeout(() => {
+        //     element.children=[];
+        // }, 0);
+        // if(element.getProp('name'))
+      
+        // new Directive('case',cond,element,parent);
     }
 });

@@ -1,54 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-		<title>filter</title>
-		<script type="text/javascript" src="./dist/nodom.js"></script>
-		<link rel="stylesheet" href="./css/nodomui.css" />
-	</head>
 
-	<body>
-		<div>
-			<ui-text x-field="data" icon="nd-icon-minus" iconPos="right"></ui-text>
-			<!-- <button e-click="change">change</button>
-			<h1>{{data2.data4.data5}}</h1>
-			{{data1}}
-			<for condition="data1">{{name}}+++++{{age}}</for> -->
-		</div>
-	</body>
-	<script>
-		nodom.app({
-			module: {
-				el: "div",
-				data: {
-					data: 1,
-					data2: {
-						data3: "123",
-						data4: {
-							data5: "111",
-						},
-					},
-					data1: [
-						{ name: "name1", age: "age1" },
-						{ name: "name2", age: "age2" },
-						{ name: "name3", age: "age3" },
-						{ name: "name4", age: "age4" },
-						{ name: "name5", age: "age5" },
-					],
-				},
-				methods: {
-					change: function (dom, module) {
-						this.data2.data4.data5 = "change";
-						this.data1.unshift({ name: "change", age: "change" });
-						console.log(this);
-						console.log(this.data1);
-					},
-					onBeforeFirstRender: function (module) {
-						console.log(this);
-					},
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<title>route</title>
+	<script type="text/javascript" src="./dist/nodom.js"></script>
+	<!-- <script src="/examples/config/route.js"></script> -->
+	<style>
+		.colorimp {
+			color: red;
+		}
+		.red{
+			color: red;
+		}
+	</style>
+</head>
+
+<body>
+	<div>
+		{{$time.a}}
+		<div x-slot='name'></div>
+		<button e-click="change">render</button>
+		<ul>
+			<li x-repeat="rows">{{name}}'s address is {{addr}}</li>
+		</ul>
+		<div x-if='show'>asd</div>
+		<div x-show='show'>asd</div>
+		{{show}}
+		<div>{{name}}</div>
+		<div><span x-elseif="grade>=60 && grade<70"> 及格 </span></div>
+		<div x-class="{red:'red'}">test</div>
+		<input type="text" x-field='text'>
+	</div>
+
+</body>
+<script>
+	nodom.app({
+		module: {
+			el: "div",
+			// template:'/child.html'
+			// class: "MdlRouteMain",
+			methods: {
+				onBeforeFirstRender: function () {},
+				change: function (dom, model, module, e, el) {
+					this.rows.push({
+						name: 'zhang',
+						addr: 'mianyang'
+					});
+					// this.rows[0].name='asd';
+					this.show = false;
+					this.name ='gg';
+					this.red =false;
+					// this.rows.unshift({
+
+					// 	name: 'gao',
+					// 	addr: 'chengdu'
+
+					// });
 				},
 			},
-		});
-	</script>
+			data: {
+				show: true,
+				name:'kyle',
+				red:true,
+				text:'',
+				$time:{
+					a:1
+				},
+				rows: [{
+						name: 'yang',
+						addr: 'chengdu'
+					},
+					{
+						name: 'zhang',
+						addr: 'mianyang'
+					},
+					{
+						name: 'chen',
+						addr: 'luoyang'
+					},
+					{
+						name: 'tang',
+						addr: 'beijing'
+					},
+					{
+						name: 'li',
+						addr: 'shanghai'
+					}, {
+						name: 'yang',
+						addr: 'chengdu'
+					},
+					{
+						name: 'chen',
+						addr: 'luoyang'
+					},
+					{
+						name: 'tang',
+						addr: 'beijing'
+					}, {
+						name: 'zhang',
+						addr: 'mianyang'
+					},
+					{
+						name: 'chen',
+						addr: 'luoyang'
+					},
+					{
+						name: 'tang',
+						addr: 'beijing'
+					},
+					{
+						name: 'li',
+						addr: 'shanghai'
+					}, {
+						name: 'yang',
+						addr: 'chengdu'
+					},
+					{
+						name: 'zhang',
+						addr: 'mianyang'
+					},
+					{
+						name: 'chen',
+						addr: 'luoyang'
+					},
+					{
+						name: 'tang',
+						addr: 'beijing'
+					}
+				]
+			}
+		},
+	});
+</script>
+
 </html>

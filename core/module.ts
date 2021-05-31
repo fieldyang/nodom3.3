@@ -131,6 +131,8 @@ export class Module {
      */
     private plugins: Map<string, Plugin> = new Map();
 
+
+
     /**
      * 构造器
      * @param config    模块配置
@@ -750,9 +752,7 @@ export class Module {
             value = key[keyName];
         }
         let qs: string = "[" + keyName + "='" + value + "']";
-
         let el: HTMLElement = this.container ? this.container.querySelector(qs) : null;
-
         if (!el && notNull) {
             return this.container;
         }

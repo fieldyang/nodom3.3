@@ -15,9 +15,10 @@ export class Compiler {
     * @returns             虚拟dom
     */
     public static compile(elementStr: string): Element {
+        
         // 这里是把模板串通过正则表达式匹配 生成AST
         let ast = this.compileTemplateToAst(elementStr);
-        // console.log(ast);
+       
         let oe = new Element('div');
         // 将AST编译成抽象语法树
         this.compileAST(oe, ast);
