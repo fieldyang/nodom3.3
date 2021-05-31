@@ -1,4 +1,7 @@
 import { Application } from "./application";
+import { DefineElementManager } from "./defineelementmanager";
+import { Directive } from "./directive";
+import { Element } from "./element";
 import { NError } from "./error";
 import { Model } from "./model";
 import { Module } from "./module";
@@ -137,6 +140,16 @@ export class ModuleFactory {
             if (cfg.singleton === undefined) {
                 cfg.singleton = true;
             }
+            //自定义标签名
+            if(cfg.className){
+                DefineElementManager.add(cfg.className.toLocaleUpperCase(),{
+                    init:function(element:Element,parent?:Element){
+                        element.tagName = 'div';
+                        new Directive('module',cfg.class,element,parent);
+                    }
+                });
+                
+            }
             if (!cfg.lazy) {
                 await this.initModule(cfg);
             }
@@ -146,7 +159,7 @@ export class ModuleFactory {
     }
 
     /**
-     * 出事化模块
+     * 初始化模块
      * @param cfg 模块类对象
      */
     private static async initModule(cfg: IMdlClassObj) {

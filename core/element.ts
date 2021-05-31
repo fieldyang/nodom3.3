@@ -8,8 +8,6 @@ import { NEvent } from "./event";
 import { Util } from "./util";
 import { ChangedDom } from "./types";
 import { Plugin } from "./plugin";
-import { NodeFlags } from "../node_modules/typescript/lib/typescript";
-import { DefineElementManager} from "./defineelementmanager";
 
 /**
  * 虚拟dom
@@ -101,11 +99,6 @@ export class Element {
      * 绑定插件
      */
     public plugin: Plugin;
-
-    /**
-     * 临时参数 map
-     */
-    private tmpParamMap: Map<string, any> = new Map();
     /**
      * 是否为svg节点
      */
@@ -119,7 +112,11 @@ export class Element {
     /**
      * 插槽名
      */
-    public slotName: any;
+    // public slotName: any;
+       /**
+     * 临时参数 map
+     */
+    private tmpParamMap: Map<string, any> = new Map();
 
     /**
      * @param tag 标签名
@@ -205,63 +202,6 @@ export class Element {
         delete this.dontRender;
     }
 
-    /**
-     * 
-     * @param module 模块
-     * @param key domkey
-     * @param dom element节点
-     * @returns element
-     */
-    public getElement(module: Module, key: string,dom?:Element) {
-        let newDom = dom?dom:module.virtualDom.clone();
-        let res;
-        function judge(dom) {
-            if (dom.key === key) {
-                res = dom;
-                return dom;
-            }
-            if (dom.children.length > 0) {
-                dom.children.forEach(element => {
-                    let res = judge(element);
-                    if (res != undefined)
-                        return res;
-                });
-            };
-            return undefined;
-        };
-        judge(newDom);
-        return res;
-    }
-
-    public dataRender(dom: Element, module: Module) {
-        let newDom: Element = dom.getElement(module, dom.key);
-        let retARR: ChangedDom[] = new Array();
-        let flag:Boolean=true;
-        if(newDom===undefined){
-            newDom =  module.virtualDom.clone();
-            newDom.render(module,null);
-            newDom=dom.getElement(module,dom.key,newDom);
-        }else{
-           flag = newDom.render(module, null);
-        }
-        if (!flag) {
-            retARR.push(new ChangedDom(newDom, 'rep', dom.getParent(module)));
-
-        } else {
-            newDom.compare(dom, retARR, dom.getParent(module));
-        }
-        // 删除
-        for (let i = retARR.length - 1; i >= 0; i--) {
-            let item: ChangedDom = retARR[i];
-            if (item.type === 'del') {
-                item.node.removeFromHtml(module);
-                retARR.splice(i, 1);
-            }
-        }
-        retARR.forEach((item) => {
-            item.node.renderToHtml(module, item);
-        });
-    }
 
     /**
      * 渲染到html element
@@ -1148,13 +1088,13 @@ export class Element {
         }
         this.recover();
     }
-
+    
     /**
      * 设置临时参数
      * @param key       参数名
      * @param value     参数值
      */
-    setTmpParam(key: string, value: any) {
+     setTmpParam(key: string, value: any) {
         this.tmpParamMap.set(key, value);
     }
 
@@ -1174,4 +1114,14 @@ export class Element {
     removeTmpParam(key: string) {
         this.tmpParamMap.delete(key);
     }
+
+    
+    /**
+     * 是否有临时参数
+     * @param key       参数名
+     */
+     hasTmpParam(key: string) {
+       return  this.tmpParamMap.has(key);
+    }
+
 }

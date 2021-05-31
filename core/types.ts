@@ -8,6 +8,7 @@ import { Route } from "./router";
  * module class obj
  */
 export interface IMdlClassObj {
+
     /**
      * class名或class
      */
@@ -48,8 +49,19 @@ export interface IMdlClassObj {
      * 等待模块初始化的id列表
      */
     waitList: number[];
+    className?: string;
 }
 
+export interface RegisterOps {
+    /**
+     * 模块名
+     */
+    name: string,
+    /**
+     * 模块类名
+     */
+    class: string
+}
 /**
  * 应用初始化配置类型
  */

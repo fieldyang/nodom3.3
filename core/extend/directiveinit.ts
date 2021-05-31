@@ -16,7 +16,7 @@ import { NodomMessage } from "../nodom";
 export default (function () {
 
     /**
-     *  指令类型初始化    
+     *  指令类型初始化
      *  每个指令类型都有一个init和handle方法，init和handle都可选
      *  init 方法在编译时执行，包含两个参数 directive(指令)、dom(虚拟dom)，无返回
      *  handle方法在渲染时执行，包含四个参数 directive(指令)、dom(虚拟dom)、module(模块)、parent(父虚拟dom)
@@ -80,11 +80,11 @@ export default (function () {
                             let oldMap = findSlot(m.virtualDom);
                             //原模块
                             oldMap.forEach(slot => {
-                                let pd:Element = m.getElement(slot.parentKey, true);
-                                let index = pd.children.findIndex((v: Element) => { return v.key === slot.key; });
+                                let pd: Element = m.getElement(slot.parentKey, true);
+                                let index = pd.children.findIndex((v: Element) =>  {return v.key === slot.key;} );
                                 if (index >= 0) {
-                                    if (slotMap.has(slot.slotName)) {
-                                        pd.children.splice(index, 1, slotMap.get(slot.slotName));
+                                    if (slotMap.has(slot.getTmpParam('slotName'))) {
+                                        pd.children.splice(index, 1, slotMap.get(slot.getTmpParam('slotName')));
                                     }
                                 }
                             })
@@ -97,8 +97,8 @@ export default (function () {
                 await subMdl.active();
             }
             function findSlot(dom: Element, res = new Map()) {
-                if (dom.slotName != undefined) {
-                    res.set(dom.slotName, dom);
+                if (dom.hasTmpParam('slotName') ) {
+                    res.set( dom.getTmpParam('slotName'), dom);
                     return;
                 }
                 dom.children.forEach(v => {
@@ -900,14 +900,17 @@ export default (function () {
      * 如果未指定model，则用被粘节点的model
      */
     DirectiveManager.addType('stick',
-        3,
+        10,
         (directive, dom:Element) => {
             dom.setProp('slotName', directive.value);
         },
         (directive, dom, module, parent) => {
         }
     );
-
+    /**
+     * 插槽指令
+     * 配合slot标签使用
+     */
     DirectiveManager.addType('slot',
         3,
         (directive, dom:Element) => {

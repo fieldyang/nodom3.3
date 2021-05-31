@@ -244,11 +244,14 @@ export class Expression {
         let valueArr = [];
         this.fields.forEach((field) => {
             valueArr.push(getFieldValue(module, model, field));
+<<<<<<< HEAD
             if(! model.hasOwnProperty('$index')){
                 module.modelManager.addObserveMap(model,field,dom);
             }else if(field.startsWith('$$')){
                 module.modelManager.addObserveMap(module.model,field,dom);
            }
+=======
+>>>>>>> fdec54ab1215426c15219c2d4d1bc165ebd047de
         });
         //module作为第一个参数
         valueArr.unshift(module);
