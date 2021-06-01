@@ -68,13 +68,13 @@ export class Model {
                 }
                 return res;
             },
-            deleteProperty: function (target, key) {
+            deleteProperty: function (src: any, key: any) {
                 //如果删除对象，从mm中同步删除
-                if (target[key] != null && typeof target[key] === 'object') {
-                    mm.delToDataMap(target[key]);
-                    mm.delModelToModelMap(target[key]);
+                if (src[key] != null && typeof src[key] === 'object') {
+                    mm.delToDataMap(src[key]);
+                    mm.delModelToModelMap(src[key]);
                 }
-                delete target[key];
+                delete src[key];
                 return true;
             }
         });

@@ -902,7 +902,6 @@ export default (function () {
     DirectiveManager.addType('stick',
         10,
         (directive, dom:Element) => {
-            dom.setProp('slotName', directive.value);
         },
         (directive, dom, module, parent) => {
         }
