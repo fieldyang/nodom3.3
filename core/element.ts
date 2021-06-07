@@ -115,11 +115,6 @@ export class Element {
     public isSvgNode: boolean;
 
     /**
-     * 是否是自定义元素
-     */
-    public defineElement: string;
-
-    /**
      * 插槽名
      */
     // public slotName: any;

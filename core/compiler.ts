@@ -22,7 +22,6 @@ export class Compiler {
         let oe = new Element('div');
         // 将AST编译成抽象语法树
         this.compileAST(oe, ast);
-        console.log(oe);
         return oe;
     }
 
@@ -94,6 +93,8 @@ export class Compiler {
         let directives = [];
         if (!attrs) { return }
         for (const attr of attrs) {
+            // 统一吧属性名转换成小写
+            attr.propName = attr.propName.toLocaleLowerCase()
             if (attr.propName.startsWith("x-")) {
                 //指令
                 directives.push(attr);
@@ -184,7 +185,7 @@ export class Compiler {
         result = result.map((item) => {
             // 如果match为空说明属性串里面没有“”也就是自定义的只有属性名没有属性值得属性，这种直接给他的value字段设置为空就行了
 
-            const o = item.match(/^(.+)=[\'|\"](.*)[\'|\"]$/) || [, item];
+            const o = item.match(/^(.+)=[\'|\"]([\s\S]*)[\'|\"]$/) || [, item];
             return {
                 propName: o[1],
                 value: o[2] ? o[2] : '',

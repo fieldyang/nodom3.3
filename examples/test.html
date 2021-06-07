@@ -5,10 +5,56 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <style>
+        .row{
+            display:inline-flex;
+        }
+        .item{
+            flex:1;
+            border:1px solid;
+            padding:10px;
+            word-break: break-all;
+            display:flex;
+            align-items: center;
+        }
+        .width200{
+            width:200px;
+        }
+        .width300{
+            width:300px;
+        }
+        .width400{
+            width:400px;
+        }
+
+    </style>
 </head>
+
 <body>
     <div>
-        <div x-class = "{'a-1':\"b!= 'c'\"}"></div>
+        <div class='row'>
+            <div class='item width200'>h1</div>
+            <div class='item width200'>h2</div>
+            <div class='item width200'>h3</div>
+            <div class='item width200'>h4</div>
+            <div class='item width400'>adfaldfjaioewrupqrjfalkjfla;jfoueroiqadfafadswuerfa</div>
+            <div class='item width400'>adfaldfjaioewrupqrjfalkjfla;jfoueroiqadfafadswuerfa</div>
+            <div class='item width400'>adfaldfjaioewrupqrjfalkjfla;jfoueroiqadfafadswuerfa</div>
+            <div class='item width400'>adfaldfjaioewrupqrjfalkjfla;jfoueroiqadfafadswuerfa</div>
+            <div class='item'>qepuradjflajfoewuroquwefrjalkdfjoiurpquroqeuwropqiwefjlsakfjaowueroqpuerpworu</div>
+        </div>
+
+        <div class='row'>
+            <div class='item width200'>adfaldfjaioewrupqrjfalkjfla;jfoueroiqadfafadswuerfa</div>
+            <div class='item width200'>h2</div>
+            <div class='item width200'>h3</div>
+            <div class='item width200'>h4</div>
+            <div class='item width400'>adfaldfjaioewrupqrjfalkjfla;jfoueroiqadfafadswuerfa</div>
+            <div class='item width400'>adfaldfjaioewrupqrjfalkjfla;jfoueroiqadfafadswuerfa</div>
+            <div class='item width400'>adfaldfjaioewrupqrjfalkjfla;jfoueroiqadfafadswuerfa</div>
+            <div class='item width400'>adfaldfjaioewrupqrjfalkjfla;jfoueroiqadfafadswuerfa</div>
+            <div class='item'>qepuradjflajfoewuroquwefrjalkdfjoiurpquroqeuwropqiwefjlsakfjaowueroqpuerpworu</div>
+        </div>
     </div>
 </body>
 <script>

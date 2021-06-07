@@ -48,6 +48,11 @@ export class DefineElement {
      */
     extraDataName: string;
 
+    /**
+     * 需要改绑的model名
+     */
+    parentDataName: string;
+
     constructor(params: HTMLElement | Object | Element) {
     }
 
@@ -64,11 +69,17 @@ export class DefineElement {
     public beforeRender(module: Module, uidom: Element) {
         this.element = uidom;
         this.moduleId = module.id;
+        // 如果需要改绑model，则改绑model
+        if (this.parentDataName && this.parentDataName != '') {
+            uidom.model = uidom.model[this.parentDataName];
+        }
         if (!this.model || uidom.key !== this.key) {
             this.key = uidom.key;
+            // 插件默认把model绑定在根model上
             this.model = uidom.model;
             //添加到模块
             if (uidom.hasProp('name')) {
+                // this.name = uidom.getProp('name');
                 module.addNPlugin(uidom.getProp('name'), this);
             }
             this.needPreRender = true;

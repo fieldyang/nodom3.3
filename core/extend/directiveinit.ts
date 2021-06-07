@@ -16,7 +16,7 @@ import { Util } from "../util";
 export default (function () {
 
     /**
-     *  指令类型初始化    
+     *  指令类型初始化
      *  每个指令类型都有一个init和handle方法，init和handle都可选
      *  init 方法在编译时执行，包含两个参数 directive(指令)、dom(虚拟dom)，无返回
      *  handle方法在渲染时执行，包含四个参数 directive(指令)、dom(虚拟dom)、module(模块)、parent(父虚拟dom)
@@ -81,7 +81,7 @@ export default (function () {
                             //原模块
                             oldMap.forEach(slot => {
                                 let pd: Element = m.getElement(slot.parentKey, true);
-                                let index = pd.children.findIndex((v: Element) =>  {return v.key === slot.key;} );
+                                let index = pd.children.findIndex((v: Element) => { return v.key === slot.key; });
                                 if (index >= 0) {
                                     if (slotMap.has(slot.getTmpParam('slotName'))) {
                                         pd.children.splice(index, 1, slotMap.get(slot.getTmpParam('slotName')));
@@ -97,8 +97,8 @@ export default (function () {
                 await subMdl.active();
             }
             function findSlot(dom: Element, res = new Map()) {
-                if (dom.hasTmpParam('slotName') ) {
-                    res.set( dom.getTmpParam('slotName'), dom);
+                if (dom.hasTmpParam('slotName')) {
+                    res.set(dom.getTmpParam('slotName'), dom);
                     return;
                 }
                 dom.children.forEach(v => {
@@ -130,7 +130,11 @@ export default (function () {
 
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             let model: Model = dom.model;
-            model = model.$query(directive.value);
+            if (directive.value == '$$') {
+                model = module.model;
+            } else {
+                model = model.$query(directive.value);
+            }
             if (!model) {
                 model = module.model.$query(directive.value);
             }
@@ -229,6 +233,44 @@ export default (function () {
                 node.children.forEach((dom) => {
                     setKey(dom, dom.key, id);
                 });
+            }
+        }
+    );
+
+    /**
+     * 递归指令
+     * 作用：在dom内部递归，即根据数据层复制节点作为前一层的子节点
+     * 数据格式：
+     * data:{
+     *     recurItem:{
+    *          title:'第一层',
+    *          recurItem:{
+    *              title:'第二层',
+    *              recurItem:{...}
+    *          }
+    *      }
+     * }
+     * 模版格式：
+     * <div x-recursion='items'><span>{{title}}</span></div>
+     */
+    DirectiveManager.addType('recur',
+        2,
+        (directive: Directive, dom: Element, parent: Element) => {
+        },
+        (directive: Directive, dom: Element, module: Module, parent: Element) => {
+            let model = dom.model;
+            if (!model) {
+                return;
+            }
+            //得到rows数组的model
+            let data = model.$query(directive.value);
+            dom.model = data;
+            //处理内部递归节点
+            if (data[directive.value]) {
+                let node = dom.clone();
+                node.model = data;
+                //作为当前节点子节点
+                dom.add(node);
             }
         }
     );
@@ -531,8 +573,9 @@ export default (function () {
                             v = undefined;
                         }
                     }
-                    //修改字段值
-                    this[field] = v;
+                    //修改字段值,需要处理.运算符
+                    eval(`this.${field}=${v}`);
+                    // this[field] = v;
                     //修改value值，该节点不重新渲染
                     if (type !== 'radio') {
                         dom.setProp('value', v);
@@ -858,6 +901,19 @@ export default (function () {
 
         }
     );
+
+    /**
+     * 粘指令，粘在前一个dom节点上，如果前一个节点repeat了多个分身，则每个分身都粘上
+     * 如果未指定model，则用被粘节点的model
+     */
+    DirectiveManager.addType('stick',
+        10,
+        (directive, dom: Element) => {
+            dom.setProp('slotName', directive.value);
+        },
+        (directive, dom, module, parent) => {
+        }
+    );
     /**
      * 插槽指令
      * 配合slot标签使用
@@ -868,7 +924,6 @@ export default (function () {
             dom.setProp('slotName', directive.value);
         },
         (directive, dom, module, parent) => {
-
         }
     );
 }())

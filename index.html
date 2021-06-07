@@ -5,7 +5,6 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<title>route</title>
 		<script type="text/javascript" src="./dist/nodom.js"></script>
-		<!-- <script src="/examples/config/route.js"></script> -->
 		<style>
 			.a-icon {
 				width: 100px;
@@ -16,14 +15,25 @@
 	</head>
 
 	<body>
-		<div x-class="a-{{data}}"></div>
+		<div>
+			<button e-click="change">change</button>
+			<input type="text" x-field="data.data1" />
+		</div>
 	</body>
 	<script>
 		nodom.app({
 			module: {
 				el: "div",
 				data: {
-					data: "icon",
+					data: {
+						data1: 123,
+					},
+				},
+				methods: {
+					change: function (dom, module) {
+						this.data.data1 = 321;
+						console.log(this);
+					},
 				},
 			},
 		});

@@ -785,6 +785,7 @@ export class Module {
      * @param fromVirtualDom    是否从源虚拟dom数获取，否则从渲染树获取
      */
     public getElement(key: string, fromVirtualDom?: boolean) {
+        
         let tree = fromVirtualDom ? this.virtualDom : this.renderTree;
         return tree.query(key);
     }
