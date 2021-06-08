@@ -9,7 +9,6 @@ import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
 import { ModuleFactory } from "./modulefactory";
 import { request } from "./nodom";
-import { Plugin } from "./plugin";
 import { Renderer } from "./renderer";
 import { ResourceManager } from "./resourcemanager";
 import { ChangedDom, IModuleCfg, IResourceObj, RegisterOps } from "./types";
@@ -131,7 +130,7 @@ export class Module {
     /**
      * 插件集合
      */
-    private plugins: Map<string, Plugin> = new Map();
+    // private plugins: Map<string, Plugin> = new Map();
 
 
 
@@ -273,8 +272,6 @@ export class Module {
                 }
             }
         }
-
-
 
 
         
@@ -729,20 +726,20 @@ export class Module {
      * @param name      插件名
      * @param plugin    插件
      */
-    public addNPlugin(name: string, plugin: Plugin) {
-        if (name) {
-            this.plugins.set(name, plugin);
-        }
-    }
+    // public addNPlugin(name: string, plugin: Plugin) {
+    //     if (name) {
+    //         this.plugins.set(name, plugin);
+    //     }
+    // }
 
     /**
      * 获取插件
      * @param name  插件名 
      * @returns     插件实例
      */
-    public getNPlugin(name: string): Plugin {
-        return this.plugins.get(name);
-    }
+    // public getNPlugin(name: string): Plugin {
+    //     return this.plugins.get(name);
+    // }
 
     /**
      * 设置数据url
@@ -783,7 +780,7 @@ export class Module {
      * @param key               dom key
      * @param fromVirtualDom    是否从源虚拟dom数获取，否则从渲染树获取
      */
-    public getElement(key: string, fromVirtualDom?: boolean) {
+    public getElement(key: string|Object, fromVirtualDom?: boolean) {
         let tree = fromVirtualDom ? this.virtualDom : this.renderTree;
         return tree.query(key);
     }

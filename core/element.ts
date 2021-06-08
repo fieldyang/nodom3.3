@@ -8,6 +8,7 @@ import { NEvent } from "./event";
 import { Util } from "./util";
 import { ChangedDom } from "./types";
 import { Plugin } from "./plugin";
+import { DefineElement } from "./defineelement";
 
 /**
  * 虚拟dom
@@ -98,24 +99,24 @@ export class Element {
     /**
      * 绑定插件
      */
-    public plugin: Plugin;
+    // public plugin: Plugin;
     /**
      * 是否为svg节点
      */
-    public isSvgNode: boolean;
+    // public isSvgNode: boolean;
 
     /**
      * 是否是自定义元素
      */
-    public defineElement:string;
+    public defineEl: DefineElement;
 
     /**
      * 插槽名
      */
     // public slotName: any;
-       /**
-     * 临时参数 map
-     */
+    /**
+  * 临时参数 map
+  */
     private tmpParamMap: Map<string, any> = new Map();
 
     /**
@@ -125,7 +126,8 @@ export class Element {
         this.tagName = tag; //标签
         //检查是否为svg
         if (tag && tag.toLowerCase() === 'svg') {
-            this.isSvgNode = true;
+            this.setTmpParam('isSvgNode', true);
+            // this.isSvgNode = true;
         }
         //key
         this.key = Util.genId() + '';
@@ -159,8 +161,8 @@ export class Element {
 
 
         //自定义元素的前置渲染
-        if (this.plugin) {
-            this.plugin.beforeRender(module, this);
+        if (this.defineEl) {
+            this.defineEl.beforeRender(module, this);
         }
 
         if (this.tagName !== undefined) { //element
@@ -184,8 +186,8 @@ export class Element {
             }
         }
         //自定义元素的后置渲染
-        if (this.plugin) {
-            this.plugin.afterRender(module, this);
+        if (this.defineEl) {
+            this.defineEl.afterRender(module, this);
         }
         return true;
     }
@@ -320,7 +322,7 @@ export class Element {
         function newEl(vdom: Element, parent: Element, parentEl?: Node): any {
             //创建element
             let el;
-            if (vdom.isSvgNode) {  //如果为svg node，则创建svg element
+            if (vdom.getTmpParam('isSvgNode')) {  //如果为svg node，则创建svg element
                 el = Util.newSvgEl(vdom.tagName);
             } else {
                 el = Util.newEl(vdom.tagName);
@@ -403,11 +405,11 @@ export class Element {
         }
 
         //define element复制
-        if (this.plugin) {
+        if (this.defineEl) {
             if (changeKey) {
-                dst.plugin = this.plugin.clone(dst);
+                dst.defineEl = this.defineEl.clone(dst);
             } else {
-                dst.plugin = this.plugin;
+                dst.defineEl = this.defineEl;
             }
         }
 
@@ -853,12 +855,23 @@ export class Element {
      * @param key 	element key
      * @returns		虚拟dom/undefined
      */
-    public query(key: string) {
-       
-        
-        if (this.key === key) {
-            return this;
+    public query(key: string | Object) {
+        //defineEl
+        if (typeof key === 'object' && key != null) {
+            let res: boolean = true;
+            for (const [attr, value] of Object.entries(key)) {
+                if (attr !== 'type' && (this.getProp(attr.toLocaleLowerCase()) || this[attr]) != value) {
+                    res = false;
+                    break;
+                }
+            };
+            if (res) {
+                return key.hasOwnProperty('type') && key['type'] !== 'element' ? this.defineEl : this;
+            }
+        } else {
+            if (this.key === key) return this;
         }
+
         for (let i = 0; i < this.children.length; i++) {
             let dom = this.children[i].query(key);
             if (dom) {
@@ -880,8 +893,7 @@ export class Element {
         let re: ChangedDom = new ChangedDom();
         let change: boolean = false;
         //找到过的dom map {domKey:true/false}，比较后，则添加到map
-        let findedMap: Map<string, boolean> = new Map();
-
+        // let findedMap: Map<string, boolean> = new Map();
         if (this.tagName === undefined) { //文本节点
             if (dst.tagName === undefined) {
                 if (this.textContent !== dst.textContent) {
@@ -1005,7 +1017,6 @@ export class Element {
                         retArr.push(new ChangedDom(v, 'add', this, k));
                     })
                 };
-
                 // this.children.forEach((dom1, ind) => {
                 //     let dom2: Element = dst.children[ind];
                 //     // dom1和dom2相同key
@@ -1088,13 +1099,13 @@ export class Element {
         }
         this.recover();
     }
-    
+
     /**
      * 设置临时参数
      * @param key       参数名
      * @param value     参数值
      */
-     setTmpParam(key: string, value: any) {
+    setTmpParam(key: string, value: any) {
         this.tmpParamMap.set(key, value);
     }
 
@@ -1115,13 +1126,13 @@ export class Element {
         this.tmpParamMap.delete(key);
     }
 
-    
+
     /**
      * 是否有临时参数
      * @param key       参数名
      */
-     hasTmpParam(key: string) {
-       return  this.tmpParamMap.has(key);
+    hasTmpParam(key: string) {
+        return this.tmpParamMap.has(key);
     }
 
 }

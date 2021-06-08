@@ -30,6 +30,7 @@ export { ResourceManager } from "./core/resourcemanager";
 export { Route, Router } from "./core/router";
 export { Scheduler } from "./core/scheduler";
 export { Serializer } from "./core/serializer";
+export {Util} from "./core/util";
 // export * from './core/text';
 export { ChangedDom, IAppCfg, IMdlClassObj, IModuleCfg, IResourceObj, IRouteCfg, ITipMessage } from "./core/types";
 // export { UITool } from './core/uibase';

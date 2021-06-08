@@ -19,7 +19,7 @@
         <div>价格：{{(Math.round((price * discount)))|currency + 'hello'}}</div>
         <div>折扣：{{$cacDis(price*discount)}}</div>
         <div>描述：{{30 +$addStr('hello' + desc) + 20}}</div>
-        <div> 随机折扣:{{Math.random()*price}}</div>
+        <div> 随机折扣:{{(Math.random()*price)|number:1}}</div>
         <div>当前日期是:{{date1|date:'yyyy/MM/dd'}}</div>
         <div>{{date1|date:'yyyy-MM-dd HH:mm:ss'}}</div>
         <div>当前时间是:{{date1|date:'HH:mm:ss'}}</div>
