@@ -5,11 +5,15 @@ import { Util } from "./util";
 /**
  * 模型类
  */
+
+export const modelCloneExpKey = ["$moduleId", "$key", "$watch", "$query"]
+
 export class Model {
     /**
      * 模块id
      */
     $moduleId: number;
+
 
     /**
      * @param data 		数据
@@ -135,5 +139,4 @@ export class Model {
         }
         return model[key];
     }
-
 }

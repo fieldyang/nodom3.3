@@ -19,7 +19,7 @@ export { NodomMessage_en } from "./core/locales/msg_en";
 export { NodomMessage_zh } from "./core/locales/msg_zh";
 export { Message, MessageQueue } from "./core/messagequeue";
 export { MethodFactory } from "./core/methodfactory";
-export { Model } from "./core/model";
+export { Model, modelCloneExpKey } from "./core/model";
 export { ModelManager } from "./core/modelmanager";
 export { Module } from "./core/module";
 export { ModuleFactory } from "./core/modulefactory";

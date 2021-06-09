@@ -6,9 +6,7 @@
 		<title>route</title>
 		<script type="text/javascript" src="./dist/nodom.js"></script>
 		<style>
-			.a-icon {
-				width: 100px;
-				height: 100px;
+			.my {
 				background-color: black;
 			}
 		</style>
@@ -17,7 +15,10 @@
 	<body>
 		<div>
 			<button e-click="change">change</button>
-			<input type="text" x-field="data.data1" />
+			<!-- <ui-test></ui-test> -->
+			<!-- <ui-text x-field="data"></ui-text> -->
+			<div x-class="{'my':'data2'}" x-model="_data">d123123123</div>
+			<h1>{{JSON.stringify(data)}}</h1>
 		</div>
 	</body>
 	<script>
@@ -25,14 +26,18 @@
 			module: {
 				el: "div",
 				data: {
+					agree: "Y",
 					data: {
-						data1: 123,
+						data1: "21231",
 					},
 				},
 				methods: {
-					change: function (dom, module) {
-						this.data.data1 = 321;
+					change: function (dom, module, e) {
+						this._data.data2 = !this._data.data2;
 						console.log(this);
+					},
+					onBeforeFirstRender: function (module) {
+						this._data = nodom.Util.clone(this.data, );
 					},
 				},
 			},

@@ -134,7 +134,7 @@ export class Expression {
             } else if (special.test(lastStr) && !isInBrace) {
                 express += exprStr.substring(first, last) + lastStr;
                 //特殊字符处理
-                fields = fields.concat(exprStr.substring(first, last).match(/[\w^\.]+/g));
+                fields = fields.concat(exprStr.substring(first, last).match(/[\w\$^\.]+/g));
                 if (lastStr == '=' || lastStr == '|' || lastStr == '&') {//处理重复字符，和表达式
                     if (lastStr == '|' && exprStr[last + 1] != '|') {//表达式处理
                         let str = filters[filters.length - 1] ? filters[filters.length - 1] : exprStr.substring(first, last);

@@ -574,8 +574,16 @@ export default (function () {
                         }
                     }
                     //修改字段值,需要处理.运算符
-                    eval(`this.${field}=${v}`);
-                    // this[field] = v;
+                    let temp = this;
+                    let arr = field.split('.')
+                    if (arr.length === 1) {
+                        this[field] = v;
+                    } else {
+                        for (let i = 0; i < arr.length - 1; i++) {
+                            temp = temp[arr[i]];
+                        }
+                        temp[arr[arr.length - 1]] = v;
+                    }
                     //修改value值，该节点不重新渲染
                     if (type !== 'radio') {
                         dom.setProp('value', v);
