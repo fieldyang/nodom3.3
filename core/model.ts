@@ -33,12 +33,11 @@ export class Model {
                     return true;
                 }
                 //不进行赋值
-                if (typeof value !== 'object' || !value.$watch) {
+                if (typeof value !== 'object' || (value===null||!value.$watch)) {
                     //更新渲染
-                    // src[key] = value;
-                    if (typeof (value) != 'function' && !key.startsWith('$'))
+                    if (typeof (value) != 'function' && (!['$moduleId','$key'].includes(key)))
                         mm.update(proxy, key, src[key], value);
-                    return Reflect.set(src, key, value, receiver)
+                    // return Reflect.set(src, key, value, receiver)
                 }
                 return Reflect.set(src, key, value, receiver)
             },
@@ -53,7 +52,7 @@ export class Model {
                 if (data) {
                     return data
                 }
-                if (typeof res === 'object') {
+                if (typeof res === 'object'&&res!==null) {
                     //如果是的对象，则返回代理，便于后续激活get set方法                   
                     // 判断是否已经代理，如果未代理，则增加代理
                     if (!src[key].$watch) {

@@ -19,7 +19,14 @@
 
 <body>
 	<div>
-		{{$time.a}}
+		<nimg dataName='rows' srcName='src' preName='pre' style="max-height:500px; overflow-y: scroll;" >
+			<div>
+				<img src="" alt="">
+				'商品1'
+				<br>
+				<button>购买</button>
+			</div>
+		</nimg>
 		<div x-slot='name'></div>
 		<button e-click="change">render</button>
 		<ul>
@@ -43,7 +50,8 @@
 			// class: "MdlRouteMain",
 			methods: {
 				onBeforeFirstRender: function () {},
-				change: function (dom, model, module, e, el) {
+				change: function (dom, module, e, el) {
+					console.log(dom,module,e,el);
 					this.rows.push({
 						name: 'zhang',
 						addr: 'mianyang'
@@ -71,19 +79,24 @@
 				},
 				rows: [{
 						name: 'yang',
-						addr: 'chengdu'
+						addr: 'chengdu',
+						pre:'./examples/data/img/logo.png',
+						src:'./examples/data/img/1.jpg'
 					},
 					{
 						name: 'zhang',
-						addr: 'mianyang'
+						addr: 'mianyang',pre:'./examples/data/img/logo.png',
+						src:'./examples/data/img/1.jpg'
 					},
 					{
 						name: 'chen',
-						addr: 'luoyang'
+						addr: 'luoyang',pre:'./examples/data/img/logo.png',
+						src:'./examples/data/img/1.jpg'
 					},
 					{
 						name: 'tang',
-						addr: 'beijing'
+						addr: 'beijing',pre:'./examples/data/img/logo.png',
+						src:'./examples/data/img/1.jpg'
 					},
 					{
 						name: 'li',

@@ -65,7 +65,7 @@ export class Plugin {
             this.model = uidom.model;
             //添加到模块
             if(uidom.hasProp('name')){
-                module.addNPlugin(uidom.getProp('name'),this);       
+                // module.addNPlugin(uidom.getProp('name'),this);       
             }
             this.needPreRender = true;    
         }else{
