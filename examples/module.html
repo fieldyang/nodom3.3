@@ -31,23 +31,28 @@
 
 			<h3>自定义模块类名</h3>
 
-			<send-message moduleName="send"> </send-message>
-			<md-a moduleName="title1">
-				<div x-slot="title">周二</div>
-				<div x-slot="btn1">
-					<button>普通点击</button>
-				</div>
-				<div x-slot="picture">loading</div>
-			</md-a>
-			<h4>自定义模块名</h4>
-			<title></title>
+		<send-message moduleName='send' age='10'>
+		</send-message>
 
-			<hr />
-			<h3>支持外部repeat的模块</h3>
-			<div x-repeat="users">
-				<p>{{name}} 的订单:</p>
-				<md-a moduleName='{{"mod" + ($index+1)}}' data="{{data}}"></md-a>
+		<md-a moduleName='title1'>
+			<div x-slot='title'>
+				周二
 			</div>
+			<div x-slot='btn1'>
+				<button>普通点击</button>
+			</div>
+			<div x-slot="picture">loading</div>
+		</md-a>
+		<h4>自定义模块名</h4>
+		<title></title>
+
+
+		<hr>
+		<h3>支持外部repeat的模块</h3>
+		<div x-repeat="users">
+			<p>{{name}} 的订单:</p>
+			<md-a moduleName='{{"mod" + ($index+1)}}' data="{{data}}"></md-a>
+		</div>
 
 			<h3>模块消息传递</h3>
 			<p>消息只能发送给父模块、兄弟模块和子模块，定向发送消息时，必须为模块设置模块名</p>
@@ -92,7 +97,32 @@
 							},
 						];
 					},
+<<<<<<< HEAD
 				},
+=======
+				],
+			},
+			methods: {
+				click: function (dom, module, e) {
+				//获取自定义元素
+					let tmp = module.getElement({
+						key: '9',
+						moduleName: 'mod0',
+						type: 'element'
+
+					});
+					// console.log(tmp);
+				},
+				registerModule: function () {
+					return [{
+						/**
+						 * name自定义标签名，class,模块类名
+						 * **/
+						name: 'title',
+						class: 'ModuleA'
+					}]
+				}
+>>>>>>> 1518903916a9185325e2344a0c152a77ebe72b73
 			},
 		});
 	</script>

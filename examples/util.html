@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,19 +8,26 @@
     <script type="text/javascript" src="../bin/nodom.js"></script>
     <title>Document</title>
 </head>
+
 <body>
-    
+
 </body>
 <script>
-    let data={
-        uid:1,
-        uname:'field',
-        areas:[
-            {aid:1,'aname':'北京'},
-            {aid:2,'aname':'上海'}
+    let data = {
+        uid: 1,
+        uname: 'field',
+        areas: [{
+                aid: 1,
+                'aname': '北京'
+            },
+            {
+                aid: 2,
+                'aname': '上海'
+            }
         ]
     }
     let d = nodom.Util.clone(data);
     console.log(d);
 </script>
+
 </html>

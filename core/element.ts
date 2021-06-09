@@ -99,25 +99,24 @@ export class Element {
      * 绑定插件
      */
     // public plugin: Plugin;
-
     /**
      * 自定义元素(插件，自定义标签)
      */
-    public defineEl: DefineElement;
+    // public isSvgNode: boolean;
 
-    /**
-     * 临时参数 map
-     */
-    private tmpParamMap: Map<string, any> = new Map();
     /**
      * 是否为svg节点
      */
-    public isSvgNode: boolean;
+    public defineEl: DefineElement;
 
     /**
      * 插槽名
      */
     // public slotName: any;
+    /**
+  * 临时参数 map
+  */
+    private tmpParamMap: Map<string, any> = new Map();
 
     /**
      * @param tag 标签名
@@ -126,7 +125,8 @@ export class Element {
         this.tagName = tag; //标签
         //检查是否为svg
         if (tag && tag.toLowerCase() === 'svg') {
-            this.isSvgNode = true;
+            this.setTmpParam('isSvgNode', true);
+            // this.isSvgNode = true;
         }
         //key
         this.key = Util.genId() + '';
@@ -378,7 +378,7 @@ export class Element {
         function newEl(vdom: Element, parent: Element, parentEl?: Node): any {
             //创建element
             let el;
-            if (vdom.isSvgNode) {  //如果为svg node，则创建svg element
+            if (vdom.getTmpParam('isSvgNode')) {  //如果为svg node，则创建svg element
                 el = Util.newSvgEl(vdom.tagName);
             } else {
                 el = Util.newEl(vdom.tagName);
@@ -911,12 +911,23 @@ export class Element {
      * @param key 	element key
      * @returns		虚拟dom/undefined
      */
-    public query(key: string) {
-
-
-        if (this.key === key) {
-            return this;
+    public query(key: string | Object) {
+        //defineEl
+        if (typeof key === 'object' && key != null) {
+            let res: boolean = true;
+            for (const [attr, value] of Object.entries(key)) {
+                if (attr !== 'type' && (this.getProp(attr.toLocaleLowerCase()) || this[attr]) != value) {
+                    res = false;
+                    break;
+                }
+            };
+            if (res) {
+                return key.hasOwnProperty('type') && key['type'] !== 'element' ? this.defineEl : this;
+            }
+        } else {
+            if (this.key === key) return this;
         }
+
         for (let i = 0; i < this.children.length; i++) {
             let dom = this.children[i].query(key);
             if (dom) {
@@ -938,8 +949,7 @@ export class Element {
         let re: ChangedDom = new ChangedDom();
         let change: boolean = false;
         //找到过的dom map {domKey:true/false}，比较后，则添加到map
-        let findedMap: Map<string, boolean> = new Map();
-
+        // let findedMap: Map<string, boolean> = new Map();
         if (this.tagName === undefined) { //文本节点
             if (dst.tagName === undefined) {
                 if (this.textContent !== dst.textContent) {
@@ -1063,7 +1073,6 @@ export class Element {
                         retArr.push(new ChangedDom(v, 'add', this, k));
                     })
                 };
-
                 // this.children.forEach((dom1, ind) => {
                 //     let dom2: Element = dst.children[ind];
                 //     // dom1和dom2相同key

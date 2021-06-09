@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 	<title>Document</title>
-	<script type="text/javascript" src="../bin/nodom.js"></script>
+	<script type="text/javascript" src="../dist/nodom.js"></script>
 	
 	<style>
 		.cls1{
@@ -17,12 +17,13 @@
 </head>
 <body>
 	<div>
+		<button e-click="serialize">序列化</button>
 	</div>
 
 	<div id='mod2'></div>
 </body>
 	<script>
-		nodom.newApp({
+		nodom.app({
 			module:{
 				el:'div',
 				//编译后的模版
@@ -48,7 +49,7 @@
 						this.data.name='yanglei123';
 					},
 					serialize:function(e,module){
-						console.log(Serializer.serialize(ModuleFactory.get(this.moduleName)));
+						console.log(nodom.Serializer.serialize(nodom.ModuleFactory.get(this.$moduleId)));
 					}
 				}
 			}

@@ -1,6 +1,5 @@
 import { Application } from "./application";
 import { Compiler } from "./compiler";
-import { DefineElement } from "./defineelement";
 import { DefineElementManager } from "./defineelementmanager";
 import { Directive } from "./directive";
 import { Element } from "./element";
@@ -131,7 +130,7 @@ export class Module {
     /**
      * 插件集合
      */
-    private defineElements: Map<string, DefineElement> = new Map();
+    // private plugins: Map<string, Plugin> = new Map();
 
 
 
@@ -227,21 +226,21 @@ export class Module {
         delete this.template;
 
         //注册自定义标签模块
-        if(this.methodFactory.has('registerModule')){
-           let registers:Array<RegisterOps> =  Reflect.apply(this.methodFactory.get('registerModule'),null,[]);
-           if(Array.isArray(registers)&&registers.length>0){
-              registers.forEach(v=>{
-                  DefineElementManager.add(v.name.toUpperCase(),{
-                      init:function(element:Element,parent?:Element){
-                        element.tagName='div';
-                        element.setProp('modulename',v.name);
-                        new Directive('module',v.class,element,parent);
-                      }
-                  })
-              })
-           }
+        if (this.methodFactory.has('registerModule')) {
+            let registers: Array<RegisterOps> = Reflect.apply(this.methodFactory.get('registerModule'), null, []);
+            if (Array.isArray(registers) && registers.length > 0) {
+                registers.forEach(v => {
+                    DefineElementManager.add(v.name.toUpperCase(), {
+                        init: function (element: Element, parent?: Element) {
+                            element.tagName = 'div';
+                            element.setProp('modulename', v.name);
+                            new Directive('module', v.class, element, parent);
+                        }
+                    })
+                })
+            }
         }
-        
+
         //如果已存在templateStr，则直接编译
         if (!Util.isEmpty(templateStr)) {
             this.virtualDom = Compiler.compile(templateStr);
@@ -273,8 +272,6 @@ export class Module {
                 }
             }
         }
-
-
 
 
 
@@ -730,20 +727,20 @@ export class Module {
      * @param name      插件名
      * @param plugin    插件
      */
-    public addNPlugin(name: string, defineEl: DefineElement) {
-        if (name) {
-            this.defineElements.set(name, defineEl);
-        }
-    }
+    // public addNPlugin(name: string, plugin: Plugin) {
+    //     if (name) {
+    //         this.plugins.set(name, plugin);
+    //     }
+    // }
 
     /**
      * 获取插件
      * @param name  插件名 
      * @returns     插件实例
      */
-    public getNPlugin(name: string): DefineElement {
-        return this.defineElements.get(name);
-    }
+    // public getNPlugin(name: string): Plugin {
+    //     return this.plugins.get(name);
+    // }
 
     /**
      * 设置数据url
@@ -784,8 +781,7 @@ export class Module {
      * @param key               dom key
      * @param fromVirtualDom    是否从源虚拟dom数获取，否则从渲染树获取
      */
-    public getElement(key: string, fromVirtualDom?: boolean) {
-        
+    public getElement(key: string | Object, fromVirtualDom?: boolean) {
         let tree = fromVirtualDom ? this.virtualDom : this.renderTree;
         return tree.query(key);
     }
