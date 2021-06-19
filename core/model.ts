@@ -5,11 +5,15 @@ import { Util } from "./util";
 /**
  * 模型类
  */
+
+export const modelCloneExpKey = ["$moduleId", "$key", "$watch", "$query"]
+
 export class Model {
     /**
      * 模块id
      */
     $moduleId: number;
+
 
     /**
      * @param data 		数据
@@ -32,14 +36,17 @@ export class Model {
                 if (excludes.includes(<string>key)) {
                     return true;
                 }
+                
+                const excArr = ['$watch', "$moduleId", "$query", "$key","$index"];
                 //不进行赋值
                 if (typeof value !== 'object' || (value===null||!value.$watch)) {
                     //更新渲染
-                    if (typeof (value) != 'function' && (!['$moduleId','$key'].includes(key)))
+                    if (excArr.indexOf(key) == -1){
+                        console.log(key);
                         mm.update(proxy, key, src[key], value);
-                    // return Reflect.set(src, key, value, receiver)
+                    }
                 }
-                return Reflect.set(src, key, value, receiver)
+                return Reflect.set(src, key, value, receiver);
             },
             get: (src: any, key: string | symbol, receiver) => {
                 // vue 的做法是变异 push 等方法避免追踪length 
@@ -80,7 +87,7 @@ export class Model {
         proxy.$watch = this.$watch;
         proxy.$moduleId = module.id;
         proxy.$query = this.$query;
-        proxy.$key = Util.genId();;
+        proxy.$key = Util.genId();
         mm.addToDataMap(data, proxy);
         mm.addModelToModelMap(proxy, data);
         return proxy;

@@ -23,6 +23,12 @@ class ModuleA extends nodom.Module {
                 sendMsg: function (dom, model, module) {
                     module.send('modb1', 'hello',1);
                 }
+            },
+            data:{
+                foods:[
+                    {name:'duck'},
+                    {name:'fish'}
+                ]
             }
         });
         super(config);

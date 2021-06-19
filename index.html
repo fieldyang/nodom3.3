@@ -5,33 +5,17 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 	<title>route</title>
+
 	<script type="text/javascript" src="./dist/nodom.js"></script>
-	<!-- <script src="/examples/config/route.js"></script> -->
-	<style>
-		.colorimp {
-			color: red;
-		}
-		.red{
-			color: red;
-		}
-	</style>
 </head>
 
 <body>
 	<div>
-		<nimg dataName='rows' srcName='src' preName='pre' style="max-height:500px; overflow-y: scroll;" >
-			<div>
-				<img src="" alt="">
-				'商品1'
-				<br>
-				<button>购买</button>
-			</div>
-		</nimg>
-		<div x-slot='name'></div>
 		<button e-click="change">render</button>
 		<ul>
 			<li x-repeat="rows">{{name}}'s address is {{addr}}</li>
 		</ul>
+		{{sum.call(null,star,star1)}}
 		<div x-if='show'>asd</div>
 		<div x-show='show'>asd</div>
 		{{show}}
@@ -51,100 +35,64 @@
 			methods: {
 				onBeforeFirstRender: function () {},
 				change: function (dom, module, e, el) {
-					console.log(dom,module,e,el);
+					// console.log(dom,module,e,el);
 					this.rows.push({
 						name: 'zhang',
 						addr: 'mianyang'
 					});
 					// this.rows[0].name='asd';
 					this.show = false;
-					this.name ='gg';
-					this.red =false;
+					this.name = 'gg';
+					this.red = false;
 					delete this.$time;
-					// this.rows.unshift({
-
-					// 	name: 'gao',
-					// 	addr: 'chengdu'
-
-					// });
+					console.log(module);
+					this.sum=function(a,b){
+						return a;
+					}
 				},
+				cac: function (a, b) {
+					return a + b;
+				}
 			},
 			data: {
+				star: 1,
+				star1: 2,
 				show: true,
-				name:'kyle',
-				red:true,
-				text:'',
-				$time:{
-					a:1
+				name: 'kyle',
+				red: true,
+				text: '',
+				$time: {
+					a: 1
+				},
+				sum:function(a,b){
+					return a+b;
 				},
 				rows: [{
 						name: 'yang',
 						addr: 'chengdu',
-						pre:'./examples/data/img/logo.png',
-						src:'./examples/data/img/1.jpg'
+						pre: './examples/data/img/logo.png',
+						src: './examples/data/img/1.jpg'
 					},
 					{
 						name: 'zhang',
-						addr: 'mianyang',pre:'./examples/data/img/logo.png',
-						src:'./examples/data/img/1.jpg'
+						addr: 'mianyang',
+						pre: './examples/data/img/logo.png',
+						src: './examples/data/img/1.jpg'
 					},
 					{
 						name: 'chen',
-						addr: 'luoyang',pre:'./examples/data/img/logo.png',
-						src:'./examples/data/img/1.jpg'
+						addr: 'luoyang',
+						pre: './examples/data/img/logo.png',
+						src: './examples/data/img/1.jpg'
 					},
 					{
 						name: 'tang',
-						addr: 'beijing',pre:'./examples/data/img/logo.png',
-						src:'./examples/data/img/1.jpg'
+						addr: 'beijing',
+						pre: './examples/data/img/logo.png',
+						src: './examples/data/img/1.jpg'
 					},
-					{
-						name: 'li',
-						addr: 'shanghai'
-					}, {
-						name: 'yang',
-						addr: 'chengdu'
-					},
-					{
-						name: 'chen',
-						addr: 'luoyang'
-					},
-					{
-						name: 'tang',
-						addr: 'beijing'
-					}, {
-						name: 'zhang',
-						addr: 'mianyang'
-					},
-					{
-						name: 'chen',
-						addr: 'luoyang'
-					},
-					{
-						name: 'tang',
-						addr: 'beijing'
-					},
-					{
-						name: 'li',
-						addr: 'shanghai'
-					}, {
-						name: 'yang',
-						addr: 'chengdu'
-					},
-					{
-						name: 'zhang',
-						addr: 'mianyang'
-					},
-					{
-						name: 'chen',
-						addr: 'luoyang'
-					},
-					{
-						name: 'tang',
-						addr: 'beijing'
-					}
 				]
-			}
+			},
 		},
 	});
 </script>

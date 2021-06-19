@@ -168,7 +168,8 @@ export class ModelManager {
      * @param newValue  新值
      */
     public update(model: Model, key: string, oldValue: any, newValue: Element) {
-            
+        console.log('render');
+                
         Renderer.add(this.module);
         //处理观察器函数
         let watcher = this.getWatcherFromModelMap(model, key);

@@ -1,14 +1,13 @@
-import { Module } from "./module";
+import { DefineElement } from "./defineelement";
 import { Directive } from "./directive";
-import { Expression } from "./expression";
-import { Model } from "./model";
-import { ModuleFactory } from "./modulefactory";
 import { NError } from "./error";
 import { NEvent } from "./event";
-import { Util } from "./util";
+import { Expression } from "./expression";
+import { Model } from "./model";
+import { Module } from "./module";
+import { ModuleFactory } from "./modulefactory";
 import { ChangedDom } from "./types";
-import { Plugin } from "./plugin";
-import { DefineElement } from "./defineelement";
+import { Util } from "./util";
 
 /**
  * 虚拟dom
@@ -101,12 +100,12 @@ export class Element {
      */
     // public plugin: Plugin;
     /**
-     * 是否为svg节点
+     * 自定义元素(插件，自定义标签)
      */
     // public isSvgNode: boolean;
 
     /**
-     * 是否是自定义元素
+     * 是否为svg节点
      */
     public defineEl: DefineElement;
 
@@ -204,6 +203,7 @@ export class Element {
         delete this.dontRender;
     }
 
+  
 
     /**
      * 渲染到html element
@@ -386,7 +386,7 @@ export class Element {
 
         //不直接拷贝的属性
         // let notCopyProps:string[] = ['parent','directives','props','exprProps','events','children'];
-        let notCopyProps: string[] = ['parent', 'directives', 'children'];
+        let notCopyProps: string[] = ['parent', 'directives', 'children', 'defineEl'];
         //简单属性
         Util.getOwnProps(this).forEach((p) => {
             if (notCopyProps.includes(p)) {
@@ -420,46 +420,6 @@ export class Element {
             }
             dst.directives.push(d);
         }
-
-        //普通属性
-        // Util.getOwnProps(this.props).forEach((k)=>{
-        //     dst.props[k] = this.props[k];
-        // });
-
-        //表达式属性
-        // Util.getOwnProps(this.exprProps).forEach((k)=>{
-        //     if(changeKey){
-        //         let item = this.exprProps[k];
-        //         if(Array.isArray(item)){   //数组
-        //             let arr = [];
-        //             for(let o of item){
-        //                 arr.push(o instanceof Expression?o.clone():o);
-        //             }
-        //             dst.exprProps[k] = arr;
-        //         }else if(item instanceof Expression){ //表达式
-        //             dst.exprProps[k] = item.clone();
-        //         }else{  //普通属性
-        //             dst.exprProps[k] = item;
-        //         }
-        //     }else{
-        //         dst.exprProps[k] = this.exprProps[k];
-        //     }
-        // });
-
-        //事件
-        // for(let key of this.events.keys()){
-        //     let evt = this.events.get(key);
-        //     //数组需要单独clone
-        //     if(Util.isArray(evt)){
-        //         let a:NEvent[] = [];
-        //         for(let e of <NEvent[]>evt){
-        //             a.push(e.clone());
-        //         }
-        //         dst.events.set(key,a);
-        //     }else{
-        //         dst.events.set(key,(<NEvent>evt).clone());
-        //     }
-        // }
 
         //孩子节点
         for (let c of this.children) {

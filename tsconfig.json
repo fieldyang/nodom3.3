@@ -11,11 +11,11 @@
     ],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    // "outDir":"./dist",
-    // "declaration": true,
-    // "declarationDir":"./dist/types"
+    "outDir":"./dist",
+    "declaration": true,
+    "declarationDir":"./dist/types"
   },
-  "include":["**/*.ts", "index.ts", "test.ts"],
+  "include":["**/*.ts", "index.ts", "test.ts", "core/123123123.js"],
   "exclude": [
     "./examples"
   ]

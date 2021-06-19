@@ -66,7 +66,7 @@ export class Expression {
                 })
             }
         });
-        exprStr =exprStr.trim().replace(/([w]\s)|instanceof|\s+/g, (w, index) => {
+        exprStr = exprStr.trim().replace(/([w]\s)|instanceof|\s+/g, (w, index) => {
             if (index) return index;
             else {
                 if (w === 'instanceof') {
@@ -98,6 +98,11 @@ export class Expression {
                     first = last;
                 } else {
                     if (!isInBrace) {//不在函数里外面也不在括号里
+                        //取data内函数
+                        let mt=exprStr.substring(first, last).match(/^[\$\w]+/);
+                        if(mt){
+                            fields.push(mt[0]);
+                        }   
                         express += exprStr.substring(first, last);
                         first = last;
                     }
@@ -158,9 +163,8 @@ export class Expression {
             }
         }
         let endStr = exprStr.substring(first);
-        ///[A-Za-z0-9]+/.test(endStr)&&
-        if (endStr.indexOf(' ')===-1&&!endStr.startsWith('##TMP')&&!endStr.startsWith(')')) {
-            let  str=endStr.indexOf('.')!=-1?endStr.substring(0,endStr.indexOf('.')):endStr;
+        if (endStr.indexOf(' ') === -1 && !endStr.startsWith('##TMP') && !endStr.startsWith(')')) {
+            let str = endStr.indexOf('.') != -1 ? endStr.substring(0, endStr.indexOf('.')) : endStr;
             fields.push(str);
         }
         express += endStr;
@@ -168,7 +172,7 @@ export class Expression {
         function replaceMethod() {
             express = express.replace(/\$[^(]+?\(/, () => {
                 return '$module.methodFactory.get("' + funName.substr(1) + '").call($module,';
-            })
+            });
         }
         /**
          * @returns {
@@ -236,7 +240,7 @@ export class Expression {
      * @param model 	模型 或 fieldObj对象 
      * @returns 		计算结果
      */
-    public val(model: Model,dom:Element) {
+    public val(model: Model, dom: Element) {
         let module: Module = ModuleFactory.get(model.$moduleId);
         if (!model) {
             model = module.model;
@@ -279,7 +283,7 @@ export class Expression {
         //js 保留字
         const jsKeyWords = ['true', 'false', 'undefined', 'null', 'typeof',
             'Object', 'Function', 'Array', 'Number', 'Date',
-            'instanceof', 'NaN'];
+            'instanceof', 'NaN','new'];
         if (field === '' || jsKeyWords.includes(field) || Util.isNumberString(field) || field.startsWith('Math') || field.startsWith('Object')) {
             return false;
         }

@@ -1,17 +1,17 @@
-import { Module } from "../module";
-import { Element } from "../element";
 import { Directive } from "../directive";
 import { DirectiveManager } from "../directivemanager";
-import { ModuleFactory } from "../modulefactory";
-import { Router } from "../router";
-import { Util } from "../util";
+import { Element } from "../element";
+import { NError } from "../error";
+import { NEvent } from "../event";
 import { Expression } from "../expression";
 import { Filter } from "../filter";
 import { Model } from "../model";
-import { Renderer } from "../renderer";
-import { NError } from "../error";
-import { NEvent } from "../event";
+import { Module } from "../module";
+import { ModuleFactory } from "../modulefactory";
 import { NodomMessage } from "../nodom";
+import { Renderer } from "../renderer";
+import { Router } from "../router";
+import { Util } from "../util";
 
 export default (function () {
 
@@ -81,7 +81,7 @@ export default (function () {
                             //原模块
                             oldMap.forEach(slot => {
                                 let pd: Element = m.getElement(slot.parentKey, true);
-                                let index = pd.children.findIndex((v: Element) =>  {return v.key === slot.key;} );
+                                let index = pd.children.findIndex((v: Element) => { return v.key === slot.key; });
                                 if (index >= 0) {
                                     if (slotMap.has(slot.getTmpParam('slotName'))) {
                                         pd.children.splice(index, 1, slotMap.get(slot.getTmpParam('slotName')));
@@ -97,8 +97,8 @@ export default (function () {
                 await subMdl.active();
             }
             function findSlot(dom: Element, res = new Map()) {
-                if (dom.hasTmpParam('slotName') ) {
-                    res.set( dom.getTmpParam('slotName'), dom);
+                if (dom.hasTmpParam('slotName')) {
+                    res.set(dom.getTmpParam('slotName'), dom);
                     return;
                 }
                 dom.children.forEach(v => {
@@ -130,7 +130,11 @@ export default (function () {
 
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             let model: Model = dom.model;
-            model = model.$query(directive.value);
+            if (directive.value == '$$') {
+                model = module.model;
+            } else {
+                model = model.$query(directive.value);
+            }
             if (!model) {
                 model = module.model.$query(directive.value);
             }
@@ -170,6 +174,7 @@ export default (function () {
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             let model = dom.model;
+
             //可能数据不存在，先设置dontrender
             dom.dontRender = true;
             if (!model) {
@@ -250,7 +255,7 @@ export default (function () {
      */
     DirectiveManager.addType('recur',
         2,
-        (directive:Directive,dom:Element,parent:Element) => {
+        (directive: Directive, dom: Element, parent: Element) => {
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             let model = dom.model;
@@ -261,7 +266,7 @@ export default (function () {
             let data = model.$query(directive.value);
             dom.model = data;
             //处理内部递归节点
-            if(data[directive.value]){
+            if (data[directive.value]) {
                 let node = dom.clone();
                 node.model = data;
                 //作为当前节点子节点
@@ -513,7 +518,6 @@ export default (function () {
 
             Util.getOwnProps(obj).forEach(function (key) {
                 let r = obj[key];
-
                 if (r instanceof Expression) {
                     r = r.val(model, dom);
                 }
@@ -569,8 +573,17 @@ export default (function () {
                             v = undefined;
                         }
                     }
-                    //修改字段值
-                    this[field] = v;
+                    //修改字段值,需要处理.运算符
+                    let temp = this;
+                    let arr = field.split('.')
+                    if (arr.length === 1) {
+                        this[field] = v;
+                    } else {
+                        for (let i = 0; i < arr.length - 1; i++) {
+                            temp = temp[arr[i]];
+                        }
+                        temp[arr[arr.length - 1]] = v;
+                    }
                     //修改value值，该节点不重新渲染
                     if (type !== 'radio') {
                         dom.setProp('value', v);
@@ -587,7 +600,9 @@ export default (function () {
             if (!model) {
                 return;
             }
-            let dataValue = model[directive.value];
+
+            let dataValue = model.$query(directive.value);
+            // model[directive.value];
             //变为字符串
             if (dataValue !== undefined && dataValue !== null) {
                 dataValue += '';
@@ -894,7 +909,7 @@ export default (function () {
 
         }
     );
-    
+
     /**
      * 粘指令，粘在前一个dom节点上，如果前一个节点repeat了多个分身，则每个分身都粘上
      * 如果未指定model，则用被粘节点的model
@@ -912,7 +927,7 @@ export default (function () {
      */
     DirectiveManager.addType('slot',
         3,
-        (directive, dom:Element) => {
+        (directive, dom: Element) => {
             dom.setProp('slotName', directive.value);
         },
         (directive, dom, module, parent) => {
