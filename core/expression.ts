@@ -99,10 +99,10 @@ export class Expression {
                 } else {
                     if (!isInBrace) {//不在函数里外面也不在括号里
                         //取data内函数
-                        let mt=exprStr.substring(first, last).match(/^[\$\w]+/);
-                        if(mt){
+                        let mt = exprStr.substring(first, last).match(/^[\$\w]+/);
+                        if (mt) {
                             fields.push(mt[0]);
-                        }   
+                        }
                         express += exprStr.substring(first, last);
                         first = last;
                     }
@@ -139,7 +139,7 @@ export class Expression {
             } else if (special.test(lastStr) && !isInBrace) {
                 express += exprStr.substring(first, last) + lastStr;
                 //特殊字符处理
-                fields = fields.concat(exprStr.substring(first, last).match(/[\$\w^\.]+/g));
+                fields = fields.concat(exprStr.substring(first, last).match(/[\$\#\w^\.]+/g));
                 if (lastStr == '=' || lastStr == '|' || lastStr == '&') {//处理重复字符，和表达式
                     if (lastStr == '|' && exprStr[last + 1] != '|') {//表达式处理
                         let str = filters[filters.length - 1] ? filters[filters.length - 1] : exprStr.substring(first, last);
@@ -221,8 +221,11 @@ export class Expression {
         if (express.indexOf('instanceof') !== -1) {
             fields.push(express.split(' ')[0]);
         }
+        let exclude = ['.', '$module', '##TMP', 'TMP'];
         fields = [...(new Set(fields))].filter((v) => {
-            return v != null && !v.startsWith('.') && !v.startsWith('$module') && !v.startsWith('##TMP');
+            return v != null && exclude.reduce((sum, value) => {
+                return sum === 0 ? 0 : (!v.startsWith(value) ? 1 : 0);
+            }, 1) === 1 && isNaN(parseInt(v, 10));
         });
         if (replaceMap.size) {
             replaceMap.forEach((value, key) => {
@@ -283,7 +286,7 @@ export class Expression {
         //js 保留字
         const jsKeyWords = ['true', 'false', 'undefined', 'null', 'typeof',
             'Object', 'Function', 'Array', 'Number', 'Date',
-            'instanceof', 'NaN','new'];
+            'instanceof', 'NaN', 'new'];
         if (field === '' || jsKeyWords.includes(field) || Util.isNumberString(field) || field.startsWith('Math') || field.startsWith('Object')) {
             return false;
         }
