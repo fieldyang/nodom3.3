@@ -42,7 +42,6 @@ export class Model {
                 if (typeof value !== 'object' || (value===null||!value.$watch)) {
                     //更新渲染
                     if (excArr.indexOf(key) == -1){
-                        console.log(key);
                         mm.update(proxy, key, src[key], value);
                     }
                 }
