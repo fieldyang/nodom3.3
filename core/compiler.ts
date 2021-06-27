@@ -22,6 +22,7 @@ export class Compiler {
         let oe = new Element('div');
         // 将AST编译成抽象语法树
         this.compileAST(oe, ast);
+        
         return oe;
     }
 

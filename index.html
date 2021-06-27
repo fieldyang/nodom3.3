@@ -15,10 +15,12 @@
 		<ul>
 			<li x-repeat="rows">{{name}}'s address is {{addr}}</li>
 		</ul>
+		11
+		<br>
 		{{sum.call(null,star,star1)}}
 		<div x-if='show'>asd</div>
 		<div x-show='show'>asd</div>
-		{{show}}
+		<div x-if='flag'> aa</div>  {{show}}
 		<div>{{name}}</div>
 		<div><span x-elseif="grade>=60 && grade<70"> 及格 </span></div>
 		<div x-class="{red:'red'}">test</div>
@@ -48,6 +50,9 @@
 					this.sum = function (a, b) {
 						return a;
 					}
+					this.flag=false;
+					// console.log(dom.parent.children[2].removeFromHtml(module,true));
+					// console.log(dom);
 				},
 				cac: function (a, b) {
 					return a + b;
@@ -61,6 +66,7 @@
 				name: 'kyle',
 				red: true,
 				text: '',
+				flag:true,
 				$time: {
 					a: 1,
 				},

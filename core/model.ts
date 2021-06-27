@@ -36,12 +36,12 @@ export class Model {
                 if (excludes.includes(<string>key)) {
                     return true;
                 }
-                
-                const excArr = ['$watch', "$moduleId", "$query", "$key","$index"];
+
+                const excArr = ['$watch', "$moduleId", "$query", "$key", "$index"];
                 //不进行赋值
-                if (typeof value !== 'object' || (value===null||!value.$watch)) {
+                if (typeof value !== 'object' || (value === null || !value.$watch)) {
                     //更新渲染
-                    if (excArr.indexOf(key) == -1){
+                    if (excArr.indexOf(key) == -1) {
                         mm.update(proxy, key, src[key], value);
                     }
                 }
@@ -58,7 +58,7 @@ export class Model {
                 if (data) {
                     return data
                 }
-                if (typeof res === 'object'&&res!==null) {
+                if (typeof res === 'object' && res !== null) {
                     //如果是的对象，则返回代理，便于后续激活get set方法                   
                     // 判断是否已经代理，如果未代理，则增加代理
                     if (!src[key].$watch) {

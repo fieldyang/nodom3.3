@@ -345,16 +345,50 @@ export class Module {
                 root.render(this, null);
                 this.clearDontRender(root);
                 this.doModuleEvent('onBeforeRenderToHtml');
+                let deleteMap = new Map();
                 // 比较节点
-                root.compare(oldTree, this.renderDoms);
+                root.compare(oldTree, this.renderDoms, deleteMap);
                 // 删除
-                for (let i = this.renderDoms.length - 1; i >= 0; i--) {
-                    let item: ChangedDom = this.renderDoms[i];
-                    if (item.type === 'del') {
-                        item.node.removeFromHtml(this);
-                        this.renderDoms.splice(i, 1);
+                // for (let i = this.renderDoms.length - 1; i >= 0; i--) {
+                //     let item: ChangedDom = this.renderDoms[i];
+                //     if (item.type === 'del') {
+                //         console.log(item);
+                //         item.node.removeFromHtml(this);
+                //         this.renderDoms.splice(i, 1);
+                //     }
+                // }
+                //刪除和替換
+                deleteMap.forEach((value, key) => {
+                    let dp = this.getNode(key);
+                    for (let i = value.length - 1; i >= 0; i--) {
+                        let index = value[i];
+                        if (typeof index == 'string') {
+                            let parm = index.split('|');
+                            index = parm[0];
+                            let vdom = root.query(parm[1]);
+                            dp.insertBefore((() => {
+                                let el;
+                                if (vdom.getTmpParam('isSvgNode')) {
+                                    el = Util.newSvgEl(vdom.tagName);
+                                } else {
+                                    el = Util.newEl(vdom.tagName);
+                                }
+                                //设置属性
+                                Util.getOwnProps(vdom.props).forEach((k) => {
+                                    el.setAttribute(k, vdom.props[k]);
+                                });
+                                el.setAttribute('key', vdom.key);
+                                vdom.handleNEvents(module, el, parent);
+                                vdom.handleAssets(el);
+                                return el;
+                            })(), dp.childNodes[index++]);
+                        }
+                        if(index)
+                        dp.removeChild(dp.childNodes[index]);
+
                     }
-                }
+                });
+                deleteMap.clear();
 
                 // 渲染
                 this.renderDoms.forEach((item) => {

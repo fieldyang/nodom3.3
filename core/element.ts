@@ -203,7 +203,7 @@ export class Element {
         delete this.dontRender;
     }
 
-  
+
 
     /**
      * 渲染到html element
@@ -600,9 +600,15 @@ export class Element {
      * 添加子节点
      * @param dom 	子节点
      */
-    public add(dom: Element) {
-        dom.parentKey = this.key;
-        this.children.push(dom);
+    public add(dom: Element | Array<Element>) {
+        if (Array.isArray(dom)) {
+            dom.forEach(v => v.parentKey = this.key);
+            this.children.push(...dom);
+        } else {
+            dom.parentKey = this.key;
+            this.children.push(dom);
+        }
+
     }
 
     /**
@@ -628,7 +634,21 @@ export class Element {
     /**
      * 从html删除
      */
-    public removeFromHtml(module: Module) {
+    public removeFromHtml(module: Module, textNode?: boolean) {
+        // if (textNode) {
+        //     let parent = module.getNode(this.parentKey);
+        //     if (parent !== null) {
+        //         let content = Array.prototype.findIndex.call(parent.childNodes, (v) => {
+        //             if (v.nodeType == 3) {
+        //                 return this.textContent == v.textContent;
+        //             } else {
+        //                 return false;
+        //             }
+        //         });
+        //         if(content!=-1)
+        //         parent.removeChild(parent.childNodes[content]);
+        //     }
+        // }
         let el = module.getNode(this.key);
         if (el !== null) {
             Util.remove(el);
@@ -846,7 +866,7 @@ export class Element {
      * @returns	{type:类型 text/rep/add/upd,node:节点,parent:父节点, 
      * 			changeProps:改变属性,[{k:prop1,v:value1},...],removeProps:删除属性,[prop1,prop2,...],changeAssets:改变的asset}
      */
-    public compare(dst: Element, retArr: Array<ChangedDom>, parentNode?: Element) {
+    public compare(dst: Element, retArr: Array<ChangedDom>,deleteMap?:Map<string,Array<any>>, parentNode?: Element) {
         if (!dst) {
             return;
         }
@@ -861,13 +881,15 @@ export class Element {
                     change = true;
                 }
             } else { //节点类型不同
-                re.type = 'rep';
-                change = true;
+                // re.type = 'rep';
+                addDelKey(this,'rep',);
+                // change = true;
             }
         } else { //element节点
             if (this.tagName !== dst.tagName) { //节点类型不同
-                re.type = 'rep';
-                change = true;
+                // re.type = 'rep';
+                addDelKey(this,'rep');
+                // change = true;
             } else { //节点类型相同，可能属性不同
                 //检查属性，如果不同则放到changeProps
                 re.changeProps = [];
@@ -917,8 +939,9 @@ export class Element {
         if (!this.children || this.children.length === 0) {
             // 旧节点的子节点全部删除
             if (dst.children && dst.children.length > 0) {
-                dst.children.forEach((item) => {
-                    retArr.push(new ChangedDom(item, 'del'));
+                dst.children.forEach((item, index) => {
+                    addDelKey(item);
+                    // retArr.push(new ChangedDom(item, 'del', dst, index));
                 });
             }
         } else {
@@ -934,19 +957,19 @@ export class Element {
                 let [newMap, newKeyMap] = [new Map(), new Map()];
                 while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
                     if (sameKey(oldStartNode, newStartNode)) {
-                        newStartNode.compare(oldStartNode, retArr, this);
+                        newStartNode.compare(oldStartNode, retArr,deleteMap, this);
                         newStartNode = this.children[++newStartIdx];
                         oldStartNode = dst.children[++oldStartIdx];
                     } else if (sameKey(oldEndNode, newEndNode)) {
-                        newEndNode.compare(oldEndNode, retArr, this);
+                        newEndNode.compare(oldEndNode, retArr,deleteMap, this);
                         newEndNode = this.children[--newEndIdx];
                         oldEndNode = dst.children[--oldEndIdx];
                     } else if (sameKey(newStartNode, oldEndNode)) {
-                        newStartNode.compare(oldEndNode, retArr, this);
+                        newStartNode.compare(oldEndNode, retArr,deleteMap, this);
                         newStartNode = this.children[++newStartIdx];
                         oldEndNode = dst.children[--oldEndIdx];
                     } else if (sameKey(newEndNode, oldStartNode)) {
-                        newEndNode.compare(oldStartNode, retArr, this);
+                        newEndNode.compare(oldStartNode, retArr,deleteMap, this);
                         newEndNode = this.children[--newEndIdx];
                         oldStartNode = dst.children[++oldStartIdx];
                     } else {
@@ -962,12 +985,13 @@ export class Element {
                         for (let i = oldStartIdx; i <= oldEndIdx; i++) {
                             let oldKey = dst.children[i].key;
                             if (newKeyMap.has(oldKey)) {
-                                newMap.get(newKeyMap.get(oldKey)).compare(dst.children[i], retArr, this);
+                                newMap.get(newKeyMap.get(oldKey)).compare(dst.children[i], retArr,deleteMap, this);
                                 newMap.delete(newKeyMap.get(oldKey));
                                 newKeyMap.delete(oldKey);
                             }
                             else {
-                                retArr.push(new ChangedDom(dst.children[i], 'del', dst));
+                                addDelKey(dst.children[i]);
+                                // retArr.push(new ChangedDom(dst.children[i], 'del', dst, i));
                             }
                         };
                     }
@@ -1013,6 +1037,13 @@ export class Element {
         }
         function sameKey(newElement, oldElement) {
             return newElement.key === oldElement.key;
+        }
+        function addDelKey(element ,type?:string){
+            let pKey:string =element.parent.key;
+         if(!deleteMap.has(pKey)){
+                deleteMap.set(pKey,new Array());
+            }
+            deleteMap.get(pKey).push( type=='rep'?element.parent.children.indexOf(element)+'|'+this.key:element.parent.children.indexOf(element));
         }
 
     }
