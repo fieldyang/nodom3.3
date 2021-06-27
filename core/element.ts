@@ -178,6 +178,7 @@ export class Element {
         if (!this.hasDirective('module')) {
             for (let i = 0; i < this.children.length; i++) {
                 let item = this.children[i];
+                console.log(item);
                 if (!item.render(module, this)) {
                     item.doDontRender();
                     this.children.splice(i--, 1);
@@ -866,14 +867,12 @@ export class Element {
      * @returns	{type:类型 text/rep/add/upd,node:节点,parent:父节点, 
      * 			changeProps:改变属性,[{k:prop1,v:value1},...],removeProps:删除属性,[prop1,prop2,...],changeAssets:改变的asset}
      */
-    public compare(dst: Element, retArr: Array<ChangedDom>,deleteMap?:Map<string,Array<any>>, parentNode?: Element) {
+    public compare(dst: Element, retArr: Array<ChangedDom>, deleteMap?: Map<string, Array<any>>, parentNode?: Element) {
         if (!dst) {
             return;
         }
         let re: ChangedDom = new ChangedDom();
         let change: boolean = false;
-        //找到过的dom map {domKey:true/false}，比较后，则添加到map
-        // let findedMap: Map<string, boolean> = new Map();
         if (this.tagName === undefined) { //文本节点
             if (dst.tagName === undefined) {
                 if (this.textContent !== dst.textContent) {
@@ -881,15 +880,11 @@ export class Element {
                     change = true;
                 }
             } else { //节点类型不同
-                // re.type = 'rep';
-                addDelKey(this,'rep',);
-                // change = true;
+                addDelKey(this, 'rep',);
             }
         } else { //element节点
             if (this.tagName !== dst.tagName) { //节点类型不同
-                // re.type = 'rep';
-                addDelKey(this,'rep');
-                // change = true;
+                addDelKey(this, 'rep');
             } else { //节点类型相同，可能属性不同
                 //检查属性，如果不同则放到changeProps
                 re.changeProps = [];
@@ -939,17 +934,12 @@ export class Element {
         if (!this.children || this.children.length === 0) {
             // 旧节点的子节点全部删除
             if (dst.children && dst.children.length > 0) {
-                dst.children.forEach((item, index) => {
-                    addDelKey(item);
-                    // retArr.push(new ChangedDom(item, 'del', dst, index));
-                });
+                dst.children.forEach(item => addDelKey(item));
             }
         } else {
             //全部新加节点
             if (!dst.children || dst.children.length === 0) {
-                this.children.forEach((item) => {
-                    retArr.push(new ChangedDom(item, 'add', this));
-                });
+                this.children.forEach(item => retArr.push(new ChangedDom(item, 'add', this)));
             } else { //都有子节点
                 //子节点对比策略
                 let [oldStartIdx, oldStartNode, oldEndIdx, oldEndNode] = [0, dst.children[0], dst.children.length - 1, dst.children[dst.children.length - 1]];
@@ -957,19 +947,19 @@ export class Element {
                 let [newMap, newKeyMap] = [new Map(), new Map()];
                 while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
                     if (sameKey(oldStartNode, newStartNode)) {
-                        newStartNode.compare(oldStartNode, retArr,deleteMap, this);
+                        newStartNode.compare(oldStartNode, retArr, deleteMap, this);
                         newStartNode = this.children[++newStartIdx];
                         oldStartNode = dst.children[++oldStartIdx];
                     } else if (sameKey(oldEndNode, newEndNode)) {
-                        newEndNode.compare(oldEndNode, retArr,deleteMap, this);
+                        newEndNode.compare(oldEndNode, retArr, deleteMap, this);
                         newEndNode = this.children[--newEndIdx];
                         oldEndNode = dst.children[--oldEndIdx];
                     } else if (sameKey(newStartNode, oldEndNode)) {
-                        newStartNode.compare(oldEndNode, retArr,deleteMap, this);
+                        newStartNode.compare(oldEndNode, retArr, deleteMap, this);
                         newStartNode = this.children[++newStartIdx];
                         oldEndNode = dst.children[--oldEndIdx];
                     } else if (sameKey(newEndNode, oldStartNode)) {
-                        newEndNode.compare(oldStartNode, retArr,deleteMap, this);
+                        newEndNode.compare(oldStartNode, retArr, deleteMap, this);
                         newEndNode = this.children[--newEndIdx];
                         oldStartNode = dst.children[++oldStartIdx];
                     } else {
@@ -985,13 +975,12 @@ export class Element {
                         for (let i = oldStartIdx; i <= oldEndIdx; i++) {
                             let oldKey = dst.children[i].key;
                             if (newKeyMap.has(oldKey)) {
-                                newMap.get(newKeyMap.get(oldKey)).compare(dst.children[i], retArr,deleteMap, this);
+                                newMap.get(newKeyMap.get(oldKey)).compare(dst.children[i], retArr, deleteMap, this);
                                 newMap.delete(newKeyMap.get(oldKey));
                                 newKeyMap.delete(oldKey);
                             }
                             else {
                                 addDelKey(dst.children[i]);
-                                // retArr.push(new ChangedDom(dst.children[i], 'del', dst, i));
                             }
                         };
                     }
@@ -1001,49 +990,18 @@ export class Element {
                         retArr.push(new ChangedDom(v, 'add', this, k));
                     })
                 };
-                // this.children.forEach((dom1, ind) => {
-                //     let dom2: Element = dst.children[ind];
-                //     // dom1和dom2相同key
-                //     if (!dom2 || dom1.key !== dom2.key) {
-                //         dom2 = undefined;
-                //         //找到key相同的节点
-                //         for (let i = 0; i < dst.children.length; i++) {
-                //             //找到了相同key
-                //             if (dom1.key === dst.children[i].key) {
-                //                 dom2 = dst.children[i];
-                //                 break;
-                //             }
-                //         }
-                //     }
-                //     if (dom2 !== undefined) {
-                //         dom1.compare(dom2, retArr, this);
-                //         //设置匹配标志，用于后面删除没有标志的节点
-                //         findedMap.set(dom2.key, true);
-                //     } else {
-                //         // dom1为新增节点
-                //         retArr.push(new ChangedDom(dom1, 'add', this, ind));
-                //     }
-                // });
-
-                // //未匹配的节点设置删除标志
-                // if (dst.children && dst.children.length > 0) {
-                //     dst.children.forEach((item) => {
-                //         if (!findedMap.has(item.key)) {
-                //             retArr.push(new ChangedDom(item, 'del', dst));
-                //         }
-                //     });
-                // }
             }
         }
         function sameKey(newElement, oldElement) {
             return newElement.key === oldElement.key;
         }
-        function addDelKey(element ,type?:string){
-            let pKey:string =element.parent.key;
-         if(!deleteMap.has(pKey)){
-                deleteMap.set(pKey,new Array());
+        //添加刪除替換的key
+        function addDelKey(element, type?: string) {
+            let pKey: string = element.parentKey;
+            if (!deleteMap.has(pKey)) {
+                deleteMap.set(pKey, new Array());
             }
-            deleteMap.get(pKey).push( type=='rep'?element.parent.children.indexOf(element)+'|'+this.key:element.parent.children.indexOf(element));
+            deleteMap.get(pKey).push(type == 'rep' ? element.parent.children.indexOf(element) + '|' + this.key : element.parent.children.indexOf(element));
         }
 
     }

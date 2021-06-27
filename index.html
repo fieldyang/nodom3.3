@@ -20,7 +20,8 @@
 		{{sum.call(null,star,star1)}}
 		<div x-if='show'>asd</div>
 		<div x-show='show'>asd</div>
-		<div x-if='flag'> aa</div>  {{show}}
+		<div x-if='flag'> aa</div>  
+		{{show}}
 		<div>{{name}}</div>
 		<div><span x-elseif="grade>=60 && grade<70"> 及格 </span></div>
 		<div x-class="{red:'red'}">test</div>
@@ -42,7 +43,6 @@
 						name: 'zhang',
 						addr: 'mianyang'
 					});
-					// this.rows[0].name='asd';
 					this.show = false;
 					this.name = 'gg';
 					this.red = false;
@@ -51,8 +51,6 @@
 						return a;
 					}
 					this.flag=false;
-					// console.log(dom.parent.children[2].removeFromHtml(module,true));
-					// console.log(dom);
 				},
 				cac: function (a, b) {
 					return a + b;

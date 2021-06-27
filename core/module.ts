@@ -127,12 +127,6 @@ export class Module {
      */
     private moduleMap: Map<string, number> = new Map();
 
-    /**
-     * 插件集合
-     */
-    // private plugins: Map<string, Plugin> = new Map();
-
-
 
     /**
      * 构造器
@@ -348,15 +342,6 @@ export class Module {
                 let deleteMap = new Map();
                 // 比较节点
                 root.compare(oldTree, this.renderDoms, deleteMap);
-                // 删除
-                // for (let i = this.renderDoms.length - 1; i >= 0; i--) {
-                //     let item: ChangedDom = this.renderDoms[i];
-                //     if (item.type === 'del') {
-                //         console.log(item);
-                //         item.node.removeFromHtml(this);
-                //         this.renderDoms.splice(i, 1);
-                //     }
-                // }
                 //刪除和替換
                 deleteMap.forEach((value, key) => {
                     let dp = this.getNode(key);
@@ -383,9 +368,8 @@ export class Module {
                                 return el;
                             })(), dp.childNodes[index++]);
                         }
-                        if(index)
-                        dp.removeChild(dp.childNodes[index]);
-
+                        if (index != null && index != undefined)
+                            dp.removeChild(dp.childNodes[index]);
                     }
                 });
                 deleteMap.clear();
@@ -755,26 +739,6 @@ export class Module {
     public removeMethod(name: string) {
         this.methodFactory.remove(name);
     }
-
-    /**
-     * 添加插件
-     * @param name      插件名
-     * @param plugin    插件
-     */
-    // public addNPlugin(name: string, plugin: Plugin) {
-    //     if (name) {
-    //         this.plugins.set(name, plugin);
-    //     }
-    // }
-
-    /**
-     * 获取插件
-     * @param name  插件名 
-     * @returns     插件实例
-     */
-    // public getNPlugin(name: string): Plugin {
-    //     return this.plugins.get(name);
-    // }
 
     /**
      * 设置数据url
