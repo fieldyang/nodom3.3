@@ -1,0 +1,113 @@
+import { DirectiveManager } from "./directivemanager";
+import { DirectiveType } from "./directivetype";
+import { Filter } from "./filter";
+import { Element } from "./element";
+import { Module } from "./module";
+import { Util } from "./util";
+
+/**
+ * 指令类
+ */
+export  class Directive {
+    /**
+     * 指令id
+     */
+    public id:number;
+
+    /**
+     * 指令类型，指令管理器中定义
+     */
+    public type:DirectiveType;
+    
+    /**
+     * 指令值
+     */
+    public value:any;
+    
+    
+    /**
+     * 过滤器组
+     */
+    public filters:Filter[];
+    /**
+     * 附加参数
+     */
+    public params:any;
+
+    /**
+     * 附加操作
+     */
+    public extra:any;
+
+    /**
+     * 构造方法
+     * @param type  	类型名
+     * @param value 	指令值
+     * @param dom       指令对应的dom
+     * @param filters   过滤器字符串或过滤器对象,如果为过滤器串，则以｜分割
+     * @param notSort   不排序
+     */
+    constructor(type:string, value:string,dom?:Element, parent?:Element, filters?:string|Filter[],notSort?:boolean) {
+        this.id = Util.genId();
+        this.type = DirectiveManager.getType(type);
+        if (Util.isString(value)) {
+            value = value.trim();
+        }
+        this.value = value;
+        
+        if(filters){
+            this.filters = [];
+            if(typeof filters === 'string'){
+                let fa:string[] = filters.split('|');
+                for(let f of fa){
+                    this.filters.push(new Filter(f));
+                }
+            }else if(Util.isArray(filters)){
+                for(let f of filters){
+                    if(typeof f === 'string'){
+                        this.filters.push(new Filter(<string>f));
+                    }else if(f instanceof Filter){
+                        this.filters.push(f);
+                    }
+                }
+            }
+        }
+        if (type !== undefined && dom) {
+            DirectiveManager.init(this,dom,parent);
+            dom.addDirective(this,!notSort);
+        }
+    }
+
+    /**
+     * 执行指令
+     * @param module    模块 
+     * @param dom       指令执行时dom
+     * @param parent    父虚拟dom
+     */
+    public async exec(module:Module,dom:Element,parent?:Element) {
+        return DirectiveManager.exec(this,dom,module,parent);
+    }
+
+    /**
+     * 克隆
+     * @param dst   目标dom
+     * @returns     新指令
+     */
+    public clone(dst:Element):Directive{
+        let dir = new Directive(this.type.name,this.value);
+        if(this.filters){
+            dir.filters = [];
+            for(let f of this.filters){
+                dir.filters.push(f.clone());
+            }
+        }
+        if(this.params){
+            dir.params = Util.clone(this.params);
+        }
+        if(this.extra){
+            dir.extra = Util.clone(this.extra);
+        }
+        DirectiveManager.init(dir,dst);
+        return dir;
+    }
+}

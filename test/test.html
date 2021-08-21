@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <style>
+        .red{
+            color:red;
+        }
+        
+    </style>
+    <!-- <link rel="stylesheet" type="text/css" href="css/1.css" /> -->
+    <style>
+        .bigger{
+            font-size:16px;
+        }
+    </style> 
+    <link rel="stylesheet" type="text/css" href="css/1.css" />
+    <title>Document</title>
+</head>
+<body>
+    <span class='cls2'>hello world</span>
+</body>
+<script>
+    // let style = document.createElement('style');
+    // document.head.appendChild(style);
+    // let sheets = document.styleSheets;
+    // console.log(sheets);
+    // // sheets[3].insertRule(".aaa{color:blue}");
+    // sheets[3].insertRule("@import 'css/2.css'");
+
+    class A{
+        constructor(){
+            // alert(this.constructor)
+            console.log(this,this.model);
+            // setTimeout(()=>{
+            //     console.log(this.model);
+                
+            // },0)
+            
+        }
+        model = {y:1}
+    }
+
+    class B extends A{
+        model = {x:1}
+    }
+
+    class C extends B{
+        model = {z:2}
+    }
+    new C();
+</script>
+
+</html>
