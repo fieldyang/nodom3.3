@@ -53,6 +53,7 @@ export class ModuleFactory {
     public static has(clazzName:string):boolean{
         return this.classes.has(clazzName);
     }
+
     /**
      * 获取模块实例（通过类名）
      * @param className     模块类名
@@ -65,6 +66,7 @@ export class ModuleFactory {
         if(!this.classes.has(className)){
             config = config || {};
             instance = Reflect.construct(clazz,[config]);
+            instance.init();
             this.classes.set(className,{
                 instance:instance,
                 model:Util.clone(instance.model)
@@ -146,7 +148,7 @@ export class ModuleFactory {
         let url: string = Util.mergePath([Application.getPath('module'), path]);
         await ResourceManager.getResources([{ url: url, type: 'js' }]);
         // let cls = eval(cfg.class);
-        let cls = new Function('return ' + cfg.class)();
+        let cls = Util.eval(cfg.class);
         if (cls) {
             let instance = Reflect.construct(cls, [{
                 name: cfg.name,

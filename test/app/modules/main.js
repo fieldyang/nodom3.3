@@ -4,21 +4,19 @@ export class ModuleMain extends Module{
     template(){
         return `
             <div>hello world!</div>
-            <ModuleA d-x1={{x}}></ModuleA>
+            <ModuleA d-x1={{x}} />
         `
     }
-    model(){
-        return {
+    model = {
             x:123
         }
-    }
+    
     methods(){
         return {
             aaa(){
             }
         }
     }
-    modules(){
-        return [ModuleA]
-    }
+    modules = [ModuleA]
+    
 }

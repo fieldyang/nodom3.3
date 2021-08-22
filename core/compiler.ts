@@ -1,12 +1,12 @@
+import { DefineElementManager } from "./defineelementmanager";
 import { Directive } from "./directive";
 import { Element } from "./element";
 import { NError } from "./error";
 import { NEvent } from "./event";
 import { Expression } from "./expression";
 import { ModuleFactory } from "./modulefactory";
-import { ASTObj, selfClosingTag } from "./types";
+import { ASTObj } from "./types";
 import { Util } from "./util";
-
 
 export class Compiler {
 
@@ -16,15 +16,11 @@ export class Compiler {
     * @returns             虚拟dom
     */
     public static compile(elementStr: string): Element {
-
         // 这里是把模板串通过正则表达式匹配 生成AST
         let ast = this.compileTemplateToAst(elementStr);
-
         let oe = new Element('div');
-        console.log(oe,ast);
         // 将AST编译成抽象语法树
         this.compileAST(oe, ast);
-
         return oe;
     }
 
@@ -44,17 +40,13 @@ export class Compiler {
                 case 'comment':// 注释不处理
                     break;
                 default:
-
-                    if (a.tagName !== 'svg') {
-                        // let chlid = new Element(a.tagName);
-                        this.handleAstNode(oe, a);
-                    }
+                    this.handleAstNode(oe, a);
                     break;
             }
         }
-
         return oe;
     }
+
     /**
      * 编译text类型的ast到虚拟dom
      * @param parent 父虚拟dom节点
@@ -75,85 +67,69 @@ export class Compiler {
      * @param astObj 
      */
     public static handleAstNode(parent: Element, astObj: ASTObj) {
-        // let de = PluginManager.get(astObj.tagName.toUpperCase());
-        // let de = DefineElementManager.get(astObj.tagName.toUpperCase());
-        console.log(astObj.tagName);
+        //前置处理
+        this.preHandleNode(astObj);
         let child = new Element(astObj.tagName);
-        if(astObj.tagName === 'ModuleA'){
-            console.log(ModuleFactory,astObj.tagName);
-        }
-        
-        // 模块类判断
-        if(ModuleFactory.has(astObj.tagName)){
-            astObj.attrs['x-module'] = astObj.tagName;
-            astObj.tagName = 'div';
-            // new Directive('module',astObj.tagName,child);
-            // child.tagName = 'div';
-            console.log(astObj);
-        }
         parent.add(child);
         this.handleAstAttrs(child, astObj.attrs, parent);
-
         this.compileAST(child, astObj.children);
-        // if (de) {
-        //     de.init(child, parent);
-        // }
     }
+    
     /**
      * 编译ast 到虚拟dom
      * @param oe        虚拟dom
      * @param attrs     需要编译成虚拟dom的attrs
      * @param parent    父虚拟dom节点
      */
-    public static handleAstAttrs(oe: Element, attrs: Array<{ propName: string, value: any }>, parent: Element) {
+    public static handleAstAttrs(oe: Element, attrs: Map<string,any>, parent: Element) {
         //指令数组 先处理普通属性在处理指令
         let directives = [];
         if (!attrs) { return }
-        for (const attr of attrs) {
-            // 统一吧属性名转换成小写
-            attr.propName = attr.propName.toLocaleLowerCase()
-            if (attr.propName.startsWith("x-")) {
+        for(const attr of attrs){
+            if (attr[0].startsWith("x-")) {
                 //指令
-                directives.push(attr);
-            } else if (attr.propName.startsWith("e-")) {
+                directives.push({
+                    name:attr[0].substr(2),
+                    value:attr[1]
+                });
+            } else if (attr[0].startsWith("e-")) {
                 // 事件
-                let e = attr.propName.substr(2);
-                oe.addEvent(new NEvent(e, attr.value.trim()));
-            } else if (attr.propName.startsWith("d-")) {
+                let e = attr[0].substr(2);
+                oe.addEvent(new NEvent(e, attr[1]));
+            } else if (attr[0].startsWith("d-")) {
                 // 数据
-                let tempArr = attr.propName.split(':');
-                let bindFlag:boolean = false;
+                let tempArr = attr[0].split(':');
+                let bindFlag: boolean = false;
                 if (tempArr.length == 2) {
                     bindFlag = tempArr[1] == 'true' ? true : false;
                 }
                 let name = tempArr[0].split('-')[1];
-                if (/\{\{.+?\}\}/.test(attr.value) === false) {
+                if (/\{\{.+?\}\}/.test(attr[1]) === false) {
                     throw new NError('数据必须是由双大括号包裹');
                 }
-                let value = attr.value.substring(2, attr.value.length - 2);
+                let value = attr[1].substring(2, attr[1].length - 2);
                 // 变量别名，变量名（原对象.变量名)，双向绑定标志
                 let data = [value, bindFlag];
                 oe.datas[name] = data;
-                
             } else {
                 // 普通属性 如class 等
                 let isExpr: boolean = false;
-                let v = attr.value.trim();
+                let v = attr[1];
                 if (v !== '') {
                     let ra = this.compileExpression(v);
                     if (Util.isArray(ra)) {
-                        oe.setProp(attr.propName, ra, true);
+                        oe.setProp(attr[0], ra, true);
                         isExpr = true;
                     }
                 }
                 if (!isExpr) {
-                    oe.setProp(attr.propName, v);
+                    oe.setProp(attr[0], v);
                 }
             }
         }
         //处理属性
         for (let attr of directives) {
-            new Directive(attr.propName.substr(2), attr.value.trim(), oe, parent, null, true);
+            new Directive(attr.name, attr.value, oe, parent, null, true);
         }
         if (directives.length > 1) {
             //指令排序
@@ -166,10 +142,12 @@ export class Compiler {
     /**
      * 处理属性字符串
      * @param attrString 属性字符串
-     * @returns attrs数组 
+     * @returns attrs map
      */
-    private static parseAttrString(attrString: string | undefined): Array<any> {
-        if (attrString == undefined || attrString.length === 0) return [];
+    private static parseAttrString(attrString: string | undefined): Map<string,any> {
+        let map = new Map();
+        if (attrString == undefined || attrString.length === 0) return map;
+
         attrString = attrString.trim();
         // 引号栈处理引号嵌套
         let yinghaoStack: string[] = [];
@@ -214,25 +192,17 @@ export class Compiler {
             //循环结束之后还剩一个属性没加进去，因为可能最后一个属性后面没有空格
             result.push(attrString.substring(point).trim());
         }
-        result = result.map((item) => {
-            // 如果match为空说明属性串里面没有“”也就是自定义的只有属性名没有属性值得属性，这种直接给他的value字段设置为空就行了
-
-            const o = item.match(/^(.+)=[\'|\"]([\s\S]*)[\'|\"]$/) || [, item];
-            const e = item.match(/^(.+)=(\{\{[\s\S]*\}\})$/);
-            if (e) {
-                return {
-                    propName: e[1],
-                    value: e[2] ? e[2] : '',
-                }
-            } else {
-                return {
-                    propName: o[1],
-                    value: o[2] ? o[2] : '',
-                };
+        for(let r of result){
+            // 如果match为空说明属性串里面没有“”,也就是自定义的只有属性名没有属性值的属性，这种直接设置value字段为空
+            const e = r.match(/^(.+)=(\{\{[\s\S]*\}\})$/);
+            if(e){
+                map.set(e[1],e[2] || '');
+            }else{
+                const o = r.match(/^(.+)=[\'|\"]([\s\S]*)[\'|\"]$/) || [, r];
+                map.set(o[1],o[2] || '');
             }
-
-        });
-        return result;
+        }
+        return map;
     }
 
     /**
@@ -244,19 +214,19 @@ export class Compiler {
         let templateStr = elementStr.trim();
         // 准备栈空间
         let stack1 = [];
-        let stack2 = [{ tagName: undefined, children: [], attrs: [] }]
+        let stack2 = [{ tagName: undefined, children: [], attrs: new Map()}]
 
         let index = 0;
 
         // 开始标签的正则表达式 
-        let startRegExp = /^\<(\s*)([a-z\-]*[0-9]?)((?:"(?:[^"]*)"+|'(?:[^']*)'+|(?:[^<>"'/]*)+)*)*(\s*\/)?(\s*)\>/
+        let startRegExp = /^\<(\s*)([a-zA-Z\-]*[0-9]?)((?:"(?:[^"]*)"+|'(?:[^']*)'+|(?:[^<>"'/]*)+|(?:\{\{.*\}\})+)*)*?(\s*\/){0,1}(\s*)\>/;
         // /^\<(\s*)([a-z\-]*[0-9]?)((?:\s+\w+\-?\w+(?:\=[\"\']?[\s\S]*?[\"\']?)?)*)*(\s*\/)?(\s*)\>/
 
         // 匹配结束标签的正则表达式
-        let endRegExp = /^\<(\s*)\/(\s*)([a-z\-]*[0-9]?)(\s*)\>/
+        let endRegExp = /^\<(\s*)\/(\s*)([a-zA-Z\-]*[0-9]?)(\s*)\>/
         // /^\<(\s*)\/(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)(\s*)\>/;
         // 匹配开始标签和结束标签之间的文字的正则表达式 
-        let wordRegExp = /^([\s\S]+?)(?=\<(?:!--)?(?:\s*\/?\s*(?:[a-z\-]*[0-9]?)(?:(?:\s+\w+\-?\w+\=?[\"\']?[\s\S]*?[\"\']?)*)*|(?:[\s\S]+?))(?:--)?\>)/
+        let wordRegExp = /^([\s\S]+?)(?=\<(?:!--)?(?:\s*\/?\s*(?:[a-zA-Z\-]*[0-9]?)(?:(?:\s+\w+\-?\w+\=?[\"\']?[\s\S]*?[\"\']?)*)*|(?:[\s\S]+?))(?:--)?\>)/
         // /^([\s\S]+?)(?=\<(!--)?(?:(\s*)\/?(\s*)(?:[a-z]+[1-6]?|ui\-[a-z]+[1-6]?)(?:(?:\s+.+?[\"\'](?:[\s\S]*?)[\"\']|.*))?(\s*)|(?:[\s\S]+?))(--)?\>)/
         // 匹配裸字符串，全字符匹配配合wordRegExp标签判断是不是裸字符串
         let onlyWordRegExp = /^([\s\S]+)/;
@@ -300,15 +270,14 @@ export class Compiler {
                     // pre标签
                     preFlag = true;
                 }
-                if (selfClosingTag.indexOf(tagName) !== -1) {
-                    // 这个标签是自闭合标签
+                // 判断是不是自闭合标签
+                if (selfCloseStr && selfCloseStr != undefined) {
+                    //自闭和标签
                     stack2[stack2.length - 1].children.push({
                         tagName,
                         children: [],
                         attrs: this.parseAttrString(attrString)
                     })
-
-
                 } else {
                     // 这个标签是普通的标签
                     // 开始标签入栈
@@ -320,7 +289,6 @@ export class Compiler {
                         attrs: this.parseAttrString(attrString)
                     });
                     // 需要跳过的长度 = 2个尖括号 + 左尖括号与标签名之间的空格长度 + 标签名长度 + 属性长度 + 属性与右尖括号之间的空格长度
-
                 }
                 index += 2 + beforeSpaceLenght + tagNameLenght + atttLenght + selfCloseLenght + afterSpaceLenght;
             } else if (endRegExp.test(rest)) {
@@ -387,9 +355,7 @@ export class Compiler {
                 index++;
             }
         }
-
         return stack2[0].children;
-
     }
 
     /**
@@ -423,5 +389,22 @@ export class Compiler {
             retA.push(exprStr.substr(oIndex));
         }
         return retA;
+    }
+
+    /**
+     * 前置处理
+     * 包括：模块类元素、自定义元素
+     * @param node  ast node
+     */
+    private static preHandleNode(node:ASTObj){
+        // 模块类判断
+        if (ModuleFactory.has(node.tagName)) {
+            // node.attrs.push({propName:'x-module',value:node.tagName});
+            node.attrs.set('x-module',node.tagName);
+            node.tagName = 'div';
+        }else if(DefineElementManager.has(node.tagName)){ //自定义元素
+            let clazz = DefineElementManager.get(node.tagName);
+            Reflect.construct(clazz,[node]);
+        }
     }
 }

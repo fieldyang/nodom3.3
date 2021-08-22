@@ -1,17 +1,17 @@
-import { Directive } from "../directive";
-import { DirectiveManager } from "../directivemanager";
-import { Element } from "../element";
-import { NError } from "../error";
-import { NEvent } from "../event";
-import { Expression } from "../expression";
-import { Filter } from "../filter";
-import { Model } from "../model";
-import { Module } from "../module";
-import { ModuleFactory } from "../modulefactory";
-import { NodomMessage } from "../nodom";
-import { Renderer } from "../renderer";
-import { Router } from "../router";
-import { Util } from "../util"
+import { Directive } from "../core/directive";
+import { DirectiveManager } from "../core/directivemanager";
+import { Element } from "../core/element";
+import { NError } from "../core/error";
+import { NEvent } from "../core/event";
+import { Expression } from "../core/expression";
+import { Filter } from "../core/filter";
+import { Model } from "../core/model";
+import { Module } from "../core/module";
+import { ModuleFactory } from "../core/modulefactory";
+import { NodomMessage } from "../core/nodom";
+import { Renderer } from "../core/renderer";
+import { Router } from "../core/router";
+import { Util } from "../core/util"
 
 export default (function () {
 
@@ -41,7 +41,7 @@ export default (function () {
             dom.setProp('role', 'module');
             //设置module name
             if (valueArr.length > 1) {
-                dom.setProp('modulename', valueArr[1]);
+                dom.setProp('moduleName', valueArr[1]);
             }
             directive.extra = {};
         },
@@ -59,18 +59,14 @@ export default (function () {
                 }
                 //保留modelId
                 directive.extra = {moduleId:m.id};
-                m.parent = module;
+                //添加到父模块
+                module.addChild(m.id);
                 //设置容器key
                 m.containerKey = dom.key;
+                //添加到渲染器
                 Renderer.add(m);
             }
-            //处理 dom d- 开头的附加参数
-            // let pm:Module = module.getParent();
-            // if(pm){
-            //     //获取外部模块数据
-            //     Util.handlesDatas(pm, module, dom);
-            // }
-            console.log(dom,dom.datas);
+            //处理d- 开头的附加参数
             Util.handlesDatas(module, m, dom);
             //用一次后删除dom的datas熟悉
             delete dom.datas;
@@ -636,7 +632,7 @@ export default (function () {
         (directive: Directive, dom: Element) => {
             if (typeof directive.value === 'string') {
                 //转换为json数据
-                let obj = new Function('return ' + directive.value)();
+                let obj = Util.eval(directive.value);
                 if (!Util.isObject(obj)) {
                     return;
                 }

@@ -6,7 +6,6 @@ import { Route } from "./router";
  * module class obj
  */
 export interface IMdlClassObj {
-
     /**
      * class名或class
      */
@@ -347,10 +346,9 @@ export interface ASTObj extends Object {
     tagName: string;
 
     /**
-     * 属性数组，里面为属性对象如{propName:'class',value:'myclass'}
+     * 属性map，里面为属性对象如{name:**,...}
      */
-    attrs?: Array<{ propName: string, value: any }>;
-
+    attrs?: Map<string,any>;
     /**
      * 事件数组，里面为事件对象{eventName:'click',eventHandler:'change'}
      */
@@ -372,6 +370,9 @@ export interface ASTObj extends Object {
     textContent?: string;
 }
 
+/**
+ * 自关闭标签
+ */
 export const selfClosingTag = [
     "area",
     "base",

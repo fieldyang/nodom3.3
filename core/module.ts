@@ -1,7 +1,6 @@
 import { Compiler } from "./compiler";
 import { Element } from "./element";
 import { LocalStore } from "./localstore";
-import { MessageQueue } from "./messagequeue";
 import { MethodFactory } from "./methodfactory";
 import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
@@ -25,22 +24,23 @@ export class Module {
     public name: string;
 
     /**
-     * 模型
+     * 模型，函数或对象
      */
     public model: any;
 
     /**
-     * 方法集合
+     * 方法集合，函数或对象
      */
-    public methods:Function;
+    public methods: any;
 
     /**
-     * 子模块，类名数组
+     * 子模块，类名数组，函数或数组
      */
-    public modules:Function;
+    public modules: any;
 
     /**
-     * css样式，数组表示，如果数组元素为object，则为样式名和键值对，否则为url,url为主页面相对路径
+     * css样式
+     * 函数或数组，如果数组元素为object，则为样式名和键值对，否则为url,url为主页面相对路径
      * [{
      *  '.cls1:{
      *      color:'red',
@@ -51,7 +51,7 @@ export class Module {
      *  }
      * },'css1.css']
      */
-    public css:any[];
+    public css:any;
 
     /**
      * 是否是首次渲染
@@ -69,9 +69,9 @@ export class Module {
     private renderTree: Element;
 
     /**
-     * 父模块
+     * 父模块 id
      */
-    public parent:Module;
+    private parentId:number;
 
     /**
      * 子模块id数组
@@ -155,44 +155,6 @@ export class Module {
         // 初始化方法工厂
         this.methodFactory = new MethodFactory();
 
-        if(!this.template || typeof this.template !== 'function'){
-            throw '需要定义模版函数';
-        }
-        //调用模版函数，并把this指向model
-        let tStr = this.template.apply(this.model);
-        if(!tStr){
-            throw '模版函数需要返回模版串';
-        }
-
-        // 编译成虚拟dom
-        this.virtualDom = Compiler.compile(tStr);
-        
-        //初始化方法
-        if(typeof this.methods === 'function'){
-            let mds = this.methods();
-            for(let m in mds){
-                this.methodFactory.add(m,mds[m]);
-            }
-        }
-
-        //初始化model
-        let data = {};
-        if(typeof this.model === 'function'){
-            data = this.model();
-        }
-        this.model = new Model(data||{},this);
-
-        //初始化子模块
-        if(typeof this.modules === 'function'){
-            let mods = this.modules();
-            for(let cls of mods){
-                ModuleFactory.getInstance(cls);
-            }
-        }
-
-        //处理css配置
-        this.handleCss();
-
         //主模块，加入渲染队列
         if(ModuleFactory.getMain() === this){
             Renderer.add(this);
@@ -200,10 +162,50 @@ export class Module {
     }
 
     /**
+     * 初始化
+     */
+    public init(){
+        //初始化model
+        let data = (typeof this.model === 'function'?this.model():this.model);
+        this.model = new Model(data||{},this);
+        
+        //调用模版函数，并把this指向model
+        let tStr = (typeof this.template === 'function'? this.template.apply(this.model):this.template);
+        if(!tStr){
+            throw '模版函数需要返回模版串';
+        }
+        delete this.template;
+
+        //初始化方法
+        let methods = (typeof this.methods === 'function'?this.methods.apply(this.model):this.methods);
+        if(methods && typeof methods === 'object'){
+            Object.getOwnPropertyNames(methods).forEach(item=>{
+                this.methodFactory.add(item,methods[item]);
+            });
+        }
+        delete this.methods;
+        
+        //初始化子模块
+        let mods = (typeof this.modules === 'function'?this.modules.apply(this.model):this.modules);
+        if(Array.isArray(mods)){
+            for(let cls of mods){
+                ModuleFactory.getInstance(cls);
+            }
+        }
+        delete this.modules;
+        
+        //处理css配置
+        this.handleCss();
+
+        // 编译成虚拟dom
+        this.virtualDom = Compiler.compile(tStr);
+    }
+    /**
      * 处理css
      */
     private handleCss(){
-        if(this.css && this.css.length > 0){
+        let cssArr = (typeof this.css === 'function'?this.css.apply(this.model):this.css);
+        if(Array.isArray(cssArr) && cssArr.length > 0){
             //如果不存在stylesheet或最后一个stylesheet是link src，则新建一个style标签
             if(document.styleSheets.length === 0 || document.styleSheets[document.styleSheets.length-1].href){
                 document.head.appendChild(document.createElement('style'));
@@ -211,7 +213,7 @@ export class Module {
             //得到最后一个sheet
             let sheet:CSSStyleSheet = document.styleSheets[document.styleSheets.length-1];
                     
-            for(let css of this.css){
+            for(let css of cssArr){
                 if(typeof css === 'string'){
                     sheet.insertRule("@import '" + css + "'");
                 }else if(typeof css === 'object'){
@@ -309,9 +311,10 @@ export class Module {
             this.subscribes.publish('@data' + this.id, null);
             this.subscribes.publish('@dataTry' + this.id, null);
         }
-        let md: Module = this.parent;
+        
+        let md: Module = this.getParent();
         if (md && md.subscribes !== undefined) {
-            md.subscribes.publish('@dataTry' + this.parent.id, null);
+            md.subscribes.publish('@dataTry' + this.parentId, null);
         }
         
         //数组还原
@@ -355,7 +358,6 @@ export class Module {
     clone(moduleName: string): any {
         let me = this;
         let m: Module = Reflect.construct(this.constructor,[{ name: moduleName }]);
-        // new Module({ name: moduleName });
         //克隆数据
         if (this.model) {
             let data = Util.clone(this.model, /^\$\S+/);
@@ -391,89 +393,24 @@ export class Module {
         Renderer.add(this);
     }
 
-    // /**
-    //  * 添加子模块
-    //  * @param moduleId      模块id
-    //  * @param className     类名
-    //  */
-    // public addChild(moduleId: number) {
-    //     if (!this.children.includes(moduleId)) {
-    //         this.children.push(moduleId);
-    //         let m: Module = ModuleFactory.get(moduleId);
-    //         if (m) {
-    //             m.parentId = this.id;
-    //         }
-    //         //保存name和id映射
-    //         this.moduleMap.set(m.name, moduleId);
-
-    //         //执行无主消息检测
-    //         MessageQueue.move(m.name, moduleId, this.id);
-    //     }
-    // }
-
     /**
-     * 发送
-     * @param toName 		接收模块名或模块id，如果为模块id，则直接发送，不需要转换
-     * @param data 			消息内容
+     * 添加子模块
+     * @param moduleId      模块id
+     * @param className     类名
      */
-    // public send(toName: string | number, data: any) {
-    //     if (typeof toName === 'number') {
-    //         MessageQueue.add(this.id, toName, data);
-    //         return;
-    //     }
-
-    //     let m: Module;
-    //     let pm: Module = ModuleFactory.get(this.parentId);
-    //     //1 比对父节点名
-    //     //2 比对兄弟节点名
-    //     //3 比对孩子节点名
-    //     if (pm) {
-    //         if (pm.name === toName) { //父亲
-    //             m = pm
-    //         } else { //兄弟
-    //             m = pm.getChild(toName);
-    //         }
-    //     }
-    //     if (!m) { //孩子节点
-    //         m = this.getChild(toName);
-    //     }
-    //     if (m) {
-    //         MessageQueue.add(this.id, m.id, data);
-    //     }
-    // }
-
-
-    /**
-     * 广播给父、兄弟和孩子（第一级）节点
-     */
-    // public broadcast(data: any) {
-    //     //兄弟节点
-    //     if (this.parentId) {
-    //         let pmod: Module = ModuleFactory.get(this.parentId);
-    //         if (pmod) {
-    //             //父模块
-    //             this.send(this.parentId, data);
-    //             if (pmod.children) {
-    //                 pmod.children.forEach((item) => {
-    //                     //自己不发
-    //                     if (item === this.id) {
-    //                         return;
-    //                     }
-    //                     let m: Module = ModuleFactory.get(item);
-    //                     //兄弟模块
-    //                     this.send(m.id, data);
-    //                 });
-    //             }
-    //         }
-    //     }
-
-    //     if (this.children !== undefined) {
-    //         this.children.forEach((item) => {
-    //             let m: Module = ModuleFactory.get(item);
-    //             this.send(m.id, data);
-    //         });
-    //     }
-    // }
+    public addChild(moduleId: number) {
+        if (!this.children.includes(moduleId)) {
+            this.children.push(moduleId);
+            let m: Module = ModuleFactory.get(moduleId);
+            if (m) {
+                m.parentId = this.id;
+            }
+            //保存name和id映射
+            if(m.name){
+                this.moduleMap.set(m.name, moduleId);
+            }
+        }
+    }
 
     /**
      * 接受消息
@@ -527,16 +464,16 @@ export class Module {
         ModuleFactory.remove(this.id);
     }
 
-    // /**
-    //  * 获取父模块
-    //  * @returns     父模块   
-    //  */
-    // public getParent():Module{
-    //     if(!this.parentId){
-    //         return;
-    //     }
-    //     return ModuleFactory.get(this.parentId);
-    // }
+    /**
+     * 获取父模块
+     * @returns     父模块   
+     */
+    public getParent():Module{
+        if(!this.parentId){
+            return;
+        }
+        return ModuleFactory.get(this.parentId);
+    }
 
     /*************事件**************/
 

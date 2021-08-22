@@ -1,9 +1,7 @@
-/// <reference path="../nodom.ts" />
-
-import { NError } from "../error";
-import { FilterManager } from "../filtermanager";
-import { NodomMessage } from "../nodom";
-import { Util } from "../util"
+import { NError } from "../core/error";
+import { FilterManager } from "../core/filtermanager";
+import { NodomMessage } from "../core/nodom";
+import { Util } from "../core/util"
 
 export default (function(){
 

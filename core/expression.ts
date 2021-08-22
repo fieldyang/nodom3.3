@@ -25,10 +25,29 @@ export class Expression {
      */
     execFunc: Function;
 
+    /**
+     * 模块依赖
+     */
     dependencies: ExpressionMd;
+
+    /**
+     * 依赖函数
+     */
     dependenciesFunc: any;
+
+    /**
+     * key 函数
+     */
     keyFunc: Function;
+
+    /**
+     * 对象函数
+     */
     objFunc: Function;
+
+    /**
+     * key 数组
+     */
     keyArray: any[];
 
     /**
@@ -42,17 +61,17 @@ export class Expression {
             execStr = this.compile(exprStr);
         }
         if (execStr) {
-            let v: string = this.fields.length > 0 ? ',' + this.fields.join(',') : '';
+            const v: string = this.fields.length > 0 ? ',' + this.fields.join(',') : '';
             this.handlesDep(execStr);
-            execStr = 'function($module' + v + '){return ' + execStr + '}';
-            this.execFunc = (new Function('return ' + execStr))();
+            this.execFunc = Util.eval(`function($module${v}){return ${execStr}}`);
         }
     }
-    //处理模块依赖
+    /**
+     * 处理模块依赖
+     * @param execStr   执行串 
+     */
     handlesDep(execStr: string) {
-
         let index = execStr.lastIndexOf('.');
-
         if (index !== -1) {
             this.dependencies = {
                 obj: execStr.substring(0, index),
@@ -68,14 +87,11 @@ export class Expression {
                     return pre + 1;
                 }
             }, 0)) {
-
-                this.keyFunc = new Function(`return function($module, ${keys.join(',')}  ){return  ${key}  }`)();
+                this.keyFunc = Util.eval(`function($module, ${keys.join(',')}  ){return  ${key}  }`);
                 this.keyArray = keys;
-
             }
             this.dependencies.obj = obj.replace(moduleName, moduleName + '.model');
-
-            this.objFunc = new Function(`return function( $module,${this.fields.join(',')}  ){return  ${this.dependencies.obj}  }`)();
+            this.objFunc = Util.eval(`function( $module,${this.fields.join(',')}){return  ${this.dependencies.obj}}`);
         } else {
             this.dependencies = {
                 key: execStr,
@@ -83,10 +99,13 @@ export class Expression {
                 moduleName: ''
             }
         }
-
     }
 
-    //获取模块相应数据
+    /**
+     * 获取模块相应数据
+     * @param model     模型
+     * @param dom       虚拟dom节点
+     */ 
     getDependence(model: Model, dom: Element) {
         if (this.dependencies.moduleName === '') {
             //赋值模块名

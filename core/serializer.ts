@@ -85,8 +85,7 @@ export class Serializer{
 						param = [jsonObj['name']];
 						break;
 				}
-				// let clazz:any = eval(cls);
-				let clazz:any = new Function('return '+cls);
+				let clazz:any = Util.eval(cls);
 				retObj = Reflect.construct(clazz,param);
 			}else{
 				retObj = {};
