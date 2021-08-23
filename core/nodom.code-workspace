@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../nodom2.1"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "nodom3"
+	}
+}

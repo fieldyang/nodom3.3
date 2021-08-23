@@ -229,6 +229,7 @@ export class Module {
                 }
             }
         }
+        delete this.css;
     }
 
     /**

@@ -7,9 +7,7 @@ export class ModuleA extends Module{
                 <div>这是外部数据{{x1}}</div>
             </div>
         `
-    
-
-    model= {
+     model= {
             name:'yang'
         }
     

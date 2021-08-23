@@ -22,8 +22,16 @@
 </head>
 <body>
     <span class='cls2'>hello world</span>
+
+    <div>
+        <Nif>
+        <moduel1>
+        <module2>
+        <module3>
+    </div>
 </body>
 <script>
+    let s = `
     // let style = document.createElement('style');
     // document.head.appendChild(style);
     // let sheets = document.styleSheets;
@@ -31,27 +39,190 @@
     // // sheets[3].insertRule(".aaa{color:blue}");
     // sheets[3].insertRule("@import 'css/2.css'");
 
-    class A{
-        constructor(){
-            // alert(this.constructor)
-            console.log(this,this.model);
-            // setTimeout(()=>{
-            //     console.log(this.model);
-                
-            // },0)
-            
+    // let reg = /(\{\{.+?\}\})|(\<.+?\>)|(\".+?\")/g;
+    // let str = '< div x-if={{discount<0.8 && xx>10}} x-class={{ "cls1":"yy>1" }} x-value = {{ x.ary<12 }} >价格：{{price}}</ div >'';
+    // // let r = reg.exec(str);
+    // let r
+    // // console.log(r,reg.source)
+    // while((r = reg.exec(str))!== null){
+    //     console.log(r,reg.lastIndex);
+    // }
+
+    // var myRe = /ab*/g;
+    // var str = 'abbcdefabh';
+    // var myArray;
+    // while ((myArray = myRe.exec(str)) !== null) {
+    //     var msg = 'Found ' + myArray[0] + '. ';
+    //     msg += 'Next match starts at ' + myRe.lastIndex;
+    //     console.log(msg);
+    // }
+
+    `
+    let srcStr = `< div x-if={{discount<0.8 && xx>10}} x-class=  {{"cls1":"yy>1" }} x-value ={{x.ary<12}} ><mod>价格<p y>cd：{{price}}<span>{{font}} </span> hello  world!<span>hahaha</span> last{{last}}</ div >`;
+    
+    console.time('t1');    
+    //1 替换所有 {{}}
+    let reg1 = /{{.+?}}/g;
+    let repStr = '__NODOM_DBL_BRACKKET_' + Math.random() + '_';
+    let repMap = new Map();
+    // for(let i=0;i<1000;i++){
+    let repIndex = 0;
+    let r;
+    while((r = reg1.exec(srcStr)) !== null){
+        let index = r.index;
+        const repS = '[' + (repStr + repIndex++) + ']';
+        srcStr = srcStr.substr(0,index) + repS + srcStr.substr(index + r[0].length);
+        repMap.set(repS,r[0]);
+        reg1.lastIndex = index + repS.length;
+    }
+    // 2 识别标签
+    reg1 = /(\<.+?\>)/g;
+    let st = 0;
+    let tagStack = [];
+    let textStack = [];
+    while((r = reg1.exec(srcStr)) !== null){
+        tagStack.push(r[0]);
+        let s = '';
+        if(st < r.index-1){
+            s = srcStr.substring(st,r.index);
+            let reg11 = new RegExp('\\[' + repStr + '\\d+\\]');
+            let r1 = reg11.exec(s);
+            if(r1 !== null){
+                s = s.replace(r1[0],repMap.get(r1[0]))
+            }
         }
-        model = {y:1}
+        textStack.push(s);
+        st = reg1.lastIndex;
     }
 
-    class B extends A{
-        model = {x:1}
+    console.log(tagStack,textStack);
+    // 当前标签，记录开始标签
+    let curTag;
+    let tags = [];
+    let root;
+    let tagObjs = [];
+    let children;
+    tagStack.forEach((tag,ii)=>{
+        let stg;
+        if(tag.startsWith('</')){ //结束标签
+            let etg = tag.substring(2,tag.length-1).trim();
+            let chds = [];
+            //找到对应此结束标签的开始标签
+            for(let i=ii;tags.length>0;i--){
+                // 结束标签前面的非空文本节点作为孩子
+                if(i>=0 && textStack[i] !== ''){
+                    chds.push({type:'text',value:textStack[i]});
+                    // 文本已使用，置为空
+                    textStack[i] = '';
+                }
+                if((stg = tags.pop())===etg){
+                    break;
+                }
+                // 标签节点作为孩子
+                let tobj = tagObjs.pop();
+                //把孩子节点改为兄弟节点
+                let ind=0;
+                for(;tobj.children.length>0;){
+                    let o = tobj.children.pop();
+                    console.log(o)
+                    chds.unshift(o);
+                }
+                chds.unshift(tobj);
+            }
+            //找到节点
+            if(stg === etg){
+                // 添加到父节点
+                let po = tagObjs.pop();
+                po.children = chds;
+                if(tagObjs.length>0){
+                    let chds = tagObjs[tagObjs.length-1].children;
+                    chds.push(po);
+                }
+            }else{
+                throw '模版格式错误';
+            }
+        }else { //标签头
+            let obj = handleTagAttr(tag);
+            if(!tag.endsWith('\/>')){ // 非自闭合
+                //标签头入栈
+                tags.push(obj.tagName);
+                //保存当前tag
+                curTag = obj;
+                //前一个文本节点存在，则作为前一个节点的孩子
+                if(ii>0 && textStack[ii] !== ''){
+                    tagObjs[tagObjs.length-1].children.push({
+                        type:'text',
+                        value:textStack[ii]
+                    });
+                    textStack[ii] = '';
+                }
+                tagObjs.push(obj);
+                
+            }else{ //自闭合，直接作为前一个的孩子节点
+                if(tagObjs.length>0){
+                    tagObjs[tagObjs.length-1].children.push(obj);
+                }
+            }
+            //设置根节点
+            if(!root){
+                root = obj;
+            }
+        }
+    });
+    if(tags.length>0){
+        throw '模版定义错误'
+    }
+    // console.log(tagObjs);
+    console.log(root);
+
+
+    // 识别
+// }
+    console.timeEnd('t1');
+    
+    // console.log(srcStr,repMap);
+    
+    
+    // 处理标签开始
+    function handleTagAttr(tagStr){
+        let tagArr = tagStr.substring(1,tagStr.length-1).split(/\s+/g).filter(item=>item!=='');
+        let obj = {
+            tagName:tagArr[0],
+            children:[]
+        }
+        
+        for(let i=1;i<tagArr.length;i++){
+            let sa = tagArr[i].split('=');
+            let pName = sa[0],pValue;
+            //值和名分离
+            if(sa.length === 1){
+                if(tagArr.length>i+2 && tagArr[i+1] === '='){ // propName,=,propValue 格式
+                    pValue = tagArr[i+2];
+                    i+=2;
+                }else if(tagArr.length>i+1 && tagArr[i+1].startsWith('=')){ // propName, =propValue 格式
+                    pValue = tagArr[i+1].substr(1);
+                    i++;
+                }
+            }else if(sa.length === 2){
+                if(sa[1] === '' && tagArr.length>i+2){  //propName= 格式
+                    pValue = tagArr[i+1];
+                    i++;
+                }else{ //propName=propValue 格式
+                    pValue = sa[1];
+                }
+            }
+            // 恢复值
+            if(pValue){
+                if(pValue.indexOf('[' + repStr) !== -1){
+                    pValue = repMap.get(pValue);
+                }
+            }
+            obj[pName] = pValue;
+        }
+        return obj;
     }
 
-    class C extends B{
-        model = {z:2}
-    }
-    new C();
+    
 </script>
 
 </html>
