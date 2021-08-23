@@ -62,7 +62,7 @@ export class Expression {
         }
         if (execStr) {
             const v: string = this.fields.length > 0 ? ',' + this.fields.join(',') : '';
-            // this.handlesDep(execStr);
+            this.handlesDep(execStr);
             this.execFunc = Util.eval(`function($module${v}){return ${execStr}}`);
         }
     }

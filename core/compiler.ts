@@ -254,12 +254,8 @@ export class Compiler {
             if (attr[0].startsWith("x-")) {
                 //指令
                 let o = {
-                    name:attr[0].substr(2)
-                }
-                if(attr[1] instanceof Expression){
-                    o['expression'] = attr[1]
-                }else{
-                    o['value'] = attr[1];
+                    name:attr[0].substr(2),
+                    value:attr[1]
                 }
                 directives.push(o);
             } else if (attr[0].startsWith("e-")) {

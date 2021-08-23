@@ -280,6 +280,7 @@ export default (function () {
             for (let i = 0; i < directive.extra.groups.length; i++) {
                 let node = directive.extra.groups[i];
                 let dir = node.getDirective('if') || node.getDirective('elseif') || node.getDirective('else');
+                console.log(dir,dir.value)
                 if (dir.value && dir.value !== 'false') {
                     target = i;
                     break;
