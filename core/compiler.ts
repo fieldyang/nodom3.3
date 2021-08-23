@@ -25,25 +25,186 @@ export class Compiler {
     }
 
     /**
+     * 编译模版串
+     * @param srcStr    源串
+     * @returns         
+     */
+    public static compileTemplateToAst(srcStr:string):ASTObj{
+        const me = this;
+        // 清理comment
+        let regExp = /\<\!\-\-[\s\S]*\-\-\>/;
+        srcStr = srcStr.replace(regExp,'');
+        //替换 {{}}
+        regExp = /{{.+?}}/g;
+        let repStr = '__NODOM_DBL_BRACKKET_' + Math.random() + '_';
+        let repMap = new Map();
+        
+        let repIndex = 0;
+        // 遍历{{ }}替换
+        let r;
+        while((r = regExp.exec(srcStr)) !== null){
+            let index = r.index;
+            const repS = '[' + (repStr + repIndex++) + ']';
+            srcStr = srcStr.substr(0,index) + repS + srcStr.substr(index + r[0].length);
+            repMap.set(repS,r[0]);
+            regExp.lastIndex = index + repS.length;
+        }
+        // 2 识别标签
+        regExp = /(\<\s*[A-Za-z]+.*?\>)|(<\/\s*[A-Za-z]+.*?\>)/g;
+        let st = 0;
+        //标签串数组,含开始和结束标签
+        let tagStack = [];
+        //独立文本串数组，对应需要的标签串前面
+        let textStack = [];
+        while((r = regExp.exec(srcStr)) !== null){
+            tagStack.push(r[0]);
+            //处理标签之间的文本
+            if(st < r.index-1){
+                let s = srcStr.substring(st,r.index);
+                let regExp1 = new RegExp('\\[' + repStr + '\\d+\\]');
+                let r1 = regExp1.exec(s);
+                if(r1 !== null){
+                    s = s.replace(r1[0],repMap.get(r1[0]))
+                    let exprs = this.compileExpression(s);
+                    textStack.push(exprs);
+                }else{
+                    textStack.push(s);
+                }
+            }else{
+                textStack.push('');
+            }
+            st = regExp.lastIndex;
+        }
+
+        // 标签名数组
+        let tagNames = [];
+        // 标签对象数组
+        let tagObjs = [];
+
+        let root:ASTObj;
+        tagStack.forEach((tag,ii)=>{
+            //开始标签名
+            let stg;
+            if(tag.startsWith('</')){ //结束标签
+                let etg = tag.substring(2,tag.length-1).trim();
+                let chds = [];
+                //找到对应此结束标签的开始标签
+                for(let i=ii;tagNames.length>0;i--){
+                    // 结束标签前面的非空文本节点作为孩子
+                    if(i>=0 && textStack[i] !== ''){
+                        chds.push({textContent:textStack[i]});
+                        // 文本已使用，置为空
+                        textStack[i] = '';
+                    }
+                    if((stg = tagNames.pop())===etg){
+                        break;
+                    }
+                    // 标签节点作为孩子
+                    let tobj = tagObjs.pop();
+                    //把孩子节点改为兄弟节点
+                    let ind=0;
+                    for(;tobj.children.length>0;){
+                        let o = tobj.children.pop();
+                        chds.unshift(o);
+                    }
+                    chds.unshift(tobj);
+                }
+                //找到节点
+                if(stg === etg){
+                    // 添加到父节点
+                    let po = tagObjs.pop();
+                    po.children = po.children.concat(chds);
+                    if(tagObjs.length>0){
+                        tagObjs[tagObjs.length-1].children.push(po);
+                    }
+                }else{
+                    throw '模版格式错误';
+                }
+                
+            }else { //标签头
+                let obj = handleTagAttr(tag);
+                //前一个文本节点存在，则作为前一个节点的孩子
+                if(ii>0 && textStack[ii] !== ''){
+                    tagObjs[tagObjs.length-1].children.push({
+                        textContent:textStack[ii]
+                    });
+                    textStack[ii] = '';
+                }
+                
+                if(!tag.endsWith('\/>')){ // 非自闭合
+                    //标签头入栈
+                    tagNames.push(obj.tagName);
+                    tagObjs.push(obj);
+                }else{ //自闭合，直接作为前一个的孩子节点
+                    if(tagObjs.length>0){
+                        tagObjs[tagObjs.length-1].children.push(obj);
+                    }
+                }
+                
+                //设置根节点
+                if(!root){
+                    root = obj;
+                }
+            }
+        });
+        if(tagNames.length>0){
+            throw '模版定义错误';
+        }
+        return root;
+
+        /**
+         * 处理标签头
+         * @param tagStr    标签头串 
+         * @returns         
+         */
+        function handleTagAttr(tagStr):ASTObj{
+            let tagArr = tagStr.substring(1,tagStr.length-1).split(/\s+/g).filter(item=>item!=='');
+            let obj = {
+                tagName:tagArr[0],
+                children:[]
+            }
+            
+            for(let i=1;i<tagArr.length;i++){
+                let sa = tagArr[i].split('=');
+                let pName = sa[0],pValue;
+                //值和名分离
+                if(sa.length === 1){
+                    if(tagArr.length>i+2 && tagArr[i+1] === '='){ // propName,=,propValue 格式
+                        pValue = tagArr[i+2];
+                        i+=2;
+                    }else if(tagArr.length>i+1 && tagArr[i+1].startsWith('=')){ // propName, =propValue 格式
+                        pValue = tagArr[i+1].substr(1);
+                        i++;
+                    }
+                }else if(sa.length === 2){
+                    if(sa[1] === '' && tagArr.length>i+2){  //propName= 格式
+                        pValue = tagArr[i+1];
+                        i++;
+                    }else{ //propName=propValue 格式
+                        pValue = sa[1];
+                    }
+                }
+                // 恢复值
+                if(pValue){
+                    if(pValue.indexOf('[' + repStr) !== -1){
+                        pValue = me.compileExpression(repMap.get(pValue))[0];
+                    }
+                }
+                obj[pName] = pValue;
+            }
+            return obj;
+        }
+    }
+    
+    /**
      * 把AST编译成虚拟dom
      * @param oe 虚拟dom的根容器
      * @param ast 抽象语法树也就是JSON对象
      * @returns oe 虚拟dom的根容器
      */
-    public static compileAST(oe: Element, ast: Array<ASTObj>): Element {
+    public static compileAST(oe: Element, ast: ASTObj): Element {
         if (!ast) return;
-        for (const a of ast) {
-            switch (a.tagName) {
-                case 'text': //文本节点
-                    this.handleAstText(oe, a);
-                    break;
-                case 'comment':// 注释不处理
-                    break;
-                default:
-                    this.handleAstNode(oe, a);
-                    break;
-            }
-        }
+        ast.tagName?this.handleAstNode(oe, ast):this.handleAstText(oe, ast);
         return oe;
     }
 
@@ -55,11 +216,11 @@ export class Compiler {
     private static handleAstText(parent: Element, astObj: ASTObj) {
         let text = new Element();
         parent.children.push(text);
-        // 处理属性
-        this.handleAstAttrs(text, astObj.attrs, parent);
-        // text 类型的节点不需要处理子节点。
-        text.expressions = astObj.expressions;
-        text.textContent = astObj.textContent;
+        if(typeof astObj.textContent === 'string'){ // 字符串
+            text.textContent = astObj.textContent;
+        }else{ //表达式
+            text.expressions = astObj.textContent;
+        }
     }
     /**
      * 
@@ -72,7 +233,10 @@ export class Compiler {
         let child = new Element(astObj.tagName);
         parent.add(child);
         this.handleAstAttrs(child, astObj.attrs, parent);
-        this.compileAST(child, astObj.children);
+        for(let a of astObj.children){
+            this.compileAST(child, a);
+        }
+        
     }
     
     /**
@@ -137,225 +301,6 @@ export class Compiler {
                 return a.type.prio - b.type.prio;
             });
         }
-    }
-
-    /**
-     * 处理属性字符串
-     * @param attrString 属性字符串
-     * @returns attrs map
-     */
-    private static parseAttrString(attrString: string | undefined): Map<string,any> {
-        let map = new Map();
-        if (attrString == undefined || attrString.length === 0) return map;
-
-        attrString = attrString.trim();
-        // 引号栈处理引号嵌套
-        let yinghaoStack: string[] = [];
-        //引号flag 当前是否在引号内
-        let yinhaoFlag = false;
-        // 断点
-        let point = 0;
-
-        let result = [];
-        for (let i = 0; i < attrString.length; i++) {
-            let s = attrString[i];
-            if (/[\"\']/.test(s)) {
-                // 遇到引号
-                if (yinghaoStack.length != 0) {
-                    // 引号栈不空
-                    if (s === yinghaoStack[yinghaoStack.length - 1]) {
-                        // 判断是不是匹配栈顶
-                        yinghaoStack.pop();
-                        if (yinghaoStack.length == 0) yinhaoFlag = false;
-                    } else {
-                        // 不匹配栈顶直接入栈
-                        yinghaoStack.push(s);
-                    }
-                } else {
-                    // 引号栈空 入栈
-                    yinghaoStack.push(s);
-                    yinhaoFlag = true;
-                }
-
-                // yinhaoFlag = !yinhaoFlag;
-            } else if (/\s/.test(s) && !yinhaoFlag) {
-                //遇到空格并且不在引号中
-                if (!/^\s*?$/.test(attrString.substring(point, i))) {
-                    result.push(attrString.substring(point, i).trim());
-                    point = i;
-                }
-            }
-        }
-        let lastAttr = attrString.substring(point).trim();
-        // 判断最后一个属性是不是自定义标签的'/' 如果是则不把他当作标签。
-        if (lastAttr !== '/') {
-            //循环结束之后还剩一个属性没加进去，因为可能最后一个属性后面没有空格
-            result.push(attrString.substring(point).trim());
-        }
-        for(let r of result){
-            // 如果match为空说明属性串里面没有“”,也就是自定义的只有属性名没有属性值的属性，这种直接设置value字段为空
-            const e = r.match(/^(.+)=(\{\{[\s\S]*\}\})$/);
-            if(e){
-                map.set(e[1],e[2] || '');
-            }else{
-                const o = r.match(/^(.+)=[\'|\"]([\s\S]*)[\'|\"]$/) || [, r];
-                map.set(o[1],o[2] || '');
-            }
-        }
-        return map;
-    }
-
-    /**
-     * 将模板字符串转换成AST抽象语法树结构
-     * @param elementStr 模板字符串
-     * @returns AST对象数组
-     */
-    private static compileTemplateToAst(elementStr: string): Array<ASTObj> {
-        let templateStr = elementStr.trim();
-        // 准备栈空间
-        let stack1 = [];
-        let stack2 = [{ tagName: undefined, children: [], attrs: new Map()}]
-
-        let index = 0;
-
-        // 开始标签的正则表达式 
-        let startRegExp = /^\<(\s*)([a-zA-Z\-]*[0-9]?)((?:"(?:[^"]*)"+|'(?:[^']*)'+|(?:[^<>"'/]*)+|(?:\{\{.*\}\})+)*)*?(\s*\/){0,1}(\s*)\>/;
-        // /^\<(\s*)([a-z\-]*[0-9]?)((?:\s+\w+\-?\w+(?:\=[\"\']?[\s\S]*?[\"\']?)?)*)*(\s*\/)?(\s*)\>/
-
-        // 匹配结束标签的正则表达式
-        let endRegExp = /^\<(\s*)\/(\s*)([a-zA-Z\-]*[0-9]?)(\s*)\>/
-        // /^\<(\s*)\/(\s*)([a-z]+[1-6]?|ui\-[a-z]+[1-6]?)(\s*)\>/;
-        // 匹配开始标签和结束标签之间的文字的正则表达式 
-        let wordRegExp = /^([\s\S]+?)(?=\<(?:!--)?(?:\s*\/?\s*(?:[a-zA-Z\-]*[0-9]?)(?:(?:\s+\w+\-?\w+\=?[\"\']?[\s\S]*?[\"\']?)*)*|(?:[\s\S]+?))(?:--)?\>)/
-        // /^([\s\S]+?)(?=\<(!--)?(?:(\s*)\/?(\s*)(?:[a-z]+[1-6]?|ui\-[a-z]+[1-6]?)(?:(?:\s+.+?[\"\'](?:[\s\S]*?)[\"\']|.*))?(\s*)|(?:[\s\S]+?))(--)?\>)/
-        // 匹配裸字符串，全字符匹配配合wordRegExp标签判断是不是裸字符串
-        let onlyWordRegExp = /^([\s\S]+)/;
-        // 匹配注释
-        let commentRegExp = /^\s*\<!--[\s\S]+?--\>/;
-        // pre结束标签。
-        let preEndTagRegExp = /^([\s\S]+)(?=\<(\s*)\/(\s*)pre(?:\s.+?)?(\s*)\>)/;
-        // pre标签标志，遇到pre标签要把标签里面的内容当成文本节点。
-        let preFlag = false;
-        // 匹配到字符串末尾
-        while (index < templateStr.length - 1) {
-            let rest = templateStr.substring(index);
-
-            if (preFlag) {
-                // 现在进入到pre标签里面了 直接搜索</pre>结束标签
-                let text = rest.match(preEndTagRegExp) ? rest.match(preEndTagRegExp)[1] : null;
-                if (text) {
-                    stack2[stack2.length - 1].children.push({ textContent: text, tagName: 'text' })
-                    index += text.length;
-                    preFlag = false;
-                } else {
-                    throw new Error("pre标签未闭合");
-
-                }
-            } else if (startRegExp.test(rest)) {
-
-                // 识别遍历到的字符是不是一个开始标签
-
-                // beforeSpaceString:左尖括号与标签名之间的空格
-                // tagName:标签名  
-                // attrString:标签里的属性字符串 
-                // selfCloseStr: 自闭合标签的反斜杠
-                // afterSpaceString:属性与右尖括号之间的空格
-                let [, beforeSpaceString, tagName, attrString, selfCloseStr, afterSpaceString] = rest.match(startRegExp);
-                const beforeSpaceLenght = beforeSpaceString ? beforeSpaceString.length : 0;
-                const tagNameLenght = tagName ? tagName.length : 0;
-                const atttLenght = attrString ? attrString.length : 0;
-                const selfCloseLenght = selfCloseStr ? selfCloseStr.length : 0;
-                const afterSpaceLenght = afterSpaceString ? afterSpaceString.length : 0;
-                if (tagName === 'pre') {
-                    // pre标签
-                    preFlag = true;
-                }
-                // 判断是不是自闭合标签
-                if (selfCloseStr && selfCloseStr != undefined) {
-                    //自闭和标签
-                    stack2[stack2.length - 1].children.push({
-                        tagName,
-                        children: [],
-                        attrs: this.parseAttrString(attrString)
-                    })
-                } else {
-                    // 这个标签是普通的标签
-                    // 开始标签入栈
-                    stack1.push(tagName);
-                    // AST入栈
-                    stack2.push({
-                        tagName,
-                        children: [],
-                        attrs: this.parseAttrString(attrString)
-                    });
-                    // 需要跳过的长度 = 2个尖括号 + 左尖括号与标签名之间的空格长度 + 标签名长度 + 属性长度 + 属性与右尖括号之间的空格长度
-                }
-                index += 2 + beforeSpaceLenght + tagNameLenght + atttLenght + selfCloseLenght + afterSpaceLenght;
-            } else if (endRegExp.test(rest)) {
-                // 识别结束标记
-                // let tagName = rest.match(endRegExp)[1];
-
-                // beforeSpaceString: / 之前的空格
-                // afterSpaceString: / 之后的空格
-                // tagName: 标签名字
-                // endSpaceString: 标签之后的空格
-                let [, beforeSpaceString, afterSpaceString, tagName, endSpaceString] = rest.match(endRegExp)
-                const beforeSpaceLenght = beforeSpaceString ? beforeSpaceString.length : 0;
-                const afterSpaceLenght = afterSpaceString ? afterSpaceString.length : 0;
-                const tagNameLenght = tagName ? tagName.length : 0;
-                const endSpaceLenght = endSpaceString ? endSpaceString.length : 0;
-                // 这时候tag一定和栈顶是相同的，因为html需要闭合，如果不相同哪么说明有标签没闭合
-                if (tagName != stack1[stack1.length - 1]) {
-                    throw new Error(stack1[stack1.length - 1] + "标签没有封闭");
-                } else {
-                    stack1.pop();
-                    let pop_arr = stack2.pop();
-                    if (stack2.length > 0) {
-                        stack2[stack2.length - 1].children.push(pop_arr);
-                    }
-                }
-                index += beforeSpaceLenght + afterSpaceLenght + tagNameLenght + endSpaceLenght + 3;
-            } else if (commentRegExp.test(rest)) {
-                // 识别注释
-                index += rest.match(commentRegExp)[0].length;
-            }
-            //wordRegExp.test(rest)   rest.match(wordRegExp) || rest.match(onlyWordRegExp)
-            else if (rest.match(wordRegExp) || rest.match(onlyWordRegExp)) {
-                //识别为文本节点 
-                // wordRegExp 匹配标签前面的字符，如果字符后面没有标签，匹配结果是null
-                //当wordRegExp匹配结果是null的时候说明再节点之后有一个裸文本标签（由onlyWordRegExp匹配）
-                //再处理之前我们要判断一下当前栈1是否为空，防止有标签没闭合的情况。
-                if (!rest.match(wordRegExp) && rest.match(onlyWordRegExp)) {
-                    //这里要处理一下可能标签没闭合 如:<div>123
-                    if (stack1.length !== 0) {
-                        let a = 111;
-                        throw new Error(stack1[stack1.length - 1] + '标签没闭合');
-                    }
-                }
-                // 这里要把裸字符串的情况与后面有标签的字符串（标签之间的字符串）分开处理
-                let word = rest.match(wordRegExp) ? rest.match(wordRegExp)[1] : rest.match(onlyWordRegExp)[1];
-
-                // 看word是不是全是空
-                if (!/^\s+$/.test(word)) {
-                    // 不全是空
-                    // 改变栈顶元素
-                    // 编译一下看是否有双大括号表达式
-                    let expr = this.compileExpression(word);
-                    if (typeof expr === 'string') {
-                        // 返回的是字符串说明没有双大括号表达式，把属性放进textContent
-                        stack2[stack2.length - 1].children.push({ textContent: expr, tagName: 'text' });
-                    } else {
-                        // 返回的是数组说明是有双大括号表达式的，编译了之后放进expressions属性
-                        stack2[stack2.length - 1].children.push({ expressions: expr, tagName: 'text' });
-                    }
-                }
-                index += word.length;
-            } else {
-                // 这里处理一下只有纯文本的形式
-                index++;
-            }
-        }
-        return stack2[0].children;
     }
 
     /**

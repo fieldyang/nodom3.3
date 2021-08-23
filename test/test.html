@@ -58,11 +58,71 @@
     // }
 
     `
-    let srcStr = `< div x-if={{discount<0.8 && xx>10}} x-class=  {{"cls1":"yy>1" }} x-value ={{x.ary<12}} ><mod>价格<p y>cd：{{price}}<span>{{font}} </span> hello  world!<span>hahaha</span> last{{last}}</ div >`;
-    
-    console.time('t1');    
+    // let srcStr = `
+    // <div class="code">
+	// 					<div class="introduce">如果discount<0.8，显示价格</div>
+	// 					<div x-if="discount<0.8">价格：{{price}}</div>
+	// 					<div x-endif></div>
+	// 				</div> 
+	// 				<div>
+	// 					<div class="tip">单个if指令</div>
+	// 				<div x-if="show">hello</div>
+	// 				<div x-endif></div>-->
+	// 				<div class="code">
+	// 					<div class="introduce">如果discount<0.8，显示价格</div>
+	// 					<div x-if="discount<0.8">价格：{{price}}</div>
+	// 					<div x-endif></div>
+	// 				</div> 
+	// 				<div class="tip">完整的if/else指令</div>
+	// 				<div class="code">
+	// 					<div class="introduce">如果age<18，显示未成年，否则显示成年</div>
+	// 					<div class="red" x-if="age<18">年龄：{{age}}，未成年</div>
+	// 					<div class="bold" x-else>年龄：{{age}}，成年</div>
+	// 					<div x-endif></div>
+	// 				</div>
+					
+	// 				<div class="tip">if elseif else</div>
+	// 				<div class="code">
+	// 					<div class="introduce">
+	// 						根据不同分数显示不同等级，<60不及格，60-69及格，70-79中等，80-89良好，>=90优秀
+	// 					</div>
+	// 					<div>成绩：{{grade}}</div>
+	// 					等级：
+	// 					<span x-if="grade<60">不及格</span>
+	// 					<span x-elseif="grade>=60 && grade<70"> 及格 </span>
+	// 					<span x-elseif="grade>=70 && grade<80"> 中等 </span>
+	// 					<span x-elseif="grade>=80 && grade<90"> 良好 </span>
+	// 					<span x-else> 优秀 </span>
+	// 					<span x-endif></span>
+	// 				</div>
+	// 				</div>
+    //             `;
+    let srcStr = `< div x-if={{discount<0.8 && xx>10}} x-class={'cls1':{{yy>1}}} x-value={{x.ary<12}} >
+        <input name='aaaa'/>
+        <mod>价格
+        <!-- afadfadf
+            
+            -->
+        <p y>cd：{{price}}
+        <span>{{font}} </span>
+         hello  world!
+         <span>hahaha</span> 
+         last{{last}} 
+        </ div >`;
+    srcStr = `
+    <div class=code>
+						<div class=introduce>如果discount<0.8，显示价格</div>
+						<div x-if={{discount<0.8}}>价格：{{price}}</div>
+						<div x-endif></div>
+					</div> 
+    `    
+    console.time('t1');
+      
+    // 清理comment
+    let reg1 = /\<\!\-\-[\s\S]*\-\-\>/;
+    srcStr = srcStr.replace(reg1,'');
     //1 替换所有 {{}}
-    let reg1 = /{{.+?}}/g;
+    reg1 = /{{.+?}}/g;
     let repStr = '__NODOM_DBL_BRACKKET_' + Math.random() + '_';
     let repMap = new Map();
     // for(let i=0;i<1000;i++){
@@ -76,7 +136,7 @@
         reg1.lastIndex = index + repS.length;
     }
     // 2 识别标签
-    reg1 = /(\<.+?\>)/g;
+    reg1 = /(\<\s*[A-Za-z]+.*?\>)|(<\/\s*[A-Za-z]+.*?\>)/g;
     let st = 0;
     let tagStack = [];
     let textStack = [];
@@ -90,6 +150,7 @@
             if(r1 !== null){
                 s = s.replace(r1[0],repMap.get(r1[0]))
             }
+            s = s.trim();
         }
         textStack.push(s);
         st = reg1.lastIndex;
@@ -124,7 +185,6 @@
                 let ind=0;
                 for(;tobj.children.length>0;){
                     let o = tobj.children.pop();
-                    console.log(o)
                     chds.unshift(o);
                 }
                 chds.unshift(tobj);
@@ -133,36 +193,35 @@
             if(stg === etg){
                 // 添加到父节点
                 let po = tagObjs.pop();
-                po.children = chds;
+                po.children = po.children.concat(chds);
                 if(tagObjs.length>0){
-                    let chds = tagObjs[tagObjs.length-1].children;
-                    chds.push(po);
+                    tagObjs[tagObjs.length-1].children.push(po);
                 }
             }else{
                 throw '模版格式错误';
             }
+            
         }else { //标签头
             let obj = handleTagAttr(tag);
+            //前一个文本节点存在，则作为前一个节点的孩子
+            if(ii>0 && textStack[ii] !== ''){
+                tagObjs[tagObjs.length-1].children.push({
+                    type:'text',
+                    value:textStack[ii]
+                });
+                textStack[ii] = '';
+            }
+            
             if(!tag.endsWith('\/>')){ // 非自闭合
                 //标签头入栈
                 tags.push(obj.tagName);
-                //保存当前tag
-                curTag = obj;
-                //前一个文本节点存在，则作为前一个节点的孩子
-                if(ii>0 && textStack[ii] !== ''){
-                    tagObjs[tagObjs.length-1].children.push({
-                        type:'text',
-                        value:textStack[ii]
-                    });
-                    textStack[ii] = '';
-                }
                 tagObjs.push(obj);
-                
             }else{ //自闭合，直接作为前一个的孩子节点
                 if(tagObjs.length>0){
                     tagObjs[tagObjs.length-1].children.push(obj);
                 }
             }
+            
             //设置根节点
             if(!root){
                 root = obj;
@@ -172,7 +231,6 @@
     if(tags.length>0){
         throw '模版定义错误'
     }
-    // console.log(tagObjs);
     console.log(root);
 
 
@@ -185,7 +243,8 @@
     
     // 处理标签开始
     function handleTagAttr(tagStr){
-        let tagArr = tagStr.substring(1,tagStr.length-1).split(/\s+/g).filter(item=>item!=='');
+        let endInd = tagStr.endsWith('/>')?tagStr.length-2:tagStr.length-1;
+        let tagArr = tagStr.substring(1,endInd).split(/\s+/g).filter(item=>item!=='');
         let obj = {
             tagName:tagArr[0],
             children:[]
