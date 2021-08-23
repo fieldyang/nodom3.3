@@ -420,6 +420,9 @@ export class Element {
             if(d.type.name === 'model'){
                 continue;
             }
+            if(d.expression){
+                d.value = d.expression.val(this.model,this);
+            }
             d.exec(module, this, this.parent);
             //指令可能改变render标志
             if (this.dontRender) {

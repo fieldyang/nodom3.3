@@ -161,7 +161,8 @@ export class Compiler {
             let tagArr = tagStr.substring(1,tagStr.length-1).split(/\s+/g).filter(item=>item!=='');
             let obj = {
                 tagName:tagArr[0],
-                children:[]
+                children:[],
+                attrs:new Map()
             }
             
             for(let i=1;i<tagArr.length;i++){
@@ -190,7 +191,7 @@ export class Compiler {
                         pValue = me.compileExpression(repMap.get(pValue))[0];
                     }
                 }
-                obj[pName] = pValue;
+                obj.attrs.set(pName,pValue);
             }
             return obj;
         }
@@ -252,10 +253,15 @@ export class Compiler {
         for(const attr of attrs){
             if (attr[0].startsWith("x-")) {
                 //指令
-                directives.push({
-                    name:attr[0].substr(2),
-                    value:attr[1]
-                });
+                let o = {
+                    name:attr[0].substr(2)
+                }
+                if(attr[1] instanceof Expression){
+                    o['expression'] = attr[1]
+                }else{
+                    o['value'] = attr[1];
+                }
+                directives.push(o);
             } else if (attr[0].startsWith("e-")) {
                 // 事件
                 let e = attr[0].substr(2);
@@ -301,6 +307,7 @@ export class Compiler {
                 return a.type.prio - b.type.prio;
             });
         }
+        
     }
 
     /**

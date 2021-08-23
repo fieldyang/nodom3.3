@@ -4,6 +4,7 @@ import { Filter } from "./filter";
 import { Element } from "./element";
 import { Module } from "./module";
 import { Util } from "./util";
+import { Expression } from "./expression";
 
 /**
  * 指令类
@@ -24,7 +25,10 @@ export  class Directive {
      */
     public value:any;
     
-    
+    /**
+     * 表达式
+     */
+    public expression:Expression;
     /**
      * 过滤器组
      */
@@ -47,13 +51,14 @@ export  class Directive {
      * @param filters   过滤器字符串或过滤器对象,如果为过滤器串，则以｜分割
      * @param notSort   不排序
      */
-    constructor(type:string, value:string,dom?:Element, parent?:Element, filters?:string|Filter[],notSort?:boolean) {
+    constructor(type:string, value:string|Expression,dom?:Element, parent?:Element, filters?:string|Filter[],notSort?:boolean) {
         this.id = Util.genId();
         this.type = DirectiveManager.getType(type);
         if (Util.isString(value)) {
-            value = value.trim();
+            this.value = (<string>value).trim();
+        }else if(value instanceof Expression){
+            this.expression = value;
         }
-        this.value = value;
         
         if(filters){
             this.filters = [];

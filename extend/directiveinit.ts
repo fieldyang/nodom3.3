@@ -276,17 +276,13 @@ export default (function () {
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             dom.dontRender = true;
             let target: number = -1;
-            
+
             for (let i = 0; i < directive.extra.groups.length; i++) {
                 let node = directive.extra.groups[i];
                 let dir = node.getDirective('if') || node.getDirective('elseif') || node.getDirective('else');
-                if (dir.value) { //if elseif指令
-                    let v = dir.value.val(dom.model, dom);
-
-                    if (v && v !== 'false') {
-                        target = i;
-                        break;
-                    }
+                if (dir.value && dir.value !== 'false') {
+                    target = i;
+                    break;
                 }
             }
             let tNode;
@@ -335,10 +331,10 @@ export default (function () {
      */
     DirectiveManager.addType('elseif', 10,
         (directive: Directive, dom: Element, parent: Element) => {
-            let value = directive.value;
-            if (!value) {
-                throw new NError("paramException", "x-elseif");
-            }
+            // let value = directive.value;
+            // if (!value) {
+            //     throw new NError("paramException", "x-elseif");
+            // }
             //value为一个表达式
             // let expr = new Expression(value);
             // directive.value = expr;
