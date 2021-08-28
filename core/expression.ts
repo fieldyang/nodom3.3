@@ -1,8 +1,6 @@
-import { Element } from "./element";
 import { Model } from "./model";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
-import { ExpressionMd } from "./types";
 import { Util } from "./util";
 
 
@@ -26,31 +24,6 @@ export class Expression {
     execFunc: Function;
 
     /**
-     * 模块依赖
-     */
-    dependencies: ExpressionMd;
-
-    /**
-     * 依赖函数
-     */
-    dependenciesFunc: any;
-
-    /**
-     * key 函数
-     */
-    keyFunc: Function;
-
-    /**
-     * 对象函数
-     */
-    objFunc: Function;
-
-    /**
-     * key 数组
-     */
-    keyArray: any[];
-
-    /**
      * @param exprStr	表达式串
      */
     constructor(exprStr?: string) {
@@ -61,63 +34,9 @@ export class Expression {
             execStr = this.compile(exprStr);
         }
         if (execStr) {
-            const v: string = this.fields.length > 0 ? ',' + this.fields.join(',') : '';
-            this.handlesDep(execStr);
-            this.execFunc = Util.eval(`function($module${v}){return ${execStr}}`);
+            let v: string = this.fields.length > 0 ? ',' + this.fields.join(',') : '';
+            this.execFunc = Util.eval('function($module' + v + '){return ' + execStr + '}');
         }
-    }
-    /**
-     * 处理模块依赖
-     * @param execStr   执行串 
-     */
-    handlesDep(execStr: string) {
-        let index = execStr.lastIndexOf('.');
-        if (index !== -1) {
-            this.dependencies = {
-                obj: execStr.substring(0, index),
-                key: execStr.substring(index + 1),
-                moduleName: execStr.substring(0, execStr.indexOf('.'))
-            }
-            let { key, obj, moduleName } = this.dependencies;
-            let keys = [];
-            //key有关键词
-            if (this.fields.reduce((pre, v) => {
-                if (key.indexOf(v) !== -1) {
-                    keys.push(v);
-                    return pre + 1;
-                }
-            }, 0)) {
-                this.keyFunc = Util.eval(`function($module, ${keys.join(',')}  ){return  ${key}  }`);
-                this.keyArray = keys;
-            }
-            this.dependencies.obj = obj.replace(moduleName, moduleName + '.model');
-            this.objFunc = Util.eval(`function( $module,${this.fields.join(',')}){return  ${this.dependencies.obj}}`);
-        } else {
-            this.dependencies = {
-                key: execStr,
-                obj: '',
-                moduleName: ''
-            }
-        }
-    }
-
-    /**
-     * 获取模块相应数据
-     * @param model     模型
-     * @param dom       虚拟dom节点
-     */ 
-    getDependence(model: Model, dom: Element) {
-        if (this.dependencies.moduleName === '') {
-            //赋值模块名
-            this.dependencies.moduleName = ModuleFactory.get(model.$moduleId).name;
-        }
-        const { dependencies } = this;
-
-        if (this.keyFunc !== undefined) {
-            dependencies['key'] = this.val(model, dom, this.keyFunc, this.keyArray)
-        }
-        dependencies['obj'] = this.objFunc ? this.val(model, dom, this.objFunc, this.fields, true) : undefined;
-        return dependencies;
     }
 
     /**
@@ -161,7 +80,7 @@ export class Expression {
         //括号数组 字段数组 函数数组 存过滤器需要的值
         let filterString = '';
         //特殊字符
-        let special = /[\?\:\!\|\*\/\+\-><=&%]/;
+        let special = /[\?\:\,\!\|\*\/\+\-><=&%]/;
         //返回的串
         let express = '';
         //函数名
@@ -244,8 +163,10 @@ export class Expression {
         }
         let endStr = exprStr.substring(first);
         if (endStr.indexOf(' ') === -1 && !endStr.startsWith('##TMP') && !endStr.startsWith(')')) {
-            let str = endStr.indexOf('.') != -1 ? endStr.substring(0, endStr.indexOf('.')) : endStr;
-            fields.push(str);
+            let str = endStr.match(/[A-za-z$]+/);
+            if (str !== null) {
+                fields.push(str[0]);
+            }
         }
         express += endStr;
 
@@ -323,25 +244,23 @@ export class Expression {
      * @param model 	模型 或 fieldObj对象 
      * @returns 		计算结果
      */
-    public val(model: Model, dom: Element, func?: Function, field?: Array<string>, realModule?: boolean) {
+    public val(model: Model) {
+
         let module: Module = ModuleFactory.get(model.$moduleId);
-        if (!model) {
-            model = module.model;
-        }
+        if(!model) model = module.model;
         let valueArr = [];
-        let fields = field ? field : this.fields;
-        fields.forEach((field) => {
-            valueArr.push(getFieldValue(module, model, field, realModule));
+        this.fields.forEach((field) => {
+            valueArr.push(getFieldValue(module, model, field));
         });
         //module作为第一个参数
         valueArr.unshift(module);
         let v;
         try {
-            let fn = func ? func : this.execFunc;
-            v = fn.apply(module, valueArr);
+            v = this.execFunc.apply(module, valueArr);
         } catch (e) {
         }
         return v === undefined || v === null ? '' : v;
+
         /**
          * 获取字段值
          * @param module    模块
@@ -349,16 +268,11 @@ export class Expression {
          * @param field     字段名
          * @return          字段值
          */
-        function getFieldValue(module: Module, dataObj: Object, field: string, realModule?: boolean) {
+        function getFieldValue(module: Module, dataObj: Object, field: string) {
             if (dataObj.hasOwnProperty(field)) {
                 return dataObj[field];
             }
-            //兄弟模块
-            const md: Module = module.getChild(field);
-            if (md !== null) {
-                // this.dependencies = true;
-                return realModule ? md : md.model;
-            }
+
             //从根查找
             return module.model.$query(field);
         }

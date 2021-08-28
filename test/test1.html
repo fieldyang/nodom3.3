@@ -31,6 +31,38 @@
     </div>
 </body>
 <script>
+    let reg = /(?<!\{\{)(?:<\/?.*?>)(?![^>]\}\})/g;
+    reg = /(?<!\{\{[^<]*)\w+(?!\}\})/g;
+    reg = /(?<!\{\{[^<}}]*)(<(\/?)(\s*?[a-zA-Z][a-zA-Z0-9-_]*)(.*?)(\/?>))(?![^>{{]*?\}\})/g;
+    // reg = /(?<!\{\{[^<]*)(?:\<(\s*)([a-zA-Z][a-zA-Z0-9-_]*)((?:"(?:[^"]*)"+|'(?:[^']*)'+|(?:[^<>"'/]*)+|(?:\{.*\})+)*)*?(\s*\/){0,1}(\s*)\>)(?![^>]*?\}\})/;
+    let s1 = `<div class={{x>1 && y<2}}></div>`
+    // console.log(s1.match(reg));
+    // s1 = `ab{{abcd}}cd`;
+    s1 = `
+    < div x-if={{discount>0.8 && xx>10}} class={{yy>1?'cls1':'cls2'}} x-value={{x.ary<12}} x-field='name'>
+        <input name='aaaa>
+        <Module1/>价格
+        <Nif conds={{discount>0.8 && xx2}}></Nif>
+            hello
+        <NEndIf>
+        <p y>cd：{{price}}</p>
+        <span>{{font}} </span>
+         hello  world!
+         <span> hahaha </span> 
+        last{{last}} 
+        </ div >
+    `
+    
+    // console.log(s1.match(reg));
+    // console.log(reg.exec(s1));
+    // console.log(reg.exec(s1));
+    // console.log(reg.exec(s1));
+    let r;
+    // while((r=reg.exec(s1)) !== null){
+    //     // s1 = s1.substr(r.index+r[0].length);
+    //     console.log(r);
+    // }
+    
     let s = `
     // let style = document.createElement('style');
     // document.head.appendChild(style);
@@ -39,7 +71,7 @@
     // // sheets[3].insertRule(".aaa{color:blue}");
     // sheets[3].insertRule("@import 'css/2.css'");
 
-    // let reg = /(\{\{.+?\}\})|(\<.+?\>)|(\".+?\")/g;
+    // let reg = /(\{\{.+?\}\})|(\<\/?.+?\>)|(\".+?\")/g;
     // let str = '< div x-if={{discount<0.8 && xx>10}} x-class={{ "cls1":"yy>1" }} x-value = {{ x.ary<12 }} >价格：{{price}}</ div >'';
     // // let r = reg.exec(str);
     // let r
@@ -98,20 +130,18 @@
 	// 				</div>
     //             `;
     let srcStr = `< div x-if={{discount<0.8 && xx>10}} class={{yy>1?'cls1':'cls2'}} x-value={{x.ary<12}} x-field='name'>
-        <input name=aaaa / >
+        <input name='aaaa / >
         <Module1/>价格
-        <Nif>
-
+        <Nif conds={{discount<0.8 && xx>2}}></Nif>
+            hello
         <NEndIf>
-        <!-- afadfadf
-            
-            -->
-        <p y>cd：{{price}}
+        <p y>cd：{{price}}</p>
         <span>{{font}} </span>
          hello  world!
-         <span>hahaha</span> 
-         last{{last}} 
-        </ div >`;
+         <span> hahaha </span> 
+        last{{last}} 
+        </ div >
+        `;
     // srcStr = `
     // <div class=code>
 	// 					<div class=introduce>如果discount<0.8，显示价格</div>
@@ -119,37 +149,16 @@
 	// 					<div x-endif></div>
 	// 				</div> 
     // `    
-    // srcStr = `
-    // <div>
-    //     < div x-if={{discount<0.8 && xx>10}} x-class={{yy>1?'cls1':"cls2"}} >
-    //         <input type='text'/>{{discount<0.8 && xx>10}}<p y>cd：{{price}}  
-    //     </div>
-    //     < div x-if={{discount<0.8 && xx>10}} x-class={{yy>1?'cls1':"cls2"}} >
-    //         <input type='text'/>{{discount<0.8 && xx>10}}<p y>cd：{{price}}  
-    //     </div>   
-    // </div>
-    `
     console.time('t1');
-      
     // 清理comment
     let reg1 = /\<\!\-\-[\s\S]*\-\-\>/;
     srcStr = srcStr.replace(reg1,'');
     //1 替换所有 {{}}
-    reg1 = /{{.+?}}/g;
-    let repStr = '__NODOM_DBL_BRACKKET_' + Math.random() + '_';
-    let repMap = new Map();
-    // for(let i=0;i<1000;i++){
-    let repIndex = 0;
-    let r;
-    while((r = reg1.exec(srcStr)) !== null){
-        let index = r.index;
-        const repS = '[' + (repStr + repIndex++) + ']';
-        srcStr = srcStr.substr(0,index) + repS + srcStr.substr(index + r[0].length);
-        repMap.set(repS,r[0]);
-        reg1.lastIndex = index + repS.length;
-    }
+    
     // 2 识别标签
-    reg1 = /(\<\s*[A-Za-z]+.*?\>)|(<\/\s*[A-Za-z]+.*?\>)/g;
+    reg1 = reg = /(?<!\{\{[^<}}]*)(<(\/?)(\s*?[a-zA-Z][a-zA-Z0-9-_]*)(.*?)(\/?>))(?![^>{{]*?\}\})/g;
+    // reg1 = /(?<!\{\{[^<]*)(\<.*?\>)(?![^>]*?\}\})/g;
+    // reg1 = /(?<!\{\{[^<]*)(?:\<(\s*)([a-zA-Z][a-zA-Z0-9-_]*)((?:"(?:[^"]*)"+|'(?:[^']*)'+|(?:[^<>"'/]*)+|(?:\{.*\})+)*)*?(\s*\/){0,1}(\s*)\>)(?![^>]*?\}\})/g;
     let st = 0;
     let tagStack = [];
     let textStack = [];
@@ -158,18 +167,14 @@
         let s = '';
         if(st < r.index-1){
             s = srcStr.substring(st,r.index);
-            let reg11 = new RegExp('\\[' + repStr + '\\d+\\]');
-            let r1 = reg11.exec(s);
-            if(r1 !== null){
-                s = s.replace(r1[0],repMap.get(r1[0]))
-            }
             s = s.trim();
         }
         textStack.push(s);
         st = reg1.lastIndex;
     }
 
-    // console.log(tagStack,textStack);
+    console.log(tagStack,textStack);
+    
     // 当前标签，记录开始标签
     let curTag;
     let tags = [];
@@ -285,12 +290,13 @@
                 }
             }
             // 恢复值
-            if(pValue){
-                if(pValue.indexOf('[' + repStr) !== -1){
-                    pValue = repMap.get(pValue);
-                }
+            // if(pValue){
+            //         pValue = repMap.get(pValue);
+                
+            // }
+            if(/^[A-Za-z][\w\d-]*$/.test(pName)){
+                obj[pName] = pValue;
             }
-            obj[pName] = pValue;
         }
         return obj;
     }

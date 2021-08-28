@@ -34,42 +34,19 @@ export class Compiler {
         // 清理comment
         let regExp = /\<\!\-\-[\s\S]*\-\-\>/;
         srcStr = srcStr.replace(regExp,'');
-        //替换 {{}}
-        regExp = /{{.+?}}/g;
-        let repStr = '__NODOM_DBL_BRACKKET_' + Math.random() + '_';
-        let repMap = new Map();
-        
-        let repIndex = 0;
-        // 遍历{{ }}替换
-        let r;
-        while((r = regExp.exec(srcStr)) !== null){
-            let index = r.index;
-            const repS = '[' + (repStr + repIndex++) + ']';
-            srcStr = srcStr.substr(0,index) + repS + srcStr.substr(index + r[0].length);
-            repMap.set(repS,r[0]);
-            regExp.lastIndex = index + repS.length;
-        }
-        // 2 识别标签
-        regExp = /(\<\s*[A-Za-z]+.*?\>)|(<\/\s*[A-Za-z]+.*?\>)/g;
+        // 1 识别标签
+        regExp = /(?<!\{\{[^<}}]*)(<(\/?)(\s*?[a-zA-Z][a-zA-Z0-9-_]*)(.*?)(\/?>))(?![^>{{]*?\}\})/g;
         let st = 0;
         //标签串数组,含开始和结束标签
         let tagStack = [];
         //独立文本串数组，对应需要的标签串前面
         let textStack = [];
+        let r;
         while((r = regExp.exec(srcStr)) !== null){
             tagStack.push(r[0]);
             //处理标签之间的文本
             if(st < r.index-1){
-                let s = srcStr.substring(st,r.index);
-                let regExp1 = new RegExp('\\[' + repStr + '\\d+\\]');
-                let r1 = regExp1.exec(s);
-                if(r1 !== null){
-                    s = s.replace(r1[0],repMap.get(r1[0]))
-                    let exprs = this.compileExpression(s);
-                    textStack.push(exprs);
-                }else{
-                    textStack.push(s);
-                }
+                textStack.push(srcStr.substring(st,r.index));
             }else{
                 textStack.push('');
             }
@@ -80,7 +57,7 @@ export class Compiler {
         let tagNames = [];
         // 标签对象数组
         let tagObjs = [];
-
+        // 根节点
         let root:ASTObj;
         tagStack.forEach((tag,ii)=>{
             //开始标签名
@@ -102,7 +79,6 @@ export class Compiler {
                     // 标签节点作为孩子
                     let tobj = tagObjs.pop();
                     //把孩子节点改为兄弟节点
-                    let ind=0;
                     for(;tobj.children.length>0;){
                         let o = tobj.children.pop();
                         chds.unshift(o);
@@ -120,7 +96,6 @@ export class Compiler {
                 }else{
                     throw '模版格式错误';
                 }
-                
             }else { //标签头
                 let obj = handleTagAttr(tag);
                 //前一个文本节点存在，则作为前一个节点的孩子
@@ -130,7 +105,6 @@ export class Compiler {
                     });
                     textStack[ii] = '';
                 }
-                
                 if(!tag.endsWith('\/>')){ // 非自闭合
                     //标签头入栈
                     tagNames.push(obj.tagName);
@@ -140,7 +114,6 @@ export class Compiler {
                         tagObjs[tagObjs.length-1].children.push(obj);
                     }
                 }
-                
                 //设置根节点
                 if(!root){
                     root = obj;
@@ -165,6 +138,10 @@ export class Compiler {
                 attrs:new Map()
             }
             
+            //属性名规则
+            let regName = /^[A-Za-z][\w\d-]*$/;
+            let regStr = /^(?:['`"]).*(?:['`"])$/;
+            let regExpr = /^\{\{.*\}\}$/;
             for(let i=1;i<tagArr.length;i++){
                 let sa = tagArr[i].split('=');
                 let pName = sa[0],pValue;
@@ -185,13 +162,18 @@ export class Compiler {
                         pValue = sa[1];
                     }
                 }
-                // 恢复值
-                if(pValue){
-                    if(pValue.indexOf('[' + repStr) !== -1){
-                        pValue = me.compileExpression(repMap.get(pValue))[0];
+                //规则命名才保存
+                if(regName.test(pName)){
+                    //处理属性值
+                    let r;
+                    if(((r=regStr.exec(pValue)) !== null)){
+                        pValue = r[0].trim();
                     }
+                    if(regExpr.test(pValue)){
+                        pValue = me.compileExpression(pValue)[0];
+                    }
+                    obj.attrs.set(pName,pValue);
                 }
-                obj.attrs.set(pName,pValue);
             }
             return obj;
         }
@@ -217,10 +199,10 @@ export class Compiler {
     private static handleAstText(parent: Element, astObj: ASTObj) {
         let text = new Element();
         parent.children.push(text);
-        if(typeof astObj.textContent === 'string'){ // 字符串
+        if(/\{\{.+\}\}/.test(astObj.textContent)){
+            text.expressions = <any[]>this.compileExpression(astObj.textContent);
+        }else{
             text.textContent = astObj.textContent;
-        }else{ //表达式
-            text.expressions = astObj.textContent;
         }
     }
     /**
@@ -237,7 +219,6 @@ export class Compiler {
         for(let a of astObj.children){
             this.compileAST(child, a);
         }
-        
     }
     
     /**
@@ -270,9 +251,9 @@ export class Compiler {
                     bindFlag = tempArr[1] == 'true' ? true : false;
                 }
                 let name = tempArr[0].split('-')[1];
-                if (/\{\{.+?\}\}/.test(attr[1]) === false) {
-                    throw new NError('数据必须是由双大括号包裹');
-                }
+                // if (/\{\{.+?\}\}/.test(attr[1]) === false) {
+                //     throw new NError('数据必须是由双大括号包裹');
+                // }
                 let value = attr[1].substring(2, attr[1].length - 2);
                 // 变量别名，变量名（原对象.变量名)，双向绑定标志
                 let data = [value, bindFlag];
@@ -303,7 +284,6 @@ export class Compiler {
                 return a.type.prio - b.type.prio;
             });
         }
-        
     }
 
     /**
@@ -311,9 +291,9 @@ export class Compiler {
      * @param exprStr   含表达式的串
      * @return          处理后的字符串和表达式数组
      */
-    public static compileExpression(exprStr: string) {
-        if (/\{\{.+?\}\}/.test(exprStr) === false) {
-            return exprStr;
+    public static compileExpression(exprStr: string):string|any[]{
+        if(!exprStr){
+            return;
         }
         let reg: RegExp = /\{\{.+?\}?\s*\}\}/g;
         let retA = new Array();

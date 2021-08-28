@@ -30,7 +30,6 @@
     	// import {ModuleMain} from './modules/main.js'
 		class Module1 extends nodom.Module{
 			template(){
-				
 				return `
 					<div class=code>
 						<div class=tip>单个if指令</div>
@@ -38,7 +37,7 @@
 						<div x-endif></div>
 						<div class=code>
 							<div class=introduce>如果discount<0.8，显示价格</div>
-							<div x-if={{discount<1}}>价格：{{price}}</div>
+							<div x-if={{discount<0.8}}>价格：{{price}}</div>
 							<div x-endif></div>
 						</div> 
 						<div class=tip>完整的if/else指令</div>
