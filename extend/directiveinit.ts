@@ -257,50 +257,12 @@ export default (function () {
     DirectiveManager.addType('if',
         10,
         (directive: Directive, dom: Element, parent: Element) => {
-            // let value = directive.value;
-            // if (!value) {
-            //     throw new NError("paramException", "x-if");
-            // }
-            // //value为一个表达式
-            // let expr = new Expression(value);
-            // directive.value = expr;
-            //设置if组
-            directive.extra = {
-                groups: [dom]
-            }
-            if (!parent) {
-                return;
-            }
-            parent.setTmpParam('ifnode', dom);
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            dom.dontRender = true;
-            let target: number = -1;
-
-            for (let i = 0; i < directive.extra.groups.length; i++) {
-                let node = directive.extra.groups[i];
-                let dir = node.getDirective('if') || node.getDirective('elseif') || node.getDirective('else');
-                if (dir.value && dir.value !== 'false') {
-                    target = i;
-                    break;
-                }
+            if(directive.expression){
+                directive.value = directive.expression.val(dom.model);
             }
-            let tNode;
-            if (target === 0) { //if 节点
-                dom.dontRender = false;
-            } else if (target > 0) { //elseif 节点
-                tNode = directive.extra.groups[target];
-            } else if (directive.extra.groups.length > 1) {  //else 节点
-                tNode = directive.extra.groups[directive.extra.groups.length - 1];
-            }
-            if (tNode) {
-                //添加到指定位置
-                let index = parent.children.indexOf(dom);
-                if (index !== -1) {
-                    parent.children.splice(index + 1, 0, tNode);
-                }
-            }
-
+            dom.dontRender = !directive.value;
         }
     );
 
@@ -311,18 +273,30 @@ export default (function () {
     DirectiveManager.addType('else',
         10,
         (directive: Directive, dom: Element, parent: Element) => {
-            if (!parent) {
-                return;
-            }
-            let ifNode = parent.getTmpParam('ifnode');
-            if (ifNode) {
-                let dir = ifNode.getDirective('if');
-                dir.extra.groups.push(dom);
-                parent.removeChild(dom);
-            }
+        
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            return;
+            dom.dontRender = true;
+            let index = parent.children.findIndex(item=>item.key === dom.key);
+            if(index === -1){
+                return;
+            }
+            for(let i=index-1;i>=0;i--){
+                let c = parent.children[i];
+                //不处理非标签
+                if(!c.tagName){
+                    continue;
+                }
+                // 前一个元素不含if和elseif指令，则不处理
+                if(!c.hasDirective('if') && !c.hasDirective('elseif')){
+                    break;
+                }
+                let d = c.getDirective('elseif') || c.getDirective('if');
+                if(d && d.value){
+                    return;
+                }
+            }
+            dom.dontRender = true;
         }
     );
 
@@ -331,47 +305,16 @@ export default (function () {
      */
     DirectiveManager.addType('elseif', 10,
         (directive: Directive, dom: Element, parent: Element) => {
-            // let value = directive.value;
-            // if (!value) {
-            //     throw new NError("paramException", "x-elseif");
-            // }
-            //value为一个表达式
-            // let expr = new Expression(value);
-            // directive.value = expr;
-            if (!parent) {
-                return;
-            }
-            let ifNode = parent.getTmpParam('ifnode');
-            if (ifNode) {
-                let dir = ifNode.getDirective('if');
-                dir.extra.groups.push(dom);
-                parent.removeChild(dom);
-            }
+            
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-
+            if(directive.expression){
+                directive.value = directive.expression.val(dom.model);
+            }
+            dom.dontRender = !directive.value;
         }
     );
 
-    /**
-     * endif 指令
-     */
-    DirectiveManager.addType('endif', 10,
-        (directive: Directive, dom: Element, parent: Element) => {
-            if (!parent) {
-                return;
-            }
-            let ifNode = parent.getTmpParam('ifnode');
-            if (ifNode) {
-                parent.removeChild(dom);
-                //移除ifnode临时参数
-                parent.removeTmpParam('ifnode');
-            }
-        },
-        (directive: Directive, dom: Element, module: Module, parent: Element) => {
-
-        }
-    );
     /**
      * switch指令
      */

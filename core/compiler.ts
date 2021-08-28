@@ -131,6 +131,17 @@ export class Compiler {
          * @returns         
          */
         function handleTagAttr(tagStr):ASTObj{
+            //字符串和表达式替换
+            let reg = /('.*?')|(".*?")|(`.*?`)|(\{\{.*?\}\})/g;
+            let r;
+            let rIndex = 0;
+            let repMap = new Map();
+            while((r=reg.exec(tagStr))!==null){
+                let tmp = '$'+rIndex++;
+                repMap.set(tmp,r[0]);
+                tagStr = tagStr.substr(0,r.index) + tmp + tagStr.substr(reg.lastIndex);
+                reg.lastIndex = r.index + 2;
+            }
             let tagArr = tagStr.substring(1,tagStr.length-1).split(/\s+/g).filter(item=>item!=='');
             let obj = {
                 tagName:tagArr[0],
@@ -166,6 +177,9 @@ export class Compiler {
                 if(regName.test(pName)){
                     //处理属性值
                     let r;
+                    if(/^\$\d+$/.test(pValue)){
+                        pValue = repMap.get(pValue);
+                    }
                     if(((r=regStr.exec(pValue)) !== null)){
                         pValue = r[0].trim();
                     }
@@ -260,18 +274,19 @@ export class Compiler {
                 oe.datas[name] = data;
             } else {
                 // 普通属性 如class 等
-                let isExpr: boolean = false;
-                let v = attr[1];
-                if (v !== '') {
-                    let ra = this.compileExpression(v);
-                    if (Util.isArray(ra)) {
-                        oe.setProp(attr[0], ra, true);
-                        isExpr = true;
-                    }
-                }
-                if (!isExpr) {
-                    oe.setProp(attr[0], v);
-                }
+                // let isExpr: boolean = false;
+                // let v = attr[1];
+                // if (v !== '') {
+                //     let ra = this.compileExpression(v);
+                //     if (Util.isArray(ra)) {
+                //         oe.setProp(attr[0], ra, true);
+                //         isExpr = true;
+                //     }
+                // }
+                oe.setProp(attr[0], attr[1],attr[1] instanceof Expression);
+                // if (!isExpr) {
+                //     oe.setProp(attr[0], v);
+                // }
             }
         }
         //处理属性

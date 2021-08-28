@@ -163,8 +163,6 @@ export class Element {
                 this.doDontRender();
                 return false;
             }
-
-
             this.handleProps(module);
         } else { //textContent
             this.handleTextContent(module);
@@ -180,6 +178,7 @@ export class Element {
                 }
             }
         }
+        
         //后置方法集执行
         this.doRenderOp(module, 'after');
         return true;
@@ -587,7 +586,6 @@ export class Element {
      * @return true/false
      */
     public hasDirective(directiveType): boolean {
-
         return this.directives.findIndex(item => item.type.name === directiveType) !== -1;
     }
 

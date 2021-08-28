@@ -7,13 +7,13 @@ import { ASTObj } from "../core/types";
 /**
  * module 元素
  */
-class NMODULE extends DefineElement{
+class MODULE extends DefineElement{
     constructor(node: ASTObj){
         super(node);
         //类名
         let clazz = node.attrs.get('className');
         if (!clazz) {
-            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'NMODULE', 'className');
+            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'MODULE', 'className');
         }
         //模块名
         let moduleName = node.attrs.get('name');
@@ -27,97 +27,81 @@ class NMODULE extends DefineElement{
 /**
  * for 元素
  */
-class NFOR extends DefineElement{
+class FOR extends DefineElement{
     constructor(node: ASTObj){
         super(node);
         //条件
-        let cond = node.attrs.get('condition');
+        let cond = node.attrs.get('cond');
         if (!cond) {
-            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'NFOR', 'condition');
+            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'FOR', 'cond');
         }
         node.attrs.set('x-repeat',cond);
     }
 }
 
-class NRECUR extends DefineElement{
+class RECUR extends DefineElement{
     constructor(node: ASTObj){
         super(node);
         //条件
-        let cond = node.attrs.get('condition');
+        let cond = node.attrs.get('cond');
         if (!cond) {
-            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'NFOR', 'condition');
+            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'RECUR', 'cond');
         }
         node.attrs.set('x-recur',cond);
     }
 }
 
-class NIF extends DefineElement{
+class IF extends DefineElement{
     constructor(node: ASTObj){
         super(node);
         //条件
-        let cond = node.attrs.get('condition');
+        let cond = node.attrs.get('cond');
         if (!cond) {
-            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'NFOR', 'condition');
+            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'IF', 'cond');
         }
         node.attrs.set('x-if',cond);
     }
 }
 
-class NELSE extends DefineElement{
+class ELSE extends DefineElement{
     constructor(node: ASTObj){
         super(node);
-        //条件
-        let cond = node.attrs.get('condition');
-        if (!cond) {
-            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'NFOR', 'condition');
-        }
-        node.attrs.set('x-else',cond);
+        node.attrs.set('x-else',undefined);
     }
 }
 
-class NELSEIF extends DefineElement{
+class ELSEIF extends DefineElement{
     constructor(node: ASTObj){
         super(node);
         //条件
-        let cond = node.attrs.get('condition');
+        let cond = node.attrs.get('cond');
         if (!cond) {
-            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'NFOR', 'condition');
+            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'ELSEIF', 'cond');
         }
         node.attrs.set('x-elseif',cond);
     }
 }
 
-class NENDIF extends DefineElement{
-    constructor(node: ASTObj){
-        super(node);
-        //条件
-        let cond = node.attrs.get('condition');
-        if (!cond) {
-            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'NFOR', 'condition');
-        }
-        node.attrs.set('x-endif',null);
-    }
-}
 
-class NSWITCH extends DefineElement{
+class SWITCH extends DefineElement{
     constructor(node: ASTObj){
         super(node);
         //条件
-        let cond = node.attrs.get('condition');
+        let cond = node.attrs.get('cond');
         if (!cond) {
-            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'NFOR', 'condition');
+            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'SWITCH', 'cond');
         }
         node.attrs.set('x-switch',cond);
     }
 }
 
-class NCASE extends DefineElement{
+class CASE extends DefineElement{
     constructor(node: ASTObj){
         super(node);
         //条件
-        let cond = node.attrs.get('condition');
+        let cond = node.attrs.get('cond');
         if (!cond) {
-            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'NFOR', 'condition');
+            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'CASE', 'cond');
         }
         node.attrs.set('x-case',cond);
     }
@@ -132,4 +116,4 @@ class NCASE extends DefineElement{
 //     }
 // });
 
-DefineElementManager.add([NMODULE,NFOR,NRECUR,NIF,NELSE,NELSEIF,NENDIF,NSWITCH,NCASE]);
+DefineElementManager.add([MODULE,FOR,RECUR,IF,ELSE,ELSEIF,SWITCH,CASE]);
