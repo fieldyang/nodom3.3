@@ -296,7 +296,7 @@ export default (function () {
                     return;
                 }
             }
-            dom.dontRender = true;
+            dom.dontRender = false;
         }
     );
 
