@@ -31,12 +31,7 @@
     </div>
 </body>
 <script>
-    let reg = /('.*?')|(".*?")|(`.*?`)|(\{\{.*?\}\})/g;
-    let ss = `<div a='1234 hello' b= "{{x > 5}}">`;
-    let rr;
-    while((rr=reg.exec(ss)) !== null){
-        console.log(rr);
-    }
+    
     let s = `
     // let style = document.createElement('style');
     // document.head.appendChild(style);

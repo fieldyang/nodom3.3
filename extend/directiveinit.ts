@@ -115,38 +115,11 @@ export default (function () {
     DirectiveManager.addType('repeat',
         2,
         (directive: Directive, dom: Element) => {
-            let value = directive.value;
-            if (!value) {
-                throw new NError("paramException", "x-repeat");
-            }
-
-            let modelName: string;
-            let fa: string[] = value.split('|');
-            modelName = fa[0];
-            //有过滤器
-            if (fa.length > 1) {
-                directive.filters = [];
-                for (let i = 1; i < fa.length; i++) {
-                    directive.filters.push(new Filter(fa[i]));
-                }
-            }
-            // //模块全局数据
-            // if(modelName.startsWith('$$')){
-            //     modelName = modelName.substr(2);
-            // }
-            directive.value = modelName;
+            
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            let model = dom.model;
-
-            //可能数据不存在，先设置dontrender
             dom.dontRender = true;
-            if (!model) {
-                return;
-            }
-            //得到rows数组的model
-            let rows = model.$query(directive.value);
-
+            let rows = directive.value;
             // 无数据，不渲染
             if (!Util.isArray(rows) || rows.length === 0) {
                 return;
@@ -259,9 +232,6 @@ export default (function () {
         (directive: Directive, dom: Element, parent: Element) => {
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            if(directive.expression){
-                directive.value = directive.expression.val(dom.model);
-            }
             dom.dontRender = !directive.value;
         }
     );
@@ -308,9 +278,6 @@ export default (function () {
             
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            if(directive.expression){
-                directive.value = directive.expression.val(dom.model);
-            }
             dom.dontRender = !directive.value;
         }
     );

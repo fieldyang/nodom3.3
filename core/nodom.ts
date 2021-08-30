@@ -25,7 +25,7 @@ export let store:Object|undefined ;
  * 新建一个App
  * @param config 应用配置
  */
-export function app(clazz:Module,el?:string){
+export function nodom(clazz:Module,el?:string){
     //消息队列消息处理任务
     Scheduler.addTask(MessageQueue.handleQueue, MessageQueue);
     //渲染器启动渲染

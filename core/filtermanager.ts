@@ -1,4 +1,4 @@
-import {Module} from "./module"
+import { Module } from "./module"
 import { NError } from "./error";
 import { Util } from "./util";
 import { NodomMessage } from "./nodom";
@@ -6,12 +6,12 @@ import { NodomMessage } from "./nodom";
 /**
  * filter类型命名规则：以小写字母a-z命名，其它字母不允许
  */
-export class FilterManager{
+export class FilterManager {
     /**
      * 过滤类型
      */
-    private static filterTypes:Map<string,Function> = new Map();
-    
+    private static filterTypes: Map<string, Function> = new Map();
+
     /**
      * 创建过滤器类型
      * @param name 		过滤器类型名
@@ -34,7 +34,7 @@ export class FilterManager{
      * 移除过滤器类型
      * @param name  过滤器类型名
      */
-    public static removeType(name:string) {
+    public static removeType(name: string) {
         if (!this.filterTypes.has(name)) {
             throw new NError('notexist1', NodomMessage.TipWords['filterType'], name);
         }
@@ -46,7 +46,7 @@ export class FilterManager{
      * @param type 		过滤器类型名
      * @return 			true/false
      */
-    public static hasType(name:string):boolean {
+    public static hasType(name: string): boolean {
         return this.filterTypes.has(name);
     }
 
@@ -57,16 +57,27 @@ export class FilterManager{
      * @param arguments 参数数组  0模块 1过滤器类型名 2待处理值 3-n处理参数
      * @returns 		过滤器执行结果
      */
-    public static exec(module:Module, type:string):string {
-        let params = new Array();
-        for (let i = 2; i < arguments.length; i++) {
-            params.push(arguments[i]);
+    public static exec(module: Module, type: string | Array<object>): string {
+        if (typeof type === 'string') {
+            let params = new Array();
+            for (let i = 2; i < arguments.length; i++) {
+                params.push(arguments[i]);
+            }
+            if (!FilterManager.filterTypes.has(type)) {
+                throw new NError('notexist1', NodomMessage.TipWords['filterType'], type);
+            }
+            //调用
+            return Util.apply(FilterManager.filterTypes.get(type), module, params);
+        } else {
+            //多个过滤器
+            return Object.keys(type).reduce((pre, v) => {
+                if (!FilterManager.filterTypes.has(v)) {
+                    throw new NError('notexist1', NodomMessage.TipWords['filterType'], v);
+                }
+                return Util.apply(FilterManager.filterTypes.get(v), module, [pre, ...type[v]]);
+            }, arguments[2]);
         }
-        if (!FilterManager.filterTypes.has(type)) {
-            throw new NError('notexist1', NodomMessage.TipWords['filterType'], type);
-        }
-        //调用
-        return Util.apply(FilterManager.filterTypes.get(type), module, params);
+
     }
 
     /**
@@ -74,11 +85,11 @@ export class FilterManager{
      * @param src 	源字符串，格式为filtertype:param1:param2:... 	
      * @returns 	解析后的过滤器数组参数
      */
-    public static explain(src: string): Array < string > {
+    public static explain(src: string): Array<string> {
         let startStr: string
         let startObj: boolean = false;
-        let strings:string = "\"'`"; //字符串开始和结束标志
-        let splitCh:string = ':'; //分隔符
+        let strings: string = "\"'`"; //字符串开始和结束标志
+        let splitCh: string = ':'; //分隔符
         let retArr = new Array();
         let tmp = ''; //临时串
         for (let i = 0; i < src.length; i++) {
@@ -115,10 +126,11 @@ export class FilterManager{
         /**
          * 转化字符串为对象
          */
-        function handleObj(s:string) {
+        function handleObj(s: string) {
             s = s.trim();
             if (s.charAt(0) === '{') { //转换为对象
-                s = Util.eval(s);
+                // s = eval('(' + s + ')');
+                s = new Function('return ' + s)();
             }
             return s;
         }

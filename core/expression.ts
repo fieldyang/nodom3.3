@@ -1,6 +1,8 @@
+import { Element } from "./element";
 import { Model } from "./model";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
+import { ExpressionMd } from "./types";
 import { Util } from "./util";
 
 
@@ -35,15 +37,10 @@ export class Expression {
         }
         if (execStr) {
             let v: string = this.fields.length > 0 ? ',' + this.fields.join(',') : '';
-            this.execFunc = Util.eval('function($module' + v + '){return ' + execStr + '}');
+            execStr = 'function($module' + v + '){return ' + execStr + '}';
+            console.log(execStr);
+            this.execFunc = Util.eval(execStr);
         }
-    }
-
-    /**
-     * 克隆
-     */
-    public clone() {
-        return this;
     }
 
     /**
@@ -51,192 +48,68 @@ export class Expression {
      * @param exprStr 	表达式串
      */
     public compile(exprStr: string): string {
-        //替代字符串的正则数组
-        let stringReg = [/\\"/g, /\\'/g, /\\`/g, /\".*?\"/g, /'.*?'/g, /`.*?`/g];
-        let replaceMap = new Map();
-        const TMPStr = '##TMP';
-        //替换字符串
-        stringReg.forEach(reg => {
-            if (reg.test(exprStr)) {
-                exprStr.match(reg).forEach((text) => {
-                    let index = exprStr.indexOf(text);
-                    replaceMap.set(TMPStr + index, text);
-                    exprStr = exprStr.substring(0, index) + (TMPStr + index) + exprStr.substring(index + text.length);
-                })
+        const me = this;
+        //字符串识别正则式
+        let reg = /('.*')|(".*")|(`.*`)/g;
+        //开始位置
+        let st=0;
+        //存在字符串
+        let hasStr = false;
+        let r;
+        while((r=reg.exec(exprStr))!==null){
+            if(r.index>st){
+                let tmp = exprStr.substr(st,r.index);
+                let s1 = handle(tmp);
+                exprStr = exprStr.substring(0,st) + s1 + r[0] + exprStr.substr(reg.lastIndex);
+                st = reg.lastIndex + (s1.length-tmp.length);
+            }else{
+                st = reg.lastIndex;
             }
-        });
-        exprStr = exprStr.trim().replace(/([w]\s)|instanceof|\s+/g, (w, index) => {
-            if (index) return index;
-            else {
-                if (w === 'instanceof') {
-                    return ' ' + w + ' ';
-                }
-                return '';
-            }
-        });
-        //首尾指针
-        let [first, last] = [0, 0];
-        let [braces, fields, funArr, filters] = [[], [], [], []];
-        //括号数组 字段数组 函数数组 存过滤器需要的值
-        let filterString = '';
-        //特殊字符
-        let special = /[\?\:\,\!\|\*\/\+\-><=&%]/;
-        //返回的串
-        let express = '';
-        //函数名
-        let funName;
-        let isInBrace = false;
-        let isInFun = false;
-        while (last < exprStr.length) {
-            let lastStr = exprStr[last];
-            if (lastStr == '(') {
-                if (isInFun) {
-                    //函数里存函数名
-                    funName = exprStr.substring(funArr.pop(), last);
-                    express += funName;
-                    first = last;
-                } else {
-                    if (!isInBrace) {//不在函数里外面也不在括号里
-                        //取data内函数
-                        let mt = exprStr.substring(first, last).match(/^[\$\w]+/);
-                        if (mt) {
-                            fields.push(mt[0]);
-                        }
-                        express += exprStr.substring(first, last);
-                        first = last;
-                    }
-                }
-                braces.push(last++);
-                isInBrace = true;
-            } else if (lastStr == ')') {
-                let tmpStr = exprStr.substring(braces.pop(), last);
-                filters.push(tmpStr);
-                if (/[\,\!\|\*\/\+\-><=&%]/.test(tmpStr)) {//字段截取需要的字母集
-                    let fieldItem = tmpStr.match(/[\w\$^\.]+/g);
-                    fields = fields.concat(fieldItem);
-                } else {
-                    if (tmpStr.substr(1).match(/[\$\w]+/) && tmpStr.substr(1).match(/[\$\w]+/)[0].length == tmpStr.substr(1).length) {//括号里没有特殊符号
-                        fields.push(tmpStr.substr(1));
-                    } else if (tmpStr.substr(1).startsWith('...')) {//拓展运算符
-                        fields.push(tmpStr.substr(4));
-                    }
-                }
-                //外面没有括号
-                if (braces.length == 0) {
-                    isInBrace = false;
-                    express += tmpStr;
-                }
-                //处理函数串
-                if (isInFun) {
-                    replaceMethod();
-                    isInFun = false;
-                }
-                first = last++;
-            } else if (lastStr == '$') {
-                isInFun = true;
-                funArr.push(last++);
-            } else if (special.test(lastStr) && !isInBrace) {
-                express += exprStr.substring(first, last) + lastStr;
-                //特殊字符处理
-                fields = fields.concat(exprStr.substring(first, last).match(/[\$\#\w^\.]+/g));
-                if (lastStr == '=' || lastStr == '|' || lastStr == '&') {//处理重复字符，和表达式
-                    if (lastStr == '|' && exprStr[last + 1] != '|') {//表达式处理
-                        let str = filters[filters.length - 1] ? filters[filters.length - 1] : exprStr.substring(first, last);
-                        if (!filters.length) {
-                            filterString = str;
-                        }
-                        let res = handFilter();
-                        let index = express.indexOf(str);
-                        //')'和'|'
-                        express = express.substring(0, index) + res.str + express.substring(index + str.length + 2);
-                        first = last += res.length + 1;
-                        continue;
-                    }
-                    while (exprStr[last + 1] == lastStr) {//处理重复字符
-                        express += exprStr[++last];
-                    };
-                }
-                first = ++last;
-            } else {
-                last++;
-            }
+            hasStr = true;
         }
-        let endStr = exprStr.substring(first);
-        if (endStr.indexOf(' ') === -1 && !endStr.startsWith('##TMP') && !endStr.startsWith(')')) {
-            let str = endStr.match(/[A-za-z$]+/);
-            if (str !== null) {
-                fields.push(str[0]);
-            }
+        if(!hasStr){
+            exprStr = handle(exprStr);
         }
-        express += endStr;
+        return exprStr;
 
-        function replaceMethod() {
-            express = express.replace(/\$[^(]+?\(/, () => {
-                return '$module.methodFactory.get("' + funName.substr(1) + '").call($module,';
-            });
-        }
         /**
-         * @returns {
-         * str:过滤器串
-         * length:编译跳过的长度
+         * 处理单词串
+         * @param src   源串
+         * @returns     处理后的串
          */
-        function handFilter() {
-            if (/\d+/.test(exprStr[last + 1])) {
-                return;
-            }
-            last++;
-            let tmpStr: string = exprStr.substr(last).split(/[\)\(\+\-\*><=&%]/)[0];
-            let args = [];
-            let value = filters.length > 0 ? filters.pop() + ')' : filterString;
-            let num = 0;
-            tmpStr.replace(/\:/g, function (m, i) {
-                num++;
-                return m;
-            });
-            if (tmpStr.indexOf(':') != -1) {//有过滤器格式
-                args = tmpStr.split(/[\:\+\-\*><=&%]/);
-            };
-            if (args.length == 0) {//如果没有过滤器参数
-                let filterName = tmpStr.match(/^\w+/)[0];
-                return {
-                    str: 'nodom.FilterManager.exec($module,"' + filterName + '",' + value + ')',
-                    length: filterName.length - 1,
+        function handle(src:string):string{
+            let reg = /[$\w\d\.]+(\s*\()?/g;
+            let r;
+            while((r=reg.exec(src))!== null){
+                if(r[0].endsWith('(')){
+                    let fos = handleFunc(r[0]);
+                    src = src.replace(r[0],fos);
+                    reg.lastIndex = r.index + fos.length;
+                }else{
+                    console.log(r[0])
+                    // 保留字不进入字段数组
+                    if(Util.keyWords.indexOf(r[0]) === -1){
+                        me.fields.push(r[0]);
+                    }
                 }
             }
-            let length = args[0].length + args[1].length;
-            if (args[1].startsWith('##TMP')) {//字符串还原
-                let deleteKey = args[1];
-                args[1] = replaceMap.get(args[1]);
-                replaceMap.delete(deleteKey);
-            }
-            let params = '';
-            for (let i = 1; i < num; i++) {//多个过滤器参数
-                params += /[\'\"\`]/.test(args[i]) ? args[i] : '\'' + args[i] + '\'' + ',';
-            }
-            params = /[\'\"\`]/.test(args[num]) ? args[num] : '\'' + args[num] + '\'';
-            return {
-                str: 'nodom.FilterManager.exec($module,"' + args[0] + '",' + value + ',' + params + ')',
-                length,
-            }
+            return src;
         }
-        if (express.indexOf('instanceof') !== -1) {
-            fields.push(express.split(' ')[0]);
+    
+        /**
+         * 处理函数
+         * @param src   源串 
+         * @returns     处理后的函数串
+         */
+        function handleFunc(src){
+            let mName = src.substring(0,src.length-1).trim();
+            let tmp = '';
+            //可能是模块方法
+            if(mName.indexOf('.') === -1){
+                return "($module.getMethod('" + mName +  "')||" + mName + ')(';
+            }
+            return mName + '(';
         }
-        let exclude = ['.', '$module', '##TMP', 'TMP', 'this'];
-        fields = [...(new Set(fields))].filter((v) => {
-            return v != null && exclude.reduce((sum, value) => {
-                return sum === 0 ? 0 : (!v.startsWith(value) ? 1 : 0);
-            }, 1) === 1 && isNaN(parseInt(v, 10));
-        });
-        if (replaceMap.size) {
-            replaceMap.forEach((value, key) => {
-                express = express.substring(0, express.indexOf(key)) + value + express.substring(express.indexOf(key) + key.length);
-            });
-        };
-        fields.forEach(field => {
-            this.addField(field);
-        });
-        return express;
     }
 
     /**
@@ -245,9 +118,8 @@ export class Expression {
      * @returns 		计算结果
      */
     public val(model: Model) {
-
         let module: Module = ModuleFactory.get(model.$moduleId);
-        if(!model) model = module.model;
+        if (!model) model = module.model;
         let valueArr = [];
         this.fields.forEach((field) => {
             valueArr.push(getFieldValue(module, model, field));
@@ -279,31 +151,9 @@ export class Expression {
     }
 
     /**
-    * 添加字段到fields
-    * @param field 	字段
-    * @returns         true/false
-    */
-    private addField(field: string): boolean {
-        //js 保留字
-        const jsKeyWords = ['true', 'false', 'undefined', 'null', 'typeof',
-            'Object', 'Function', 'Array', 'Number', 'Date',
-            'instanceof', 'NaN', 'new'];
-        if (field === '' || jsKeyWords.includes(field) || Util.isNumberString(field) || field.startsWith('Math') || field.startsWith('Object')) {
-            return false;
-        }
-        //多级字段只保留第一级，如 x.y只保留x
-        let ind: number;
-        if ((ind = field.indexOf('.')) !== -1) {
-            if (ind == 0) {
-                field = field.substr(1);
-            }
-            else {
-                field = field.substr(0, ind);
-            }
-        }
-        if (!this.fields.includes(field)) {
-            this.fields.push(field);
-        }
-        return true;
+     * 克隆
+     */
+     public clone() {
+        return this;
     }
 }

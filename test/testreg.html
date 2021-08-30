@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+</body>
+<script>
+    let reg = /('.*')|(".*")|(`.*`)/g;
+    let s = `zz + foo1 ( foo2(xx,'123')+ Math.floor(yy)+ 'hello')+ "xxff" +   123`;
+    let fields = [];
+    let r;
+    let st=0;
+    
+    while((r=reg.exec(s))!==null){
+        if(r.index>st){
+            let tmp = s.substr(st,r.index);
+            let s1 = handle(tmp);
+            s = s.substring(0,st) + s1 + r[0] + s.substr(reg.lastIndex);
+            st = reg.lastIndex + (s1.length-tmp.length);
+        }else{
+            st = reg.lastIndex;
+        }
+    }
+    console.log(fields,s);
+    let xx = 10;
+    let yy = 20.5;
+    let zz = 30;
+    console.log(new Function('return(' + s + ')')());
+    
+    function handle(s){
+        let reg = /[$\w\d\.]+(\s*\()?/g;
+        let r;
+        while((r=reg.exec(s))!== null){
+            if(r[0].endsWith('(')){
+                let fos = handleFunc(r[0]);
+                s = s.replace(r[0],fos);
+                reg.lastIndex = r.index + fos.length;
+            }else{
+                fields.push(r[0]);
+            }
+        }
+        return s;
+    }
+
+
+    function handleFunc(s){
+        
+        let mName = s.substring(0,s.length-1).trim();
+        if(mName.indexOf('.') === -1){
+            return '(' + mName +  '|| $module.getMethod("' + mName + '"))' + '(';
+        }
+        return mName + '('
+    }
+
+    function foo1(s){
+        console.log()
+        return s;
+    }
+
+    function foo2(a,b){
+        return a + '_' + b;
+    }
+</script>
+</html>

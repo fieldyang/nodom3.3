@@ -5,8 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>repeat</title>
-    <script type="text/javascript" src="../dist/nodom.js"></script>
-
+    <script src='../dist/nodom.js'></script>
     <style>
         .code {
             margin: 20px;
@@ -19,96 +18,112 @@
 </head>
 
 <body>
-    <div class="view">
-        <button  e-click='pop'>pop</button>
-        <div class="tip">基本使用</div>
-        <div class="code">
-            菜单：
-            <div x-repeat="foods">
-                菜名：{{name}}，价格：{{price}}
-            </div>
-        </div>
-        <div class="tip">索引号的使用（编号从0开始）</div> 
-         <div class="code">
-            菜单：
-            <div x-repeat="foods">
-                编号：{{$index}}，菜名：{{name}}，价格：{{price}}
-            </div>
-        </div>
-        <div class="tip">过滤器使用-显示奇数号的数据（编号从1开始）</div>
-        <div class="code">
-            菜单：
-            <div x-repeat="foods|select:odd">
-                菜名：{{name}}，价格：{{price}}
-            </div>
-        </div>
-         <div class="tip">过滤器使用-价格升序排序（编号从1开始）</div>
-        <div class="code">
-            菜单：
-            <div x-repeat="foods|orderby:price">
-                编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
-            </div>
-        </div>
-        <div class="tip">过滤器使用-价格升序排序且只取前三（编号从1开始）</div>
-        <div class="code">
-            菜单：
-            <div x-repeat="foods|orderby:price|select:func:top:3">
-                编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
-            </div>
-        </div>
-        <div class="tip">使用数组外的数据，直接引用</div>
-        <div class="code">
-            会员折扣：{{$$discount.data*10}}折
-            <div x-repeat="foods">
-                菜名：{{name}}，价格：{{price}}，会员价：{{price*$$discount.data}}
-            </div>
-        </div> 
-
-    </div>
+    <div></div>    
 </body>
-<script>
-    nodom.app({
-        options:{},
-        module:{
-            el:'div',
-            data: {
-                show:0,
-                discount:{data:0.9},
-                foods: [{
-                    name: '夫妻肺片',
-                    price: 25
-                }, {
-                    name: '京酱肉丝',
-                    price: 22
-                }, {
-                    name: '糖醋里脊',
-                    price: 20
-                }, {
-                    name: '红烧茄子',
-                    price: 12
-                }, {
-                    name: '口水鸡',
-                    price: 18
-                }, {
-                    name: '水煮肉片',
-                    price: 24
-                }]
-            },
-            methods:{
-                top:function(arr){
-                    var a = [];
-                    for(let i=0;i<3;i++){
-                        a.push(arr[i]);
-                    }
-                    
-                    return a;
-                },
-                pop:function(){
-              
+<script type='module'>
+    // import * as nodom from '../dist/nodom.js'
+    
+    class Module1 extends Module{
+        template(){
+            return `
+            <div class="view">
+                <div >时间:{{Util.formatDate(date1,'yyyy-MM-dd HH:mm:ss')}}</div>
+                <button  e-click='pop'>pop</button>
+                <div class="tip">基本使用</div>
+                <div class="code">
+                    菜单：
+                    <div x-repeat="{{foods}}">
+                        菜名：{{name}}，价格：{{price}}
+                    </div>
+                </div>
+                <div class="tip">索引号的使用（编号从0开始）</div> 
+                <div class="code">
+                    菜单：
+                    <div x-repeat={{foods}}>
+                        编号：{{$index}}，菜名：{{name}}，价格：{{price}}
+                    </div>
+                </div>
+                <div class="tip">过滤器使用-显示奇数号的数据（编号从1开始）</div>
+                <div class="code">
+                    菜单：
+                    <div x-repeat={{getOdd(foods)}}>
+                        菜名：{{name}}，价格：{{price}}
+                    </div>
+                </div>
+                <!--
+                <div class="tip">过滤器使用-价格升序排序（编号从1开始）</div>
+                <div class="code">
+                    菜单：
+                    <div x-repeat={{foods|orderby:price}}>
+                        编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
+                    </div>
+                </div>
+                
+                <div class="tip">过滤器使用-价格升序排序且只取前三（编号从1开始）</div>
+                <div class="code">
+                    菜单：
+                    <div x-repeat={{foods|select:func:top:3}}>
+                        编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
+                    </div>
+                </div>
+                <div class="tip">使用数组外的数据，直接引用</div>
+                <div class="code">
+                    会员折扣：{{discount.data*10}}折
+                    <div x-repeat={{foods}}>
+                        菜名：{{name}}，价格：{{price}}，会员价：{{price*$$discount.data}}
+                    </div>
+                </div>-->
+            </div>        
+            `
+        }
+        model={
+            show:0,
+            date1:new Date().getTime(),
+            discount:{data:0.9},
+            foods: [{
+                name: '夫妻肺片',
+                price: 25
+            }, {
+                name: '京酱肉丝',
+                price: 22
+            }, {
+                name: '糖醋里脊',
+                price: 20
+            }, {
+                name: '红烧茄子',
+                price: 12
+            }, {
+                name: '口水鸡',
+                price: 18
+            }, {
+                name: '水煮肉片',
+                price: 24
+            }]
+        }
+        methods={
+            top(arr){
+                var a = [];
+                for(let i=0;i<3;i++){
+                    a.push(arr[i]);
                 }
+                
+                return a;
+            },
+            getOdd(arr){
+                let a1 = [];
+                for(let i=0;i<arr.length;i++){
+                    if(i%2){
+                        a1.push(arr[i]);
+                    }
+                }
+                return a1;
+            },
+            pop(){
+            
             }
         }
-    });
+    }
+    nodom(Module1,'div');
 
 </script>
 

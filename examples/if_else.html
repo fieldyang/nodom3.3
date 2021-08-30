@@ -4,7 +4,7 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<title>if_else</title>
-
+		<script src='../dist/nodom.js'></script>
 		<style>
 			.introduce {
 				color: #666666;
@@ -30,10 +30,8 @@
 		<div class="view"></div> 
 	</body>
 	<script type='module'>
-		import * as nodom from '../dist/nodom.js'
-		// import {Module,app} from '../dist/nodom.js'
-    	// import {ModuleMain} from './modules/main.js'
-		class Module1 extends nodom.Module{
+		// import * as nodom from '../dist/nodom.js'
+		class Module1 extends Module{
 			template(){
 				return `
 					<div class=code>
@@ -74,6 +72,6 @@
 			}
 		}
 		// console.log(app);
-    	nodom.app(Module1,'div');
+    	nodom(Module1,'div');
 	</script>
 </html>
