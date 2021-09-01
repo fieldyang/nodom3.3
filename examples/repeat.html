@@ -15,19 +15,24 @@
             color: darkorange;
         }
     </style>
+    <script>
+        
+    </script>
 </head>
 
 <body>
     <div></div>    
 </body>
-<script type='module'>
+<script>
     // import * as nodom from '../dist/nodom.js'
-    
+    function $date(str,format){
+        return Util.formatDate(str,format);
+    }
     class Module1 extends Module{
         template(){
             return `
             <div class="view">
-                <div >时间:{{Util.formatDate(date1,'yyyy-MM-dd HH:mm:ss')}}</div>
+                <div >时间:{{$date(date1,'yyyy-MM-dd HH:mm:ss')}}</div>
                 <button  e-click='pop'>pop</button>
                 <div class="tip">基本使用</div>
                 <div class="code">

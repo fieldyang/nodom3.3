@@ -10,59 +10,66 @@
     
 </body>
 <script>
-    let reg = /('.*')|(".*")|(`.*`)/g;
-    let s = `zz + foo1 ( foo2(xx,'123')+ Math.floor(yy)+ 'hello')+ "xxff" +   123`;
+    let reg = /('.*?')|(".*?")|(`.*?`)/g;
+    // let s = `zz + foo1 ( $foo2(xx,'123')+ Math.floor(yy)+20)+ 'xxff' +   123`;
+    let s = `$date(date1,'yyyy-MM-dd HH:mm:ss')`;
     let fields = [];
     let r;
     let st=0;
-    
     while((r=reg.exec(s))!==null){
         if(r.index>st){
-            let tmp = s.substr(st,r.index);
+            let tmp = s.substring(st,r.index);
             let s1 = handle(tmp);
+            console.log(tmp,r);
             s = s.substring(0,st) + s1 + r[0] + s.substr(reg.lastIndex);
-            st = reg.lastIndex + (s1.length-tmp.length);
-        }else{
-            st = reg.lastIndex;
+            reg.lastIndex = st + s1.length + r[0].length;
         }
+        st = reg.lastIndex;
     }
     console.log(fields,s);
     let xx = 10;
     let yy = 20.5;
     let zz = 30;
-    console.log(new Function('return(' + s + ')')());
+    let func = new Function('return(' + s + ')');
+    let foo;
+    console.log(func)
+    console.log(func());
     
     function handle(s){
-        let reg = /[$\w\d\.]+(\s*\()?/g;
+        let reg = /[$a-zA-Z_][$\w\d\.]+(\s*\()?/g;
         let r;
+        let st = 0;
         while((r=reg.exec(s))!== null){
             if(r[0].endsWith('(')){
                 let fos = handleFunc(r[0]);
-                s = s.replace(r[0],fos);
+                s = s.substring(0,r.index) + fos + s.substr(reg.lastIndex);
                 reg.lastIndex = r.index + fos.length;
+                st = reg.lastIndex;
             }else{
                 fields.push(r[0]);
             }
         }
+        // console.log(s);
         return s;
     }
 
-
     function handleFunc(s){
-        
         let mName = s.substring(0,s.length-1).trim();
         if(mName.indexOf('.') === -1){
-            return '(' + mName +  '|| $module.getMethod("' + mName + '"))' + '(';
+            // return '(' + mName +  '|| $module.getMethod("' + mName + '"))' + '(';
+            // return '(foo||' + mName + ')' + '(';
+            // return '(foo?foo:' + mName + ')(';
+            return " ($module.getMethod('" + mName +  "')||" + mName + ')(';
+            
         }
         return mName + '('
     }
 
     function foo1(s){
-        console.log()
         return s;
     }
 
-    function foo2(a,b){
+    function $foo2(a,b){
         return a + '_' + b;
     }
 </script>

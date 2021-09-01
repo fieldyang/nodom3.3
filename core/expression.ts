@@ -37,8 +37,7 @@ export class Expression {
         }
         if (execStr) {
             let v: string = this.fields.length > 0 ? ',' + this.fields.join(',') : '';
-            execStr = 'function($module' + v + '){return ' + execStr + '}';
-            console.log(execStr);
+            execStr = 'function($module' + v + '){return(' + execStr + ')}';
             this.execFunc = Util.eval(execStr);
         }
     }
@@ -58,13 +57,12 @@ export class Expression {
         let r;
         while((r=reg.exec(exprStr))!==null){
             if(r.index>st){
-                let tmp = exprStr.substr(st,r.index);
+                let tmp = exprStr.substring(st,r.index);
                 let s1 = handle(tmp);
                 exprStr = exprStr.substring(0,st) + s1 + r[0] + exprStr.substr(reg.lastIndex);
-                st = reg.lastIndex + (s1.length-tmp.length);
-            }else{
-                st = reg.lastIndex;
+                reg.lastIndex = st + s1.length + r[0].length;
             }
+            st = reg.lastIndex;
             hasStr = true;
         }
         if(!hasStr){
@@ -78,19 +76,17 @@ export class Expression {
          * @returns     处理后的串
          */
         function handle(src:string):string{
-            let reg = /[$\w\d\.]+(\s*\()?/g;
+            let reg = /[$a-zA-Z_][$\w\d\.]+(\s*\()?/g;
             let r;
+            let st = 0;
             while((r=reg.exec(src))!== null){
                 if(r[0].endsWith('(')){
                     let fos = handleFunc(r[0]);
-                    src = src.replace(r[0],fos);
+                    src = src.substring(0,r.index) + fos + src.substr(reg.lastIndex);
                     reg.lastIndex = r.index + fos.length;
+                    st = reg.lastIndex;
                 }else{
-                    console.log(r[0])
-                    // 保留字不进入字段数组
-                    if(Util.keyWords.indexOf(r[0]) === -1){
-                        me.fields.push(r[0]);
-                    }
+                    me.fields.push(r[0]);
                 }
             }
             return src;
@@ -103,7 +99,6 @@ export class Expression {
          */
         function handleFunc(src){
             let mName = src.substring(0,src.length-1).trim();
-            let tmp = '';
             //可能是模块方法
             if(mName.indexOf('.') === -1){
                 return "($module.getMethod('" + mName +  "')||" + mName + ')(';
@@ -128,8 +123,9 @@ export class Expression {
         valueArr.unshift(module);
         let v;
         try {
-            v = this.execFunc.apply(module, valueArr);
+            v = this.execFunc.apply(module.model, valueArr);
         } catch (e) {
+            console.log(e);
         }
         return v === undefined || v === null ? '' : v;
 
