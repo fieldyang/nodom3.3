@@ -10,48 +10,66 @@
     
 </body>
 <script>
-    let reg = /('.*?')|(".*?")|(`.*?`)/g;
-    // let s = `zz + foo1 ( $foo2(xx,'123')+ Math.floor(yy)+20)+ 'xxff' +   123`;
-    let s = `$date(date1,'yyyy-MM-dd HH:mm:ss')`;
-    let fields = [];
+
+
+    let reg = /('.*')|(".*")|(`.*`)|(\{\{.*?\}\})/g;
+    let s = `div x-repeat={{arr.sort((a,b)=>{if(a.price>b.price)return 1;return -1;})}}
+         class='a b c d' value=12 yyy ccc="{{abc}}"
+    `;
+    let regExp = /(?<!\{\{[^<}}]*)(<(\/?)(\s*?[a-zA-Z][a-zA-Z0-9-_]*)(.*?)(\/?>))(?![^>{{]*?\}\})/g;
+    console.log(regExp.exec(`
+        <div x-repeat={{arr.sort((a,b)=>{if(a.price>b.price)return 1;return -1;})}}
+         class='a b c d' value=12 yyy ccc="{{abc}}><span></span></div>
+    `))
+    // let s = `$date(date1,'yyyy-MM-dd HH:mm:ss')`;
+    let tagName;
+    let pName;
+    let startValue;
+    let prop={};
     let r;
     let st=0;
     while((r=reg.exec(s))!==null){
         if(r.index>st){
-            let tmp = s.substring(st,r.index);
-            let s1 = handle(tmp);
-            console.log(tmp,r);
-            s = s.substring(0,st) + s1 + r[0] + s.substr(reg.lastIndex);
-            reg.lastIndex = st + s1.length + r[0].length;
+            let tmp = s.substring(st,r.index).trim();
+            if(tmp === ''){
+                continue;
+            }
+            handle(tmp);
+            if(startValue){
+                prop[pName] = r[0];
+                pName=undefined;
+                startValue=false;
+            }
+            
+            st = reg.lastIndex;
         }
         st = reg.lastIndex;
     }
-    console.log(fields,s);
-    let xx = 10;
-    let yy = 20.5;
-    let zz = 30;
-    let func = new Function('return(' + s + ')');
-    let foo;
-    console.log(func)
-    console.log(func());
+    console.log(prop);
     
     function handle(s){
-        let reg = /[$a-zA-Z_][$\w\d\.]+(\s*\()?/g;
+        // let arr = s.split(/\s+/);
+        let reg = /([^ \f\n\r\t\v=]+)|(\=)/g;
         let r;
         let st = 0;
         while((r=reg.exec(s))!== null){
-            if(r[0].endsWith('(')){
-                let fos = handleFunc(r[0]);
-                s = s.substring(0,r.index) + fos + s.substr(reg.lastIndex);
-                reg.lastIndex = r.index + fos.length;
-                st = reg.lastIndex;
-            }else{
-                fields.push(r[0]);
+            if(!tagName){
+                tagName = r[0];
+            }else if(!pName){
+                pName = r[0];
+            }else if(startValue){
+                prop[pName] = r[0];
+                startValue=false;
+                pName=undefined;
+            }else if(pName && r[0] === '='){
+                startValue = true;
+            }else if(pName && !startValue){ //无值属性
+                prop[pName] = undefined;
+                pName=r[0];
             }
         }
-        // console.log(s);
-        return s;
     }
+
 
     function handleFunc(s){
         let mName = s.substring(0,s.length-1).trim();

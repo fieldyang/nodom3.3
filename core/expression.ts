@@ -1,10 +1,7 @@
-import { Element } from "./element";
 import { Model } from "./model";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
-import { ExpressionMd } from "./types";
 import { Util } from "./util";
-
 
 /**
  * 表达式类
@@ -38,6 +35,7 @@ export class Expression {
         if (execStr) {
             let v: string = this.fields.length > 0 ? ',' + this.fields.join(',') : '';
             execStr = 'function($module' + v + '){return(' + execStr + ')}';
+            console.log(execStr);
             this.execFunc = Util.eval(execStr);
         }
     }

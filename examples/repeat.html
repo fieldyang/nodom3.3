@@ -24,15 +24,10 @@
     <div></div>    
 </body>
 <script>
-    // import * as nodom from '../dist/nodom.js'
-    function $date(str,format){
-        return Util.formatDate(str,format);
-    }
     class Module1 extends Module{
         template(){
             return `
             <div class="view">
-                <div >时间:{{$date(date1,'yyyy-MM-dd HH:mm:ss')}}</div>
                 <button  e-click='pop'>pop</button>
                 <div class="tip">基本使用</div>
                 <div class="code">
@@ -48,42 +43,25 @@
                         编号：{{$index}}，菜名：{{name}}，价格：{{price}}
                     </div>
                 </div>
-                <div class="tip">过滤器使用-显示奇数号的数据（编号从1开始）</div>
+                <div class="tip">自定义过滤数组</div>
                 <div class="code">
                     菜单：
                     <div x-repeat={{getOdd(foods)}}>
                         菜名：{{name}}，价格：{{price}}
                     </div>
                 </div>
-                <!--
-                <div class="tip">过滤器使用-价格升序排序（编号从1开始）</div>
+                <div class="tip">价格升序排序（编号从1开始）</div>
                 <div class="code">
                     菜单：
-                    <div x-repeat={{foods|orderby:price}}>
+                    <div x-repeat={{arr.sort((a,b)=>{if(a.price>b.price)return 1;return -1;})}}>
                         编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
                     </div>
                 </div>
-                
-                <div class="tip">过滤器使用-价格升序排序且只取前三（编号从1开始）</div>
-                <div class="code">
-                    菜单：
-                    <div x-repeat={{foods|select:func:top:3}}>
-                        编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
-                    </div>
-                </div>
-                <div class="tip">使用数组外的数据，直接引用</div>
-                <div class="code">
-                    会员折扣：{{discount.data*10}}折
-                    <div x-repeat={{foods}}>
-                        菜名：{{name}}，价格：{{price}}，会员价：{{price*$$discount.data}}
-                    </div>
-                </div>-->
             </div>        
             `
         }
         model={
             show:0,
-            date1:new Date().getTime(),
             discount:{data:0.9},
             foods: [{
                 name: '夫妻肺片',
@@ -122,6 +100,9 @@
                     }
                 }
                 return a1;
+            },
+            sort(arr){
+                return arr.sort((a,b)=>{if(a.price>b.price)return 1;return -1;})
             },
             pop(){
             

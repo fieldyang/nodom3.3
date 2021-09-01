@@ -32,7 +32,7 @@ export class Compiler {
     public static compileTemplateToAst(srcStr:string):ASTObj{
         const me = this;
         // 清理comment
-        let regExp = /\<\!\-\-[\s\S]*\-\-\>/;
+        let regExp = /\<\!\-\-[\s\S]*\-\-\]>/;
         srcStr = srcStr.replace(regExp,'');
         // 1 识别标签
         regExp = /(?<!\{\{[^<}}]*)(<(\/?)(\s*?[a-zA-Z][a-zA-Z0-9-_]*)(.*?)(\/?>))(?![^>{{]*?\}\})/g;
@@ -97,7 +97,9 @@ export class Compiler {
                     throw '模版格式错误';
                 }
             }else { //标签头
-                let obj = handleTagAttr(tag);
+                //去掉标签前后< >
+                let tmpS = tag.endsWith('\/>')?tag.substring(1,tag.length-2):tag.substring(1,tag.length-1);
+                let obj = this.handleTagAttr(tmpS.trim());
                 //前一个文本节点存在，则作为前一个节点的孩子
                 if(ii>0 && textStack[ii] !== ''){
                     tagObjs[tagObjs.length-1].children.push({
@@ -124,75 +126,92 @@ export class Compiler {
             throw '模版定义错误';
         }
         return root;
-
-        /**
-         * 处理标签头
-         * @param tagStr    标签头串 
-         * @returns         
-         */
-        function handleTagAttr(tagStr):ASTObj{
-            //字符串和表达式替换
-            let reg = /('.*?')|(".*?")|(`.*?`)|(\{\{.*?\}\})/g;
-            let r;
-            let rIndex = 0;
-            let repMap = new Map();
-            while((r=reg.exec(tagStr))!==null){
-                let tmp = '$'+rIndex++;
-                repMap.set(tmp,r[0]);
-                tagStr = tagStr.substr(0,r.index) + tmp + tagStr.substr(reg.lastIndex);
-                reg.lastIndex = r.index + 2;
-            }
-            let tagArr = tagStr.substring(1,tagStr.length-1).split(/\s+/g).filter(item=>item!=='');
-            let obj = {
-                tagName:tagArr[0],
-                children:[],
-                attrs:new Map()
-            }
-            
-            //属性名规则
-            let regName = /^[A-Za-z][\w\d-]*$/;
-            let regStr = /^(?:['`"]).*(?:['`"])$/;
-            let regExpr = /^\{\{.*\}\}$/;
-            for(let i=1;i<tagArr.length;i++){
-                let sa = tagArr[i].split('=');
-                let pName = sa[0],pValue;
-                //值和名分离
-                if(sa.length === 1){
-                    if(tagArr.length>i+2 && tagArr[i+1] === '='){ // propName,=,propValue 格式
-                        pValue = tagArr[i+2];
-                        i+=2;
-                    }else if(tagArr.length>i+1 && tagArr[i+1].startsWith('=')){ // propName, =propValue 格式
-                        pValue = tagArr[i+1].substr(1);
-                        i++;
-                    }
-                }else if(sa.length === 2){
-                    if(sa[1] === '' && tagArr.length>i+2){  //propName= 格式
-                        pValue = tagArr[i+1];
-                        i++;
-                    }else{ //propName=propValue 格式
-                        pValue = sa[1];
-                    }
-                }
-                //规则命名才保存
-                if(regName.test(pName)){
-                    //处理属性值
-                    let r;
-                    if(/^\$\d+$/.test(pValue)){
-                        pValue = repMap.get(pValue);
-                    }
-                    if(((r=regStr.exec(pValue)) !== null)){
-                        pValue = r[0].trim();
-                    }
-                    if(regExpr.test(pValue)){
-                        pValue = me.compileExpression(pValue)[0];
-                    }
-                    obj.attrs.set(pName,pValue);
-                }
-            }
-            return obj;
-        }
     }
     
+    /**
+     * 处理标签属性
+     * @param tagStr    标签串
+     * @returns 
+     */
+    private static handleTagAttr(tagStr:string):ASTObj{
+        const me = this;
+        //字符串和表达式替换
+        let reg = /('.*')|(".*")|(`.*`)|(\{\{.*?\}\})/g;
+        console.log(tagStr);
+        let tagName:string;
+        let attrs = new Map;
+        let pName:string;
+        let startValue:boolean;
+        let st = 0;
+        let r;
+        while((r=reg.exec(tagStr))!==null){
+            if(r.index>st){
+                let tmp = tagStr.substring(st,r.index).trim();
+                if(tmp === ''){
+                    continue;
+                }
+                handle(tmp);
+                if(startValue){
+                    setValue(r[0]);
+                }
+                st = reg.lastIndex;
+            }
+            st = reg.lastIndex;
+        }
+        return{
+            tagName:tagName,
+            attrs:attrs,
+            children:[]
+        }
+
+        /**
+         * 处理串（非字符串和表达式）
+         * @param s 
+         */
+        function handle(s){
+            let reg = /([^ \f\n\r\t\v=]+)|(\=)/g;
+            let r;
+            let st = 0;
+            while((r=reg.exec(s))!== null){
+                if(!tagName){
+                    tagName = r[0];
+                }else if(!pName){
+                    pName = r[0];
+                }else if(startValue){
+                    setValue(r[0]);
+                }else if(pName && r[0] === '='){
+                    startValue = true;
+                }else if(pName && !startValue){ //无值属性
+                    setValue();
+                    pName=r[0];
+                }
+            }
+        }
+
+        /**
+         * 设置属性值
+         * @param value     属性值
+         */
+        function setValue(value?:any){
+            //属性名判断
+            if(!/^[A-Za-z][\w\d-]*$/.test(pName)){
+                return;
+            }
+            if(value){
+                //去掉字符串两端
+                if(((r=/^(?:['`"]).*(?:['`"])$/.exec(value)) !== null)){
+                    value = r[0].trim();
+                }
+                //表达式编译
+                if(/^\{\{.*\}\}$/.test(value)){
+                    value = me.compileExpression(value)[0];
+                }
+            }
+            attrs.set(pName,value);
+            pName=undefined;
+            startValue=false;
+        }
+    }
     /**
      * 把AST编译成虚拟dom
      * @param oe 虚拟dom的根容器
@@ -265,28 +284,12 @@ export class Compiler {
                     bindFlag = tempArr[1] == 'true' ? true : false;
                 }
                 let name = tempArr[0].split('-')[1];
-                // if (/\{\{.+?\}\}/.test(attr[1]) === false) {
-                //     throw new NError('数据必须是由双大括号包裹');
-                // }
                 let value = attr[1].substring(2, attr[1].length - 2);
                 // 变量别名，变量名（原对象.变量名)，双向绑定标志
                 let data = [value, bindFlag];
                 oe.datas[name] = data;
             } else {
-                // 普通属性 如class 等
-                // let isExpr: boolean = false;
-                // let v = attr[1];
-                // if (v !== '') {
-                //     let ra = this.compileExpression(v);
-                //     if (Util.isArray(ra)) {
-                //         oe.setProp(attr[0], ra, true);
-                //         isExpr = true;
-                //     }
-                // }
                 oe.setProp(attr[0], attr[1],attr[1] instanceof Expression);
-                // if (!isExpr) {
-                //     oe.setProp(attr[0], v);
-                // }
             }
         }
         //处理属性
