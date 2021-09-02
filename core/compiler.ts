@@ -18,11 +18,7 @@ export class Compiler {
     public static compile(elementStr: string): Element {
 
         // 这里是把模板串通过正则表达式匹配 生成AST
-        // console.time('t1')
-        // for (let i = 0; i < 10; i++) {
         let ast = this.compileTemplateToAst(elementStr);
-        // }
-        // console.timeEnd('t1')
         let oe = new Element('div');
         // 将AST编译成抽象语法树
         this.compileAST(oe, ast);
@@ -142,7 +138,7 @@ export class Compiler {
      * @returns attrs数组 
      */
     private static parseAttrString(attrString: string | undefined): Map<string, any> {
-        const attrReg = /([a-zA-Z][a-zA-Z0-9-_]*)=?('.*?'|".*?"|{{.*?\}{0,2}\s*}})?/;
+        const attrReg = /([a-zA-Z][a-zA-Z0-9-_]*)=?('.*?'|".*?"|\{\{[\s\S]*?\}{0,2}\s*\}\})?/;
         let index = 0;
         let attrs = new Map();
         while (index < attrString.length - 1) {
@@ -155,9 +151,7 @@ export class Compiler {
             if (attrValue?.startsWith('{{')) {
                 attrValue = new Expression(attrValue.substring(2, attrValue.length - 2));
             }
-            if (attrName != undefined) {
-                attrs.set(attrName, attrValue ? attrValue : '');
-            }
+            attrs.set(attrName, attrValue ? attrValue : '');
             index += attrStr.length + attr.index;
         }
         return attrs;
@@ -175,8 +169,7 @@ export class Compiler {
         let index = -2;
         // 开始标签的正则表达式 
         const tagReg =
-            /(?<!{{[^<}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^<{]*}})/g
-        // /(?<!\{\{[^<}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)(.*?)(\/?)>)(?![^>{{]*?\}\})/g
+            /(?<!\{\{[^<}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)>)(?![^>{{]*?\}\})/g;
         // 匹配注释
         const commentRegExp = /\s*\<!--[\s\S]+?--\>/g;
         // 不需要注释节点
