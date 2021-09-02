@@ -11,7 +11,7 @@ import { ModuleFactory } from "../core/modulefactory";
 import { NodomMessage } from "../core/nodom";
 import { Renderer } from "../core/renderer";
 import { Router } from "../core/router";
-import { Util } from "../core/util"
+import { Util } from "../core/util";
 
 export default (function () {
 
@@ -48,17 +48,17 @@ export default (function () {
 
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             const ext = directive.extra;
-            let m:Module;
+            let m: Module;
             //存在moduleId，表示已经渲染过，不渲染
             if (ext.moduleId) {
                 m = ModuleFactory.get(ext.moduleId);
-            }else{
+            } else {
                 m = ModuleFactory.getInstance(directive.value, dom.getProp('modulename'));
-                if(!m){
+                if (!m) {
                     return;
                 }
                 //保留modelId
-                directive.extra = {moduleId:m.id};
+                directive.extra = { moduleId: m.id };
                 //添加到父模块
                 module.addChild(m.id);
                 //设置容器key
@@ -67,9 +67,9 @@ export default (function () {
                 Renderer.add(m);
             }
             //处理d- 开头的附加参数
-            Util.handlesDatas(module, m, dom);
+            // Util.handlesDatas(module, m, dom);
             //用一次后删除dom的datas熟悉
-            delete dom.datas;
+            // delete dom.datas;
         }
     );
 

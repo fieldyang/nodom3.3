@@ -7,16 +7,14 @@ export { Element } from "./core/element";
 export { NError } from "./core/error";
 export { ExternalNEvent, NEvent } from "./core/event";
 export { Expression } from "./core/expression";
-export * from "./extend/defineelementinit";
-export * from "./extend/directiveinit";
-export * from "./extend/filterinit";
 export { NFactory } from "./core/factory";
 export { Filter } from "./core/filter";
 export { FilterManager } from "./core/filtermanager";
 export { NodomMessage_en } from "./core/locales/msg_en";
 export { NodomMessage_zh } from "./core/locales/msg_zh";
-export { Message, MessageQueue } from "./core/messagequeue";
+export { LocalStore } from './core/localstore';
 export { MessageManager } from "./core/messagemanager";
+export { Message, MessageQueue } from "./core/messagequeue";
 export { MethodFactory } from "./core/methodfactory";
 export { Model, modelCloneExpKey } from "./core/model";
 export { ModelManager } from "./core/modelmanager";
@@ -30,7 +28,9 @@ export { Scheduler } from "./core/scheduler";
 export { Serializer } from "./core/serializer";
 export { ChangedDom, IAppCfg, IMdlClassObj, IModuleCfg, IResourceObj, IRouteCfg, ITipMessage } from "./core/types";
 export { Util } from './core/util';
-export {LocalStore} from './core/localstore'
+export * from "./extend/defineelementinit";
+export * from "./extend/directiveinit";
+export * from "./extend/filterinit";
 
 
 
