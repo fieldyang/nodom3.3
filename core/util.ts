@@ -778,8 +778,8 @@ export class Util {
      * @param evalStr   eval串
      * @returns         eval值
      */
-    public static eval(evalStr:string):any{
+    public static eval(evalStr: string): any {
         return new Function(`return(${evalStr})`)();
     }
-    
+
 }

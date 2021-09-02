@@ -35,7 +35,7 @@ export class Expression {
         if (execStr) {
             let v: string = this.fields.length > 0 ? ',' + this.fields.join(',') : '';
             execStr = 'function($module' + v + '){return(' + execStr + ')}';
-            console.log(execStr);
+            // console.log(execStr);
             this.execFunc = Util.eval(execStr);
         }
     }

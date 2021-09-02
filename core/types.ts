@@ -24,7 +24,7 @@ export interface IMdlClassObj {
     /**
      * 模型
      */
-    model?:any;
+    model?: any;
     /**
      * 实例
      */
@@ -54,9 +54,9 @@ export interface IMdlClassObj {
     className?: string;
 }
 
-export interface ExpressionMd{
-    obj:any,
-    key:any,
+export interface ExpressionMd {
+    obj: any,
+    key: any,
     moduleName: any,
 }
 export interface RegisterOps {
@@ -348,7 +348,7 @@ export interface ASTObj extends Object {
     /**
      * 属性map，里面为属性对象如{name:**,...}
      */
-    attrs?: Map<string,any>;
+    attrs?: Map<string, any>;
     /**
      * 事件数组，里面为事件对象{eventName:'click',eventHandler:'change'}
      */
@@ -368,6 +368,11 @@ export interface ASTObj extends Object {
      * textContent 节点为text的时候才有的属性，与children属性互斥
      */
     textContent?: string;
+
+    /**
+     * 是否闭合
+     */
+    isClosed?: boolean;
 }
 
 /**
