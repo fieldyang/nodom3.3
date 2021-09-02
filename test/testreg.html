@@ -11,22 +11,26 @@
 </body>
 <script>
 
-
+    let r;
+    
     let reg = /('.*')|(".*")|(`.*`)|(\{\{.*?\}\})/g;
     let s = `div x-repeat={{arr.sort((a,b)=>{if(a.price>b.price)return 1;return -1;})}}
          class='a b c d' value=12 yyy ccc="{{abc}}"
     `;
+    s = `
+        <div x-repeat={{arr.sort((a,b)=>{if(a.price>b.price)return 1;return -1;})}} 
+            class='a b c d' value=12 yyy ccc="{{abc}}><span></span></div>
+    `;
     let regExp = /(?<!\{\{[^<}}]*)(<(\/?)(\s*?[a-zA-Z][a-zA-Z0-9-_]*)(.*?)(\/?>))(?![^>{{]*?\}\})/g;
-    console.log(regExp.exec(`
-        <div x-repeat={{arr.sort((a,b)=>{if(a.price>b.price)return 1;return -1;})}}
-         class='a b c d' value=12 yyy ccc="{{abc}}><span></span></div>
-    `))
+    regExp = /(?<!{{[^<}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^<{]*}})/g;
+    while((r=regExp.exec(s)) !== null){
+        console.log(r)
+    }
     // let s = `$date(date1,'yyyy-MM-dd HH:mm:ss')`;
     let tagName;
     let pName;
     let startValue;
     let prop={};
-    let r;
     let st=0;
     while((r=reg.exec(s))!==null){
         if(r.index>st){

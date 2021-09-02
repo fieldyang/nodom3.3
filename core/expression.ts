@@ -79,12 +79,20 @@ export class Expression {
             let st = 0;
             while((r=reg.exec(src))!== null){
                 if(r[0].endsWith('(')){
-                    let fos = handleFunc(r[0]);
+                    let fos = handleFunc(r[0],r.index>0?src[r.index-1]:'');
                     src = src.substring(0,r.index) + fos + src.substr(reg.lastIndex);
                     reg.lastIndex = r.index + fos.length;
                     st = reg.lastIndex;
                 }else{
-                    me.fields.push(r[0]);
+                    let fn = r[0];
+                    let ind = fn.indexOf('.');
+                    if(ind !== -1){
+                        fn = fn.substring(0,ind); 
+                    }
+                    // 非保留字
+                    if(Util.keyWords.indexOf(fn) === -1){
+                        me.fields.push(fn);
+                    }
                 }
             }
             return src;
@@ -93,15 +101,24 @@ export class Expression {
         /**
          * 处理函数
          * @param src   源串 
+         * @param preCh 前一个字符
          * @returns     处理后的函数串
          */
-        function handleFunc(src){
+        function handleFunc(src:string,preCh?:string){
             let mName = src.substring(0,src.length-1).trim();
+            let ind = mName.indexOf('.');
             //可能是模块方法
-            if(mName.indexOf('.') === -1){
-                return "($module.getMethod('" + mName +  "')||" + mName + ')(';
+            if(ind === -1){
+                if(Util.keyWords.indexOf(mName) === -1 && preCh !== '.'){    //非关键词,且前一个字符不是.
+                    return "($module.getMethod('" + mName +  "')||" + mName + ')(';
+                }
+            }else{
+                let fn = mName.substring(0,ind);
+                if(Util.keyWords.indexOf(fn) === -1){
+                    me.fields.push(fn);
+                }
             }
-            return mName + '(';
+            return src;
         }
     }
 

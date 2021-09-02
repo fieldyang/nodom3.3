@@ -35,7 +35,8 @@ export class Compiler {
         let regExp = /\<\!\-\-[\s\S]*\-\-\]>/;
         srcStr = srcStr.replace(regExp,'');
         // 1 识别标签
-        regExp = /(?<!\{\{[^<}}]*)(<(\/?)(\s*?[a-zA-Z][a-zA-Z0-9-_]*)(.*?)(\/?>))(?![^>{{]*?\}\})/g;
+        // regExp = /(?<!\{\{[^<}}]*)(<(\/?)(\s*?[a-zA-Z][a-zA-Z0-9-_]*)(.*?)(\/?>))(?![^>{{]*?\}\})/g;
+        regExp = /(?<!{{[^<}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^<{]*}})/g;
         let st = 0;
         //标签串数组,含开始和结束标签
         let tagStack = [];
@@ -136,8 +137,7 @@ export class Compiler {
     private static handleTagAttr(tagStr:string):ASTObj{
         const me = this;
         //字符串和表达式替换
-        let reg = /('.*')|(".*")|(`.*`)|(\{\{.*?\}\})/g;
-        console.log(tagStr);
+        let reg = /('.*')|(".*")|(`.*`)|({{[\S\s]*?\}{0,2}\s*}})/g;
         let tagName:string;
         let attrs = new Map;
         let pName:string;
@@ -203,7 +203,7 @@ export class Compiler {
                     value = r[0].trim();
                 }
                 //表达式编译
-                if(/^\{\{.*\}\}$/.test(value)){
+                if(/^\{\{[\S\s]*\}\}$/.test(value)){
                     value = me.compileExpression(value)[0];
                 }
             }
@@ -313,7 +313,7 @@ export class Compiler {
         if(!exprStr){
             return;
         }
-        let reg: RegExp = /\{\{.+?\}?\s*\}\}/g;
+        let reg: RegExp = /\{\{[\s\S]+?\}?\s*\}\}/g;
         let retA = new Array();
         let re: RegExpExecArray;
         let oIndex: number = 0;

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>repeat</title>
-    <script src='../dist/nodom.js'></script>
+    <!-- <script src='../dist/nodom.js'></script> -->
     <style>
         .code {
             margin: 20px;
@@ -23,11 +23,14 @@
 <body>
     <div></div>    
 </body>
-<script>
+<script type='module'>
+    import {nodom,Util,Module} from '../dist/nodom.js'
     class Module1 extends Module{
         template(){
             return `
             <div class="view">
+                <div>{{price.toFixed(2)}}
+                <div>{{Util.formatDate(new Date().getTime(),'yyyy-MM-dd')}}    
                 <button  e-click='pop'>pop</button>
                 <div class="tip">基本使用</div>
                 <div class="code">
@@ -53,7 +56,8 @@
                 <div class="tip">价格升序排序（编号从1开始）</div>
                 <div class="code">
                     菜单：
-                    <div x-repeat={{arr.sort((a,b)=>{if(a.price>b.price)return 1;return -1;})}}>
+                    <div x-repeat={{foods.sort((a,b)=>{if(a.price>b.price)
+                        return 1;return -1;})}}>
                         编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
                     </div>
                 </div>
@@ -62,6 +66,7 @@
         }
         model={
             show:0,
+            date1:new Date().getTime(),
             discount:{data:0.9},
             foods: [{
                 name: '夫妻肺片',
