@@ -130,20 +130,11 @@ export interface IRouteCfg {
      * 路由路径，可以带通配符*，可以带参数 /:
      */
     path: string;
+    
     /**
-     * 路由模块id或模块类名，id为数字，类名为string
+     * 模块
      */
-    module?: number | string;
-
-    /**
-     * 模块名
-     */
-    moduleName?: string;
-
-    /**
-     * 数据url
-     */
-    dataUrl?: string;
+    module?:Module;
     /**
      * 子路由数组
      */

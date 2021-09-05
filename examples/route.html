@@ -4,8 +4,6 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<title>route</title>
-		<script type="text/javascript" src="../dist/nodom.js"></script>
-		<script type="text/javascript" src="../dist/nodomui.js"></script>
 		<script src="config/route.js"></script>
 		<style>
 			.colorimp {
@@ -15,24 +13,13 @@
 	</head>
 
 	<body>
-		<div>hello</div>
+		<div></div>
 	</body>
-	<script>
-		nodom.app({
-			module: {
-				el: "div",
-				methods: {
-					onFirstRender: function (module) {
-						let path;
-						if (location.hash) {
-							path = location.hash.substr(1);
-						}
-						//默认home ，如果存在hash值，则把hash值作为路由进行跳转，否则跳转到默认路由
-						path = path || "/router";
-						nodom.Router.go(path);
-					},
-				},
-			},
-		});
+	<script type='module'>
+		import {nodom,Module} from '../dist/nodom.js'
+    	import {MRoute} from './modules/mroute.js'
+		import {initRoute} from './modules/route/routeconfig.js'
+		nodom(MRoute,'div');
+		initRoute();
 	</script>
 </html>

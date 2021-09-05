@@ -7,7 +7,6 @@
     <title>Document</title>
 </head>
 <body>
-    
 </body>
 <script>
 
@@ -17,6 +16,10 @@
     let s = `div x-repeat={{arr.sort((a,b)=>{if(a.price>b.price)return 1;return -1;})}}
          class='a b c d' value=12 yyy ccc="{{abc}}"
     `;
+
+    reg = /(?<=').*(?=')/;
+    // console.log(reg.exec("'xxx'"));
+    
     s = `
         <div x-repeat={{arr.sort((a,b)=>{if(a.price>b.price)return 1;return -1;})}} 
             class='a b c d' value=12 yyy ccc="{{abc}}><span></span></div>

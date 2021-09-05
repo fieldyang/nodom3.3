@@ -1169,5 +1169,4 @@ export class Element {
             }
         }
     }
-
 }

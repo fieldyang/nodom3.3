@@ -28,15 +28,14 @@ export class Expression {
     constructor(exprStr?: string) {
         this.fields = []; // 字段数组
         this.id = Util.genId();
-        let execStr: string;
         if (exprStr) {
-            execStr = this.compile(exprStr);
-        }
-        if (execStr) {
-            let v: string = this.fields.length > 0 ? ',' + this.fields.join(',') : '';
-            execStr = 'function($module' + v + '){return(' + execStr + ')}';
-            // console.log(execStr);
-            this.execFunc = Util.eval(execStr);
+            this.execFunc = new Function('$model','$methods',`
+                with($model){
+                    with($methods){
+                        return ${exprStr};
+                    }
+                }
+            `);
         }
     }
 
@@ -128,37 +127,19 @@ export class Expression {
      * @returns 		计算结果
      */
     public val(model: Model) {
+        if(!this.execFunc){
+            return '';
+        }
         let module: Module = ModuleFactory.get(model.$moduleId);
         if (!model) model = module.model;
-        let valueArr = [];
-        this.fields.forEach((field) => {
-            valueArr.push(getFieldValue(module, model, field));
-        });
-        //module作为第一个参数
-        valueArr.unshift(module);
+        
         let v;
         try {
-            v = this.execFunc.apply(module.model, valueArr);
+            v = this.execFunc(model,module.methods||{});
         } catch (e) {
-            console.log(e);
+            console.error(e);
         }
-        return v === undefined || v === null ? '' : v;
-
-        /**
-         * 获取字段值
-         * @param module    模块
-         * @param dataObj   数据对象 
-         * @param field     字段名
-         * @return          字段值
-         */
-        function getFieldValue(module: Module, dataObj: Object, field: string) {
-            if (dataObj.hasOwnProperty(field)) {
-                return dataObj[field];
-            }
-
-            //从根查找
-            return module.model.$query(field);
-        }
+        return v;
     }
 
     /**

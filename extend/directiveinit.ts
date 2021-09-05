@@ -283,58 +283,6 @@ export default (function () {
     );
 
     /**
-     * switch指令
-     */
-    DirectiveManager.addType('switch',
-        10,
-        (directive: Directive, dom: Element) => {
-            let value = directive.value;
-            if (!value) {
-                throw new NError("paramException", "x-switch");
-            }
-        },
-        (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            let hasTrue: boolean = false;
-            for (let node of dom.children) {
-                node.dontRender = true;
-                let dir = node.getDirective('case');
-                //已经出现为true的node，不用再计算条件值
-                if (hasTrue) {
-                    node.dontRender = true;
-                    continue;
-                }
-                let v = dir.value.val(dom.model, dom);
-                hasTrue = v && v !== 'false';
-                node.dontRender = !hasTrue;
-            }
-        }
-    );
-
-
-    /**
-     *  case 指令
-     */
-    DirectiveManager.addType('case',
-        10,
-        (directive: Directive, dom: Element, parent: Element) => {
-            if (!directive.value) {
-                throw new NError("paramException", "x-case");
-            }
-            if (!parent) {
-                return;
-            }
-            let dir = parent.getDirective('switch');
-
-            //组合 switch 变量=case值
-            let value = dir.value + ' == "' + directive.value + '"';
-            let expr = new Expression(value);
-            directive.value = expr;
-        },
-        (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            return;
-        }
-    );
-    /**
      * 指令名 show
      * 描述：显示指令
      */
@@ -351,14 +299,7 @@ export default (function () {
             }
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            let model = dom.model;
-            let v = directive.value.val(model, dom);
-            //渲染
-            if (v && v !== 'false') {
-                dom.dontRender = false;
-            } else { //不渲染
-                dom.dontRender = true;
-            }
+            dom.dontRender = !directive.value;
         }
     );
     /**
@@ -526,61 +467,6 @@ export default (function () {
                     dom.dontRender = false;
                 }
             }
-        }
-    );
-
-    /**
-     * 指令名 class
-     * 描述：class指令
-     */
-    DirectiveManager.addType('class',
-        10,
-        (directive: Directive, dom: Element) => {
-            if (typeof directive.value === 'string') {
-                //转换为json数据
-                let obj = Util.eval(directive.value);
-                if (!Util.isObject(obj)) {
-                    return;
-                }
-                let robj = {};
-                Util.getOwnProps(obj).forEach(function (key) {
-                    if (Util.isString(obj[key])) {
-                        //如果是字符串，转换为表达式
-                        robj[key] = new Expression(obj[key]);
-                    } else {
-                        robj[key] = obj[key];
-                    }
-                });
-                directive.value = robj;
-            }
-        },
-        (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            let obj = directive.value;
-            let clsArr: Array<string> = [];
-            let cls: string = dom.getProp('class');
-            let model = dom.model;
-
-            if (Util.isString(cls) && !Util.isEmpty(cls)) {
-                clsArr = cls.trim().split(/\s+/);
-            }
-
-            Util.getOwnProps(obj).forEach(function (key) {
-                let r = obj[key];
-                if (r instanceof Expression) {
-                    r = r.val(model);
-                }
-                let ind = clsArr.indexOf(key);
-                if (!r || r === 'false') {
-                    //移除class
-                    if (ind !== -1) {
-                        clsArr.splice(ind, 1);
-                    }
-                } else if (ind === -1) { //添加class
-                    clsArr.push(key);
-                }
-            });
-            //刷新dom的class
-            dom.setProp('class', clsArr.join(' '));
         }
     );
 
@@ -872,34 +758,13 @@ export default (function () {
             }
 
             //a标签需要设置href
-            if (dom.tagName === 'A') {
+            if (dom.tagName.toLowerCase() === 'a') {
                 dom.setProp('href', 'javascript:void(0)');
             }
-            // 表达式处理
-            if (typeof value === 'string' && /^\{\{.+\}\}$/.test(value)) {
-                value = new Expression(value.substring(2, value.length - 2));
-            }
-
-            //表达式，则需要设置为exprProp
-            if (value instanceof Expression) {
-                dom.setProp('path', value, true);
-                directive.value = value;
-            } else {
-                dom.setProp('path', value);
-            }
-            //处理active 属性
-            if (dom.hasProp('activename')) {
-                let an = dom.getProp('activename');
-                dom.setProp('active', new Expression(an), true);
-                if (dom.hasProp('activeclass')) {
-                    new Directive('class', "{" + dom.getProp('activeclass') + ":'" + an + "'}", dom);
-                }
-            }
-
             //添加click事件
             dom.addEvent(new NEvent('click',
                 (dom, module, e) => {
-                    let path: string = dom.getProp('path');
+                    let path: string = directive.value;
                     if (Util.isEmpty(path)) {
                         return;
                     }
@@ -909,7 +774,7 @@ export default (function () {
         },
 
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            let path: string = dom.getProp('path');
+            let path: string = directive.value;
             //添加到router的activeDomMap
             let domArr: string[] = Router.activeDomMap.get(module.id);
             if (!domArr) {
