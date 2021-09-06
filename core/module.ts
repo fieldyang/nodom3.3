@@ -198,9 +198,7 @@ export class Module {
         this.handleCss();
 
         // 编译成虚拟dom
-        console.time('compile')
         this.virtualDom = Compiler.compile(tStr);
-        console.timeEnd('compile');
     }
     /**
      * 处理css
