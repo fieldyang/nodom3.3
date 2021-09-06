@@ -89,6 +89,7 @@ export class Compiler {
      */
     public static handleAstAttrs(oe: Element, attrs: Map<string, any>, parent: Element) {
         //指令数组 先处理普通属性在处理指令
+        console.log('111');
         let directives = [];
         if (!attrs) { return }
         for (let [key, value] of attrs) {
