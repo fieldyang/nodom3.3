@@ -193,14 +193,10 @@ export class Module {
             }
         }
         delete this.modules;
-
         //处理css配置
         this.handleCss();
-
         // 编译成虚拟dom
-        console.time('compile')
         this.virtualDom = Compiler.compile(tStr);
-        console.timeEnd('compile');
     }
     /**
      * 处理css
@@ -247,6 +243,7 @@ export class Module {
      * @return false 渲染失败 true 渲染成功
      */
     public render(): boolean {
+        // console.log(this);
         //状态为2，不渲染
         // if (this.state === 2) {
         //     return true;

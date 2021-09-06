@@ -159,11 +159,12 @@ export class Element {
         this.doRenderOp(module, 'before');
 
         if (this.tagName !== undefined) { //element
+            this.handleProps(module);
             if (!this.handleDirectives(module)) {
                 this.doDontRender();
                 return false;
             }
-            this.handleProps(module);
+            
         } else { //textContent
             this.handleTextContent(module);
         }
@@ -396,10 +397,7 @@ export class Element {
 
         //指令复制
         for (let d of this.directives) {
-            if (changeKey) {
-                d = d.clone(dst);
-            }
-            dst.directives.push(d);
+            dst.directives.push(d.clone(dst));
         }
         //孩子节点
         for (let c of this.children) {
@@ -460,23 +458,16 @@ export class Element {
       */
     public handleProps(module: Module) {
         for (let k of Util.getOwnProps(this.exprProps)) {
-
             //属性值为数组，则为表达式
             if (Util.isArray(this.exprProps[k])) {
                 let pv = this.handleExpression(this.exprProps[k], module);
-                //class可叠加
-                if (k === 'class') {
-                    this.addClass(pv);
-                } else if (k === 'style') {
+                if (k === 'style') {
                     this.addStyle(pv);
                 } else {
                     this.props[k] = pv;
                 }
             } else if (this.exprProps[k] instanceof Expression) { //单个表达式
-                if (k === 'class') {
-                    this.addClass(this.exprProps[k].val(this.model))
-                }
-                else if (k === 'style') {
+                if (k === 'style') {
                     this.addStyle(this.exprProps[k].val(this.model))
                 } else {
                     this.props[k] = this.exprProps[k].val(this.model);

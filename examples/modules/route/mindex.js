@@ -5,7 +5,7 @@ export class MIndex extends Module {
         return `
             <div>
                 <div>这是index</div>
-                <a x-route=/router/r1>to r1</a>
+                <a x-route='/router/r1'>to r1</a>
                 <div x-router></div>
             </div>
         `

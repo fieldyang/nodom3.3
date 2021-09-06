@@ -133,7 +133,6 @@ export default (function () {
             }
             let chds = [];
             let key = dom.key;
-
             // 移除指令
             dom.removeDirectives(['repeat']);
             for (let i = 0; i < rows.length; i++) {
@@ -150,7 +149,6 @@ export default (function () {
                 rows[i].$index = i;
                 chds.push(node);
             }
-
             //找到并追加到dom后
             if (chds.length > 0) {
                 for (let i = 0, len = parent.children.length; i < len; i++) {
@@ -752,46 +750,68 @@ export default (function () {
     DirectiveManager.addType('route',
         10,
         (directive: Directive, dom: Element) => {
-            let value = directive.value;
-            if (Util.isEmpty(value)) {
-                return;
-            }
-
             //a标签需要设置href
             if (dom.tagName.toLowerCase() === 'a') {
                 dom.setProp('href', 'javascript:void(0)');
             }
+            if(dom.hasProp('active')){
+                let ac = dom.getProp('active');
+                console.log(ac);
+                //active 转expression
+                dom.setProp('active',new Expression(ac),true);
+                //保存activeName
+                directive.extra = {activeName:ac}
+            }
+            
             //添加click事件
             dom.addEvent(new NEvent('click',
                 (dom, module, e) => {
-                    let path: string = directive.value;
+                    let path = dom.getProp('path');
+                    if(!path){
+                        let dir:Directive = dom.getDirective('route');
+                        path = dir.value;
+                    }
+                    
                     if (Util.isEmpty(path)) {
                         return;
                     }
+                    //设置激活属性
+                    if(directive.extra){
+                        Router.setActive(module,dom.model,directive.extra.activeName);
+                    } 
                     Router.go(path);
                 }
             ));
         },
 
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            let path: string = directive.value;
-            //添加到router的activeDomMap
-            let domArr: string[] = Router.activeDomMap.get(module.id);
-            if (!domArr) {
-                Router.activeDomMap.set(module.id, [dom.key]);
-            } else {
-                if (!domArr.includes(dom.key)) {
-                    domArr.push(dom.key);
-                }
+            // 设置激活字段
+            if(directive.extra){
+                Router.addActiveField(module,dom.model,directive.extra.activeName);
             }
-            if (!path || path === Router.currentPath) {
-                return;
+            dom.setProp('path',directive.value);
+            //激活
+            if(dom.getProp('active') === true && Router.currentPath !== directive.value){
+                // console.log(directive.value)
+                setTimeout(() => { Router.go(directive.value)}, 0);
             }
-            //active需要跳转路由（当前路由为该路径对应的父路由）
-            if (dom.hasProp('active') && dom.getProp('active') && (!Router.currentPath || path.indexOf(Router.currentPath) === 0)) {
-                //可能router尚未渲染出来
-                setTimeout(() => { Router.go(path) }, 0);
-            }
+            // //添加到router的activeDomMap
+            // let domArr: string[] = Router.activeDomMap.get(module.id);
+            // if (!domArr) {
+            //     Router.activeDomMap.set(module.id, [dom.key]);
+            // } else {
+            //     if (!domArr.includes(dom.key)) {
+            //         domArr.push(dom.key);
+            //     }
+            // }
+            // if (!path || path === Router.currentPath) {
+            //     return;
+            // }
+            // //active需要跳转路由（当前路由为该路径对应的父路由）
+            // if (dom.hasProp('active') && dom.getProp('active') && (!Router.currentPath || path.indexOf(Router.currentPath) === 0)) {
+            //     //可能router尚未渲染出来
+            //     setTimeout(() => { Router.go(path) }, 0);
+            // }
         }
     );
 

@@ -100,18 +100,16 @@ export  class Directive {
      */
     public clone(dst:Element):Directive{
         let dir = new Directive(this.type.name,this.value);
-        if(this.filters){
-            dir.filters = [];
-            for(let f of this.filters){
-                dir.filters.push(f.clone());
-            }
-        }
         if(this.params){
             dir.params = Util.clone(this.params);
         }
         if(this.extra){
             dir.extra = Util.clone(this.extra);
         }
+        if(this.expression){
+            dir.expression = this.expression;
+        }
+
         DirectiveManager.init(dir,dst);
         return dir;
     }

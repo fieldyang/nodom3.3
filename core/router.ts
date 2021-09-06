@@ -4,7 +4,6 @@ import { Model } from "./model";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
 import { NodomMessage } from "./nodom";
-import { Renderer } from "./renderer";
 import { IRouteCfg } from "./types";
 import { Util } from "./util";
 
@@ -54,7 +53,7 @@ export class Router {
     /**
      * 激活Dom map，格式为{moduleId:[]}
      */
-    static activeDomMap:Map<number,Array<string>> = new Map();
+    static activeFieldMap:Map<number,Array<any>> = new Map();
 
     /**
      * 绑定到module的router指令对应的key，即router容器对应的key，格式为 {moduleId:routerKey,...}
@@ -77,10 +76,11 @@ export class Router {
                 return;
             }
         }
+        console.log(path);
         this.addPath(path);
         setTimeout(()=>{
             this.load();
-        },0)
+        },0);
     }
 
     /**
@@ -156,7 +156,7 @@ export class Router {
                 showPath = route.useParentPath && proute?proute.fullPath:route.fullPath;
                 //给模块设置路由参数
                 let module:Module = ModuleFactory.get(<number>route.module);
-                route.setLinkActive();
+                // route.setLinkActive();
                 //设置首次渲染
                 module.setFirstRender(true);
                 module.active();
@@ -204,7 +204,7 @@ export class Router {
                 //激活模块
                 module.active();
                 //设置active项激活
-                route.setLinkActive();
+                // route.setLinkActive();
                 
                 //设置路由参数
                 setRouteParamToNModel(route);
@@ -404,40 +404,69 @@ export class Router {
     }
 
     /**
+     * 添加激活字段
+     * @param module    模块 
+     * @param model     激活字段所在model
+     * @param field     字段名
+     */
+    static addActiveField(module:Module,model:any,field:string){
+        if(!model || !field){
+            return;
+        }
+        let arr = Router.activeFieldMap.get(module.id);
+        if(!arr){  //尚未存在，新建
+            Router.activeFieldMap.set(module.id, [{model:model,field:field}]);
+        }else if(arr.find(item=>item.model===model&&item.field===field) === undefined){  //不重复添加
+            arr.push({model:model,field:field});
+        }
+    }
+
+    /**
      * 修改模块active view（如果为view active为true，则需要路由跳转）
      * @param module 	模块
      * @param path 		view对应的route路径
      */
-    static changeActive(module, path) {
-        if (!module || !path || path === '') {
+    static setActive(module:Module, model:any,field:string) {
+        let arr = Router.activeFieldMap.get(module.id);
+        if(!arr){
             return;
         }
-        let domArr:string[] = Router.activeDomMap.get(module.id);
-        if(!domArr){
-            return;
+        for(let o of arr){
+            if(o.model === model && o.field === field){
+                o.model[field] = true;
+            }else{
+                o.model[field] = false;
+            }
         }
-        //遍历router active view，设置或取消active class
-        domArr.forEach((item) => {
-            let dom = module.getElement(item);
-            if (!dom) {
-                return;
-            }
-            // dom route 路径
-            let domPath:string = dom.getProp('path');
-            if (dom.hasProp('activename')) { // active属性为表达式，修改字段值
-                let model = module.modelNFactory.get(dom.modelId);
-                if (!model) {
-                    return;
-                }
-                let field = dom.getProp('activename');
-                //路径相同或参数路由路径前部分相同则设置active 为true，否则为false
-                if (path === domPath || path.indexOf(domPath + '/') === 0) {
-                    model.set(field,true);
-                } else {
-                    model.set(field,false);
-                }
-            }
-        });
+        // if (!module || !path || path === '') {
+        //     return;
+        // }
+        // let domArr:string[] = Router.activeDomMap.get(module.id);
+        // if(!domArr){
+        //     return;
+        // }
+        // //遍历router active view，设置或取消active class
+        // domArr.forEach((item) => {
+        //     let dom = module.getElement(item);
+        //     if (!dom) {
+        //         return;
+        //     }
+        //     // dom route 路径
+        //     let domPath:string = dom.getProp('path');
+        //     if (dom.hasProp('activename')) { // active属性为表达式，修改字段值
+        //         let model = module.modelNFactory.get(dom.modelId);
+        //         if (!model) {
+        //             return;
+        //         }
+        //         let field = dom.getProp('activename');
+        //         //路径相同或参数路由路径前部分相同则设置active 为true，否则为false
+        //         if (path === domPath || path.indexOf(domPath + '/') === 0) {
+        //             model.set(field,true);
+        //         } else {
+        //             model.set(field,false);
+        //         }
+        //     }
+        // });
     }
 }
 
@@ -519,22 +548,22 @@ export class Route {
             });
         }
     }
-    /**
-     * 设置关联标签激活状态
-     */
-    setLinkActive() {
-        if(this.parent){
-            let pm:Module;
-            if(!this.parent.module){
-                pm = ModuleFactory.getMain();
-            }else{
-                pm = ModuleFactory.get(<number>this.parent.module);
-            }    
-            if (pm) {
-                Router.changeActive(pm, this.fullPath);
-            }
-        }
-    }
+    // /**
+    //  * 设置关联标签激活状态
+    //  */
+    // setLinkActive() {
+    //     if(this.parent){
+    //         let pm:Module;
+    //         if(!this.parent.module){
+    //             pm = ModuleFactory.getMain();
+    //         }else{
+    //             pm = ModuleFactory.get(<number>this.parent.module);
+    //         }    
+    //         if (pm) {
+    //             Router.changeActive(pm, this.fullPath);
+    //         }
+    //     }
+    // }
 
     /**
      * 添加子路由
