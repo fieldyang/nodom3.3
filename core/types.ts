@@ -1,6 +1,6 @@
 import { Element } from "./element";
 import { Module } from "./module";
-import { Route } from "./router";
+import { Route } from "./route";
 
 /**
  * module class obj
@@ -129,7 +129,7 @@ export interface IRouteCfg {
     /**
      * 路由路径，可以带通配符*，可以带参数 /:
      */
-    path: string;
+    path?: string;
     
     /**
      * 模块
@@ -152,10 +152,7 @@ export interface IRouteCfg {
      * 是否使用父路由路径
      */
     useParentPath?: boolean;
-    /**
-     * 不添加到路由树
-     */
-    notAdd?: boolean;
+    
     /**
      * 父路由
      */
@@ -369,21 +366,21 @@ export interface ASTObj extends Object {
 /**
  * 自关闭标签
  */
-export const selfClosingTag = [
-    "area",
-    "base",
-    "basefont",
-    "br",
-    "col",
-    "embed",
-    "frame",
-    "hr",
-    "img",
-    "input",
-    "keygen",
-    "link",
-    "meta",
-    "param",
-    "source",
-    "track",
-];
+// export const selfClosingTag = [
+//     "area",
+//     "base",
+//     "basefont",
+//     "br",
+//     "col",
+//     "embed",
+//     "frame",
+//     "hr",
+//     "img",
+//     "input",
+//     "keygen",
+//     "link",
+//     "meta",
+//     "param",
+//     "source",
+//     "track",
+// ];

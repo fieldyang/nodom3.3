@@ -28,6 +28,7 @@ export class Expression {
     constructor(exprStr?: string) {
         this.fields = []; // 字段数组
         this.id = Util.genId();
+        
         if (exprStr) {
             this.execFunc = new Function('$model','$methods',`
                 with($model){
@@ -37,6 +38,7 @@ export class Expression {
                 }
             `);
         }
+        // console.log(exprStr,this.execFunc);
     }
 
     /**

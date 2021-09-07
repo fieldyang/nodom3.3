@@ -159,11 +159,11 @@ export class Element {
         this.doRenderOp(module, 'before');
 
         if (this.tagName !== undefined) { //element
-            this.handleProps(module);
             if (!this.handleDirectives(module)) {
                 this.doDontRender();
                 return false;
             }
+            this.handleProps(module);
             
         } else { //textContent
             this.handleTextContent(module);
@@ -403,7 +403,7 @@ export class Element {
         for (let c of this.children) {
             dst.add(c.clone(changeKey));
         }
-
+        
         return dst;
     }
 
@@ -470,6 +470,7 @@ export class Element {
                 if (k === 'style') {
                     this.addStyle(this.exprProps[k].val(this.model))
                 } else {
+                    // console.log('prop is',k,this.exprProps[k].execFunc);
                     this.props[k] = this.exprProps[k].val(this.model);
                 }
             }
@@ -1072,6 +1073,14 @@ export class Element {
         }
     }
 
+    /**
+     * 获取事件
+     * @param eventName     事件名
+     * @returns             事件对象或事件对象数组
+     */
+    public getEvent(eventName:string){
+        return this.events.get(eventName);
+    }
     /**
      * 执行不渲染关联操作
      * 关联操作，包括:

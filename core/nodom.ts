@@ -7,7 +7,7 @@ import { MessageQueue } from "./messagequeue";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
 import { Renderer } from "./renderer";
-import { Route } from "./router";
+import { Route } from "./route";
 import { Scheduler } from "./scheduler";
 import { IAppCfg, IMdlClassObj, IRouteCfg } from "./types";
 import { Util } from "./util";

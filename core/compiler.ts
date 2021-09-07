@@ -137,7 +137,7 @@ export class Compiler {
     private static handleTagAttr(tagStr:string):ASTObj{
         const me = this;
         //字符串和表达式替换
-        let reg = /('[\s\S]*')|("[\s\S]*")|(`[\s\S]*`)|({{[\S\s]*?\}{0,2}\s*}})/g;
+        let reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|({{[\S\s]*?\}{0,2}\s*}})/g;
         let tagName:string;
         let attrs = new Map;
         let pName:string;

@@ -750,18 +750,30 @@ export default (function () {
             }
             if(dom.hasProp('active')){
                 let ac = dom.getProp('active');
-                console.log(ac);
                 //active 转expression
                 dom.setProp('active',new Expression(ac),true);
                 //保存activeName
-                directive.extra = {activeName:ac}
+                directive.extra = {activeName:ac};
+            }
+            // 不重复添加route event
+            let evt = dom.getEvent('click');
+            if(evt){
+                if(Array.isArray(evt)){
+                    for(let ev of evt){ //已存在路由事件
+                        if(ev.getExtraParam('routeEvent')){
+                            return;
+                        }
+                    }
+                }else if(evt.getExtraParam('routeEvent')){
+                    return;
+                }
             }
             
             //添加click事件
-            dom.addEvent(new NEvent('click',
+            evt = new NEvent('click',
                 (dom, module, e) => {
                     let path = dom.getProp('path');
-                    console.log(dom);
+                    
                     if(!path){
                         let dir:Directive = dom.getDirective('route');
                         path = dir.value;
@@ -770,43 +782,26 @@ export default (function () {
                     if (Util.isEmpty(path)) {
                         return;
                     }
-                    //设置激活属性
-                    if(directive.extra){
-                        Router.setActive(module,dom.model,directive.extra.activeName);
-                    } 
                     Router.go(path);
                 }
-            ));
+            );
+            //设置路由标识
+            evt.setExtraParam('routeEvent',true);
+            dom.addEvent(evt);
         },
-
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             // 设置激活字段
             if(directive.extra){
-                Router.addActiveField(module,dom.model,directive.extra.activeName);
+                Router.addActiveField(module,directive.value,dom.model,directive.extra.activeName);
             }
             dom.setProp('path',directive.value);
-            //激活
-            if(dom.getProp('active') === true && Router.currentPath !== directive.value){
-                // console.log(directive.value)
-                setTimeout(() => { Router.go(directive.value)}, 0);
-            }
-            // //添加到router的activeDomMap
-            // let domArr: string[] = Router.activeDomMap.get(module.id);
-            // if (!domArr) {
-            //     Router.activeDomMap.set(module.id, [dom.key]);
-            // } else {
-            //     if (!domArr.includes(dom.key)) {
-            //         domArr.push(dom.key);
-            //     }
-            // }
-            // if (!path || path === Router.currentPath) {
-            //     return;
-            // }
-            // //active需要跳转路由（当前路由为该路径对应的父路由）
-            // if (dom.hasProp('active') && dom.getProp('active') && (!Router.currentPath || path.indexOf(Router.currentPath) === 0)) {
-            //     //可能router尚未渲染出来
-            //     setTimeout(() => { Router.go(path) }, 0);
-            // }
+
+            //延迟激活（指令执行后才执行属性处理，才能获取active prop的值）
+            setTimeout(()=>{
+                if(dom.getProp('active') === true && !Router.currentPath.startsWith(directive.value)){
+                    Router.go(directive.value);
+                }
+            },0);
         }
     );
 
