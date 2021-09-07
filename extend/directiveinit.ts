@@ -125,12 +125,6 @@ export default (function () {
                 return;
             }
             dom.dontRender = false;
-            //有过滤器，处理数据集合
-            if (directive.filters && directive.filters.length > 0) {
-                for (let f of directive.filters) {
-                    rows = f.exec(rows, module);
-                }
-            }
             let chds = [];
             let key = dom.key;
             // 移除指令
@@ -767,6 +761,7 @@ export default (function () {
             dom.addEvent(new NEvent('click',
                 (dom, module, e) => {
                     let path = dom.getProp('path');
+                    console.log(dom);
                     if(!path){
                         let dir:Directive = dom.getDirective('route');
                         path = dir.value;

@@ -132,6 +132,7 @@ export class Expression {
         }
         let module: Module = ModuleFactory.get(model.$moduleId);
         if (!model) model = module.model;
+        
         let v;
         try {
             v = this.execFunc(model,module.methods||{});

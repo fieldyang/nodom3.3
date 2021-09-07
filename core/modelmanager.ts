@@ -161,13 +161,18 @@ export class ModelManager {
 
     /**
      * 更新导致渲染
+     * 如果不设置oldValue和newValue，则直接强制渲染
      * @param model     model
      * @param key       属性
      * @param oldValue  旧值
      * @param newValue  新值
      */
-    public update(model: Model, key: string, oldValue: any, newValue: Element) {
-        Renderer.add(this.module);
+    public update(model: Model, key: string, oldValue?: any, newValue?: Element) {
+        // console.log(this.module,key,oldValue,newValue);
+        
+        if(oldValue && oldValue !== newValue || oldValue === undefined && newValue === undefined){
+            Renderer.add(this.module);
+        }
         //处理观察器函数
         let watcher = this.getWatcherFromModelMap(model, key);
         if (watcher) {

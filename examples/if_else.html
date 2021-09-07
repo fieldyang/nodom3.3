@@ -54,8 +54,8 @@
 							<div>成绩：{{grade}}</div>
 							等级：
 							<if tag='span' cond={{grade<60}}>不及格</if>
-							<elseif tag='span' cond='{{grade>60&&grade<70}}''> 及格 </elseif>
-							<elseif tag='span' cond='{{grade>70&&grade<80}}''> 中等 </elseif>
+							<elseif tag='span' cond={{grade>60&&grade<70}}> 及格 </elseif>
+							<elseif tag='span' cond={{grade>70&&grade<80}}> 中等 </elseif>
 							<elseif tag='span' cond={{grade>80&&grade<90}}> 良好 </elseif>
 							<else tag='span'> 优秀 </else>
 						</div>

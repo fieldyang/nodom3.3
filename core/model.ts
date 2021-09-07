@@ -26,7 +26,6 @@ export class Model {
 
         let proxy = new Proxy(data, {
             set: (src: any, key: string, value: any, receiver: any) => {
-
                 //值未变,proxy 不处理
                 if (src[key] === value) {
                     return true;
@@ -48,11 +47,18 @@ export class Model {
             },
             get: (src: any, key: string | symbol, receiver) => {
                 let res = Reflect.get(src, key, receiver);
+                //数组的sort和fill触发强行渲染
+                if(Array.isArray(src) && ['sort','fill'].indexOf(<string>key) !== -1){
+                    setTimeout(()=>{
+                        mm.update(proxy,<string>key);
+                    },0)
+                }
                 let data = module.modelManager.getFromDataMap(src[key]);
                 if (data) {
                     return data;
                 }
-                if (typeof res === 'object' && res !== null) {
+                
+                if (res !== null && typeof res === 'object') {
                     //如果是的对象，则返回代理，便于后续激活get set方法                   
                     // 判断是否已经代理，如果未代理，则增加代理
                     if (!src[key].$watch) {

@@ -4,6 +4,9 @@ export class MRepeat extends Module{
         return `
         <div class="view">
             <button e-click='pop'>pop</button>
+            <button e-click='addFood'>addFood</button>
+            <button e-click='desc'>价格降序</button>
+            
             <div class="tip">基本使用</div>
             <div class="code">
                 菜单：
@@ -25,14 +28,15 @@ export class MRepeat extends Module{
                     菜名：{{name}}，价格：{{price}}
                 </div>
             </div>
+            <!--
             <div class=tip>价格升序排序（编号从1开始）</div>
             <div class=code>
                 菜单：
-                <div x-repeat={{foods.sort((a,b)=>{if(a.price>b.price)
+                <div x-repeat={{foods.sort((a,b)=>{if(a.price>b.price) 
                     return 1;return -1;})}}>
                     编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
                 </div>
-            </div>
+            </div>--> 
         </div>        
         `
     }
@@ -78,12 +82,24 @@ export class MRepeat extends Module{
             }
             return a1;
         },
-        sort(arr){
-            return arr.sort((a,b)=>{if(a.price>b.price)return 1;return -1;})
+        desc(){
+            this.foods.sort((a,b)=>{if(a.price>b.price)return -1;return 1;})
         },
         pop(){
-            console.log(this);
             this.foods.pop();
+        },
+        addFood(){
+            this.foods.splice(2,0,
+                {
+                    name: '新增1',
+                    price: 20
+                },
+                {
+                    name: '新增2',
+                    price: 30
+                }
+            )
         }
+        
     }
 }

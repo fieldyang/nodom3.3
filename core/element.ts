@@ -925,7 +925,7 @@ export class Element {
                     change = true;
                 }
             } else { //节点类型不同
-                addDelKey(this, 'rep',);
+                addDelKey(this, 'rep');
             }
         } else { //element节点
             if (this.tagName !== dst.tagName) { //节点类型不同
@@ -1033,8 +1033,8 @@ export class Element {
                 if (newMap.size) {
                     newMap.forEach((v, k) => {
                         retArr.push(new ChangedDom(v, 'add', this, k));
-                    })
-                };
+                    });
+                }
             }
         }
         function sameKey(newElement, oldElement) {
