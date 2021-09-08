@@ -6,6 +6,7 @@ import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
 import { ModuleFactory } from "./modulefactory";
 import { Renderer } from "./renderer";
+import { Router } from "./router";
 import { ChangedDom, IModuleCfg } from "./types";
 import { Util } from "./util";
 
@@ -79,16 +80,6 @@ export class Module {
     public children: Array<number> = [];
 
     /**
-     * 容器key
-     */
-    public containerKey: string;
-
-    /**
-     * 模块创建时执行操作
-     */
-    private createOps: Array<Function> = [];
-
-    /**
      * 状态 0 create(创建)、1 init(初始化，已编译)、2 unactive(渲染后被置为非激活) 3 active(激活，可渲染显示)
      */
     public state: number = 0;
@@ -123,6 +114,15 @@ export class Module {
      */
     private moduleMap: Map<string, number> = new Map();
 
+    /**
+     * 后置渲染序列
+     */
+    private preRenderOps:any[] = [];
+
+    /**
+     * 后置渲染序列
+     */
+    private postRenderOps:any[] = [];
     /**
      * 订阅
      */
@@ -255,7 +255,8 @@ export class Module {
         // console.log(this);
         //克隆新的树
         let root: Element = this.virtualDom.clone();
-
+        //执行前置方法
+        this.doRenderOps(0);
         if (this.firstRender) {
             this.doFirstRender(root);
         } else { //增量渲染
@@ -295,7 +296,6 @@ export class Module {
                     }
                 });
                 deleteMap.clear();
-
                 // 渲染
                 this.renderDoms.forEach((item) => {
                     item.node.renderToHtml(this, item);
@@ -305,6 +305,8 @@ export class Module {
             this.doModuleEvent('onRender');
         }
 
+        //执行后置方法
+        this.doRenderOps(1);
         //通知更新数据
         if (this.subscribes) {
             this.subscribes.publish('@data' + this.id, null);
@@ -335,16 +337,20 @@ export class Module {
         root.render(this, null);
         this.clearDontRender(root);
         this.doModuleEvent('onBeforeFirstRenderToHTML');
+        
         //无容器，不执行
         if (!this.getContainer()) {
             return;
         }
+        
         //清空子元素
         Util.empty(this.container);
+        
         //渲染到html
         root.renderToHtml(this, <ChangedDom>{ type: 'fresh' });
         //删除首次渲染标志
         delete this.firstRender;
+        console.log(this);
         //执行首次渲染后事件
         this.doModuleEvent('onFirstRender');
     }
@@ -491,19 +497,6 @@ export class Module {
     }
 
     /**
-     * 添加实例化后操作
-     * @param foo  	操作方法
-     */
-    public addCreateOperation(foo: Function) {
-        if (!Util.isFunction(foo)) {
-            return;
-        }
-        if (!this.createOps.includes(foo)) {
-            this.createOps.push(foo);
-        }
-    }
-
-    /**
      * 清理不渲染节点
      * @param dom   节点
      */
@@ -604,10 +597,14 @@ export class Module {
      * 获取模块容器
      */
     public getContainer(): HTMLElement {
-        if (this.containerKey) {
-            this.container = document.querySelector("[key='" + this.containerKey + "']");
+        if(!this.container){
+            this.container = Router.getDependContainer(this.id);
         }
         return this.container;
+    }
+
+    public setContainer(el:HTMLElement){
+        this.container = el;
     }
 
     /**
@@ -627,6 +624,43 @@ export class Module {
         let foo = this.getMethod(methodName);
         if (foo && typeof foo === 'function') {
             return foo.apply(this, args);
+        }
+    }
+
+    /**
+     * 添加渲染方法
+     * @param foo   方法函数    
+     * @param flag  标志 0:渲染前执行 1:渲染后执行
+     * @param args  参数
+     * @param once  是否只执行一次，如果为true，则执行后删除
+     */
+    public addRenderOps(foo:Function,flag:number,args?:any[],once?:boolean){
+        if(typeof foo !== 'function'){
+            return;
+        }
+        let arr = flag===0?this.preRenderOps:this.postRenderOps;
+        arr.push({
+            foo:foo,
+            args:args,
+            once:once
+        });
+    }
+
+    /**
+     * 执行渲染方法
+     * @param flag 类型 0:前置 1:后置
+     */
+    private doRenderOps(flag:number){
+        let arr = flag===0?this.preRenderOps:this.postRenderOps;
+        if(arr){
+            for(let i=0;i<arr.length;i++){
+                let o = arr[i];
+                o.foo.apply(this,o.args);
+                // 执行后删除
+                if(o.once){
+                    arr.splice(i--,1);
+                }
+            }
         }
     }
 }

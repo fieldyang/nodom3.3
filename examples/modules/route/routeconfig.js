@@ -43,18 +43,15 @@ export function initRoute(){
                 routes: [{
                     path: '/rparam/:page/:id',
                     module: MdlMod4,
-                    // useParentPath:true,
                     onEnter: function () {
                         // console.log('route2/rparam');
                     },
                     routes:[{
                         path:'/desc',
-                        module:MdlMod7,
-                        // useParentPath:true
+                        module:MdlMod7
                     },{
                         path:'/comment',
-                        module:MdlMod8,
-                        // useParentPath:true
+                        module:MdlMod8
                     }]
                 }]
             }, 

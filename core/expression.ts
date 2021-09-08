@@ -28,17 +28,15 @@ export class Expression {
     constructor(exprStr?: string) {
         this.fields = []; // 字段数组
         this.id = Util.genId();
-        
         if (exprStr) {
             this.execFunc = new Function('$model','$methods',`
                 with($model){
                     with($methods){
-                        return ${exprStr};
+                        return ${exprStr.trim()};
                     }
                 }
             `);
         }
-        // console.log(exprStr,this.execFunc);
     }
 
     /**

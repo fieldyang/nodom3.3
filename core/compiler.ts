@@ -163,6 +163,7 @@ export class Compiler {
         if(!finded){
             handle(tagStr);
         }
+
         return{
             tagName:tagName,
             attrs:attrs,

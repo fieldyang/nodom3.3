@@ -218,6 +218,7 @@ export class Element {
                 el = module.getNode(parent.key);
             } else {
                 el = module.getContainer();
+                console.log(el);
             }
         } else if (this.tagName !== undefined) { //element节点才可以查找
             el = module.getNode(this.key);

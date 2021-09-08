@@ -13,7 +13,7 @@ export class Renderer {
      * 添加到渲染列表
      * @param module 模块
      */
-    public static add(module:Module) {
+    public static add(module:Module,force?:boolean) {
         //非激活状态，不进入渲染列表
         // if (module.state !== 3) {
         //     return;

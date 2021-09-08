@@ -6,7 +6,8 @@ export class MRepeat extends Module{
             <button e-click='pop'>pop</button>
             <button e-click='addFood'>addFood</button>
             <button e-click='desc'>价格降序</button>
-            
+            <div class={{
+                xxx?'cls1':'cls2'}}>hahahaha</div>
             <div class="tip">基本使用</div>
             <div class="code">
                 菜单：
@@ -28,7 +29,7 @@ export class MRepeat extends Module{
                     菜名：{{name}}，价格：{{price}}
                 </div>
             </div>
-            <!--
+            
             <div class=tip>价格升序排序（编号从1开始）</div>
             <div class=code>
                 菜单：
@@ -36,7 +37,7 @@ export class MRepeat extends Module{
                     return 1;return -1;})}}>
                     编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
                 </div>
-            </div>--> 
+            </div>
         </div>        
         `
     }
@@ -44,6 +45,7 @@ export class MRepeat extends Module{
         show:0,
         date1:new Date().getTime(),
         discount:{data:0.9},
+        xxx:true,
         foods: [{
             name: '夫妻肺片',
             price: 25

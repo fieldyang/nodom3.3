@@ -61,8 +61,8 @@ export default (function () {
                 directive.extra = { moduleId: m.id };
                 //添加到父模块
                 module.addChild(m.id);
-                //设置容器key
-                m.containerKey = dom.key;
+                //设置容器
+                m.setContainer(module.getNode(dom.key));
                 //添加到渲染器
                 Renderer.add(m);
             }
@@ -796,9 +796,10 @@ export default (function () {
             }
             dom.setProp('path',directive.value);
 
-            //延迟激活（指令执行后才执行属性处理，才能获取active prop的值）
+            //延迟激活（指令执行后才执行属性处理，延迟才能获取active prop的值）
             setTimeout(()=>{
-                if(dom.getProp('active') === true && !Router.currentPath.startsWith(directive.value)){
+                // 路由路径以当前路径开始
+                if(dom.getProp('active') === true && directive.value.startsWith(Router.currentPath)){
                     Router.go(directive.value);
                 }
             },0);
