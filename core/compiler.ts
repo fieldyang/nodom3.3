@@ -298,7 +298,7 @@ export class Compiler {
                 let value = attr[1].substring(2, attr[1].length - 2);
                 // 变量别名，变量名（原对象.变量名)，双向绑定标志
                 let data = [value, bindFlag];
-                oe.datas[name] = data;
+                oe.moduleDatas[name] = data;
             } else {
                 oe.setProp(attr[0], attr[1],attr[1] instanceof Expression);
             }
@@ -356,7 +356,6 @@ export class Compiler {
     private static preHandleNode(node:ASTObj){
         // 模块类判断
         if (ModuleFactory.has(node.tagName)) {
-            // node.attrs.push({propName:'x-module',value:node.tagName});
             node.attrs.set('x-module',node.tagName);
             node.tagName = 'div';
         }else if(DefineElementManager.has(node.tagName)){ //自定义元素

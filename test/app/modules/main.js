@@ -1,10 +1,12 @@
-// import {Module} from '../../../dist/nodom.js'
+import {Module} from '../../../dist/nodom.js'
 import {ModuleA} from './modulea.js'
 export class ModuleMain extends Module{
     template(){
         return `
+            <div>
             <div>hello world!</div>
-           <!-- <ModuleA d-x1={{x}} />-->
+           <ModuleA />
+           </div>
         `
     }
     model = {

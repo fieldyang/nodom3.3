@@ -38,7 +38,7 @@ export class MRepeat extends Module{
                     编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
                 </div>
             </div>
-        </div>        
+        </div>
         `
     }
     model={
@@ -91,6 +91,7 @@ export class MRepeat extends Module{
             this.foods.pop();
         },
         addFood(){
+            console.log('ddd');
             this.foods.splice(2,0,
                 {
                     name: '新增1',

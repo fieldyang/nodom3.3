@@ -10,7 +10,7 @@ export class ModuleA extends Module{
         `
     }
     model= {
-        name:'yang'
+        name:'yang',
+        x1:0
     }
-    
 }

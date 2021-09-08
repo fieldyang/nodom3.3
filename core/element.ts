@@ -1,5 +1,4 @@
 import { Directive } from "./directive";
-import { NError } from "./error";
 import { NEvent } from "./event";
 import { Expression } from "./expression";
 import { Model } from "./model";
@@ -26,11 +25,6 @@ export class Element {
      * element为textnode时有效
      */
     public textContent: string | HTMLElement;
-
-    /**
-     * 类型，包括: html fragment 或 html element 
-     */
-    public type: string;
 
     /**
      * 指令集
@@ -71,11 +65,6 @@ export class Element {
     public children: Array<Element> = [];
 
     /**
-     * 父element key
-     */
-    public parentKey: string;
-
-    /**
      * 父虚拟dom
      */
     public parent: Element;
@@ -91,9 +80,10 @@ export class Element {
     public dontRender: boolean = false;
 
     /**
-     * 外部数据
+     * 模块外部数据集，d- 开头的属性，用于从父、兄和子模块获取数据，该element为模块容器时有效，
      */
-    public datas = {};
+    public moduleDatas = {};
+
     /**
      * 渲染前（获取model后）执行方法集合,可以是方法名（在module的methods中定义），也可以是函数
      * 函数的this指向element的model，参数为(element,module)
@@ -119,7 +109,6 @@ export class Element {
         //检查是否为svg
         if (tag && tag.toLowerCase() === 'svg') {
             this.setTmpParam('isSvgNode', true);
-            // this.isSvgNode = true;
         }
         //key
         this.key = Util.genId() + '';
@@ -133,7 +122,7 @@ export class Element {
      */
     public render(module: Module, parent?: Element): Boolean {
         if (this.dontRender) {
-            this.doDontRender();
+            this.doDontRender(parent);
             return false;
         }
 
@@ -144,7 +133,6 @@ export class Element {
                 this.model = parent.model;
             }
             this.parent = parent;
-            this.parentKey = parent.key;
         }
         //设置model为模块model
         if (!this.model) {
@@ -160,7 +148,7 @@ export class Element {
 
         if (this.tagName !== undefined) { //element
             if (!this.handleDirectives(module)) {
-                this.doDontRender();
+                this.doDontRender(parent);
                 return false;
             }
             this.handleProps(module);
@@ -169,35 +157,20 @@ export class Element {
             this.handleTextContent(module);
         }
 
-        //子模块渲染
+        //子节点渲染，子模块不渲染
         if (!this.hasDirective('module')) {
             for (let i = 0; i < this.children.length; i++) {
                 let item = this.children[i];
                 if (!item.render(module, this)) {
-                    item.doDontRender();
-                    this.children.splice(i--, 1);
+                    item.doDontRender(this);
+                    i--;
                 }
             }
         }
-        
         //后置方法集执行
         this.doRenderOp(module, 'after');
         return true;
     }
-
-    /**
-     * 恢复到渲染前
-     */
-    private recover() {
-        //删除parent
-        delete this.parent;
-        //删除model
-        delete this.model;
-        //删除dontRender
-        delete this.dontRender;
-    }
-
-
 
     /**
      * 渲染到html element
@@ -218,7 +191,7 @@ export class Element {
                 el = module.getNode(parent.key);
             } else {
                 el = module.getContainer();
-                console.log(el);
+                // console.log(el);
             }
         } else if (this.tagName !== undefined) { //element节点才可以查找
             el = module.getNode(this.key);
@@ -236,7 +209,7 @@ export class Element {
                     //首次渲染需要生成子孙节点
                     genSub(el1, this);
                 } else {
-                    el1 = newText(<string>this.textContent, this);
+                    el1 = newText(<string>this.textContent);
                 }
                 el.appendChild(el1);
 
@@ -251,19 +224,7 @@ export class Element {
                 ])
                 let ind = indexArr.indexOf(this.key);
                 if (ind !== -1) {
-                    //element或fragment
-                    if (this.type === 'html') {
-                        let div: HTMLElement = <HTMLElement>document.querySelector("[key='" + this.key + "']");
-                        if (div !== null) {
-                            div.innerHTML = '';
-                            div.appendChild(<HTMLElement>this.textContent);
-                        } else {
-                            let div: Node = newText(<string>this.textContent);
-                            Util.replaceNode(el.childNodes[ind], div);
-                        }
-                    } else {
-                        el.childNodes[ind].textContent = <string>this.textContent;
-                    }
+                    el.childNodes[ind].textContent = <string>this.textContent;
                 }
                 break;
             case 'upd': //修改属性
@@ -335,19 +296,9 @@ export class Element {
         /**
          * 新建文本节点
          */
-        function newText(text: string | HTMLElement | DocumentFragment, dom?: Element): any {
-            if (!text) {
-                text = '';
-                dom = null;
-            }
-            if (dom && 'html' === dom.type) { //html fragment 或 element
-                let div = Util.newEl('div');
-                div.setAttribute('key', dom.key);
-                div.appendChild(<HTMLElement>text);
-                return div;
-            } else {
-                return document.createTextNode(<string>text);
-            }
+        function newText(text: string | HTMLElement | DocumentFragment): any {
+            return document.createTextNode(<string>text || '');
+           
         }
 
         /**
@@ -363,7 +314,7 @@ export class Element {
                         el1 = newEl(item, vNode, pEl);
                         genSub(el1, item);
                     } else {
-                        el1 = newText(item.textContent, item);
+                        el1 = newText(item.textContent);
                     }
                     pEl.appendChild(el1);
                 });
@@ -598,60 +549,13 @@ export class Element {
     public add(dom: Element | Array<Element>) {
         if (Array.isArray(dom)) {
             dom.forEach(v => {
-                v.parentKey = this.key;
                 //将parent也附加上，增量渲染需要
                 v.parent = this;
             });
             this.children.push(...dom);
         } else {
-            dom.parentKey = this.key;
             this.children.push(dom);
             dom.parent = this;
-        }
-
-    }
-
-    /**
-     * 从虚拟dom树和html dom树删除自己
-     * @param module 	模块
-     * @param delHtml 	是否删除html element
-     */
-    public remove(module: Module, delHtml?: boolean) {
-        // 从父树中移除
-        let parent: Element = this.getParent(module);
-        if (parent) {
-            parent.removeChild(this);
-        }
-        // 删除html dom节点
-        if (delHtml && module) {
-            let el = module.getNode(this.key);
-            if (el !== null) {
-                Util.remove(el);
-            }
-        }
-    }
-
-    /**
-     * 从html删除
-     */
-    public removeFromHtml(module: Module, textNode?: boolean) {
-        // if (textNode) {
-        //     let parent = module.getNode(this.parentKey);
-        //     if (parent !== null) {
-        //         let content = Array.prototype.findIndex.call(parent.childNodes, (v) => {
-        //             if (v.nodeType == 3) {
-        //                 return this.textContent == v.textContent;
-        //             } else {
-        //                 return false;
-        //             }
-        //         });
-        //         if(content!=-1)
-        //         parent.removeChild(parent.childNodes[content]);
-        //     }
-        // }
-        let el = module.getNode(this.key);
-        if (el !== null) {
-            Util.remove(el);
         }
     }
 
@@ -664,23 +568,6 @@ export class Element {
         // 移除
         if (Util.isArray(this.children) && (ind = this.children.indexOf(dom)) !== -1) {
             this.children.splice(ind, 1);
-        }
-    }
-
-    /**
-     * 获取parent
-     * @param module 模块 
-     * @returns      父element
-     */
-    public getParent(module: Module): Element {
-        if (!module) {
-            throw new NError('invoke', 'Element.getParent', '0', 'Module');
-        }
-        if (this.parent) {
-            return this.parent;
-        }
-        if (this.parentKey) {
-            return module.getElement(this.parentKey);
         }
     }
 
@@ -1044,7 +931,7 @@ export class Element {
         }
         //添加刪除替換的key
         function addDelKey(element: Element, type?: string) {
-            let pKey: string = element.parentKey;
+            let pKey: string = element.parent.key;
             if (!deleteMap.has(pKey)) {
                 deleteMap.set(pKey, new Array());
             }
@@ -1087,7 +974,8 @@ export class Element {
      * 关联操作，包括:
      *  1 节点(子节点)含有module指令，需要unactive
      */
-    public doDontRender() {
+    public doDontRender(parent?:Element) {
+        //对于模块容器，对应module需unactive
         if (this.hasDirective('module')) {
             let d: Directive = this.getDirective('module');
             if (d.extra && d.extra.moduleId) {
@@ -1097,11 +985,16 @@ export class Element {
                 }
             }
         }
+        
         //子节点递归
         for (let c of this.children) {
-            c.doDontRender();
+            c.doDontRender(this);
         }
-        this.recover();
+
+        //从虚拟dom树中移除
+        if(parent){
+            parent.removeChild(this);
+        }
     }
 
     /**

@@ -53,7 +53,7 @@ export default (function () {
             if (ext.moduleId) {
                 m = ModuleFactory.get(ext.moduleId);
             } else {
-                m = ModuleFactory.getInstance(directive.value, dom.getProp('modulename'));
+                m = ModuleFactory.getInstance(directive.value, dom.getProp('moduleName'));
                 if (!m) {
                     return;
                 }
@@ -62,9 +62,9 @@ export default (function () {
                 //添加到父模块
                 module.addChild(m.id);
                 //设置容器
-                m.setContainer(module.getNode(dom.key));
+                m.setContainerKey(dom.key);
                 //添加到渲染器
-                Renderer.add(m);
+                m.active();
             }
             //处理d- 开头的附加参数
             // Util.handlesDatas(module, m, dom);

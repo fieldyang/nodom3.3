@@ -80,7 +80,6 @@ export class ModuleFactory {
                 instance.model = Util.clone(cfg.model);
             }
         }
-        
         return instance;
     }
     /**

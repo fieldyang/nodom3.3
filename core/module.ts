@@ -1,12 +1,10 @@
 import { Compiler } from "./compiler";
 import { Element } from "./element";
 import { LocalStore } from "./localstore";
-import { MethodFactory } from "./methodfactory";
 import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
 import { ModuleFactory } from "./modulefactory";
 import { Renderer } from "./renderer";
-import { Router } from "./router";
 import { ChangedDom, IModuleCfg } from "./types";
 import { Util } from "./util";
 
@@ -80,9 +78,9 @@ export class Module {
     public children: Array<number> = [];
 
     /**
-     * 状态 0 create(创建)、1 init(初始化，已编译)、2 unactive(渲染后被置为非激活) 3 active(激活，可渲染显示)
+     * 状态 1 create(创建) 2 unactive(渲染后被置为非激活) 3 active(激活，可渲染显示) 4 已渲染
      */
-    public state: number = 0;
+    public state: number;
 
     /**
      * 局部存储，用于存放父子模块作用域的订阅
@@ -95,19 +93,14 @@ export class Module {
     public modelManager: ModelManager;
 
     /**
-     * 方法工厂
-     */
-    public methodFactory: MethodFactory;
-
-    /**
-     * 待渲染的虚拟dom数组
-     */
-    private renderDoms: Array<ChangedDom> = [];
-
-    /**
      * 放置模块的容器
      */
-    private container: HTMLElement = null;
+    private container: HTMLElement;
+
+    /**
+     * 容器key
+     */
+    private containerKey:string;
 
     /**
      * 子模块名id映射，如 {模块局部名:模块全局id}，以父子关系形成一个闭环，模块名闭环内唯一
@@ -139,6 +132,7 @@ export class Module {
      */
     constructor(config?: IModuleCfg) {
         this.id = Util.genId();
+        this.state = 0;
         // 模块名字
         if (config && config.name) {
             this.name = config.name;
@@ -152,13 +146,6 @@ export class Module {
         ModuleFactory.add(this);
         // 初始化模型工厂
         this.modelManager = new ModelManager(this);
-        // 初始化方法工厂
-        this.methodFactory = new MethodFactory();
-
-        //主模块，加入渲染队列
-        if (ModuleFactory.getMain() === this) {
-            Renderer.add(this);
-        }
     }
 
     /**
@@ -168,7 +155,6 @@ export class Module {
         //初始化model
         let data = (typeof this.model === 'function' ? this.model() : this.model);
         this.model = new Model(data || {}, this);
-
         //调用模版函数，并把this指向model
         let tStr = (typeof this.template === 'function' ? this.template.apply(this.model) : this.template);
         if (!tStr) {
@@ -176,16 +162,10 @@ export class Module {
         }
         delete this.template;
 
-        //初始化方法
-        let methods = (typeof this.methods === 'function' ? this.methods.apply(this.model) : this.methods);
-        if (methods && typeof methods === 'object') {
-            Object.getOwnPropertyNames(methods).forEach(item => {
-                this.methodFactory.add(item, methods[item]);
-            });
-        }
-        // delete this.methods;
-
-        //初始化子模块
+        //初始化方法集
+        this.methods = (typeof this.methods === 'function' ? this.methods.apply(this.model) : this.methods) || {};
+        
+        //初始化子模块实例
         let mods = (typeof this.modules === 'function' ? this.modules.apply(this.model) : this.modules);
         if (Array.isArray(mods)) {
             for (let cls of mods) {
@@ -193,10 +173,16 @@ export class Module {
             }
         }
         delete this.modules;
+        
         //处理css配置
         this.handleCss();
         // 编译成虚拟dom
         this.virtualDom = Compiler.compile(tStr);
+
+        // 根模块，进行激活
+        if(this === ModuleFactory.getMain()){
+            this.active();
+        }
     }
     /**
      * 处理css
@@ -237,22 +223,19 @@ export class Module {
         return null;
     }
 
-
     /**
      * 模型渲染
      * @return false 渲染失败 true 渲染成功
      */
     public render(): boolean {
-        // console.log(this);
         //状态为2，不渲染
-        // if (this.state === 2) {
-        //     return true;
-        // }
+        if (this.state === 2) {
+            return true;
+        }
         //容器没就位或state不为active则不渲染，返回渲染失败
-        // if (this.state !== 3 || !this.virtualDom) {
-        //     return false;
-        // }
-        // console.log(this);
+        if (this.state < 3 || !this.virtualDom) {
+            return false;
+        }
         //克隆新的树
         let root: Element = this.virtualDom.clone();
         //执行前置方法
@@ -268,11 +251,11 @@ export class Module {
                 this.renderTree = root;
                 //渲染
                 root.render(this, null);
-                this.clearDontRender(root);
                 this.doModuleEvent('onBeforeRenderToHtml');
                 let deleteMap = new Map();
+                let renderDoms:ChangedDom[] = [];
                 // 比较节点
-                root.compare(oldTree, this.renderDoms, deleteMap);
+                root.compare(oldTree, renderDoms, deleteMap);
                 //刪除和替換
                 deleteMap.forEach((value, key) => {
                     let dp: HTMLElement = this.getNode(key);
@@ -297,7 +280,7 @@ export class Module {
                 });
                 deleteMap.clear();
                 // 渲染
-                this.renderDoms.forEach((item) => {
+                renderDoms.forEach((item) => {
                     item.node.renderToHtml(this, item);
                 });
             }
@@ -305,8 +288,12 @@ export class Module {
             this.doModuleEvent('onRender');
         }
 
+        //设置已渲染状态
+        this.state = 4;
+
         //执行后置方法
         this.doRenderOps(1);
+
         //通知更新数据
         if (this.subscribes) {
             this.subscribes.publish('@data' + this.id, null);
@@ -317,9 +304,6 @@ export class Module {
         if (md && md.subscribes !== undefined) {
             md.subscribes.publish('@dataTry' + this.parentId, null);
         }
-
-        //数组还原
-        this.renderDoms = [];
         return true;
     }
 
@@ -335,7 +319,6 @@ export class Module {
             root.model = this.model;
         }
         root.render(this, null);
-        this.clearDontRender(root);
         this.doModuleEvent('onBeforeFirstRenderToHTML');
         
         //无容器，不执行
@@ -350,7 +333,6 @@ export class Module {
         root.renderToHtml(this, <ChangedDom>{ type: 'fresh' });
         //删除首次渲染标志
         delete this.firstRender;
-        console.log(this);
         //执行首次渲染后事件
         this.doModuleEvent('onFirstRender');
     }
@@ -387,7 +369,6 @@ export class Module {
         if (!this.localStore) {
             this.localStore = new LocalStore();
         }
-
     }
 
     /**
@@ -430,7 +411,14 @@ export class Module {
      * 激活模块(添加到渲染器)
      */
     public active() {
+        this.state = 3;
         Renderer.add(this);
+        for(let id of this.children){
+            let m = ModuleFactory.get(id);
+            if(m){
+                m.active();
+            }
+        }
     }
 
     /**
@@ -440,21 +428,23 @@ export class Module {
         if (ModuleFactory.getMain() === this || this.state === 2) {
             return;
         }
+        //设置状态
         this.state = 2;
+        //删除容器
+        delete this.container;
         //设置首次渲染标志
         this.firstRender = true;
-        if (Util.isArray(this.children)) {
-            this.children.forEach((item) => {
-                let m: Module = ModuleFactory.get(item);
-                if (m) {
-                    m.unactive();
-                }
-            });
+        //处理子节点
+        for(let id of this.children){
+            let m = ModuleFactory.get(id);
+            if(m){
+                m.unactive();
+            }
         }
     }
 
     /**
-     * 模块终结
+     * 模块销毁
      */
     public destroy() {
         if (Util.isArray(this.children)) {
@@ -497,20 +487,6 @@ export class Module {
     }
 
     /**
-     * 清理不渲染节点
-     * @param dom   节点
-     */
-    clearDontRender(dom: Element) {
-        for (let i = 0; i < dom.children.length; i++) {
-            let item = dom.children[i];
-            if (item.dontRender) {
-                dom.children.splice(i, 1);
-                return;
-            }
-            this.clearDontRender(item);
-        }
-    }
-    /**
      * 获取子孙模块
      * @param name          模块名 
      * @param descendant    如果为false,只在子节点内查找，否则在后代节点查找（深度查询），直到找到第一个名字相同的模块
@@ -539,7 +515,7 @@ export class Module {
      * @returns     方法
      */
     public getMethod(name: string): Function {
-        return this.methodFactory.get(name);
+        return this.methods[name];
     }
 
     /**
@@ -548,7 +524,7 @@ export class Module {
      * @param foo   方法函数
      */
     public addMethod(name: string, foo: Function) {
-        this.methodFactory.add(name, foo);
+        this.methods[name] = foo;
     }
 
     /**
@@ -556,7 +532,7 @@ export class Module {
      * @param name  方法名
      */
     public removeMethod(name: string) {
-        this.methodFactory.remove(name);
+        delete this.methods[name];
     }
 
     /**
@@ -576,11 +552,13 @@ export class Module {
             value = key[keyName];
         }
         let qs: string = "[" + keyName + "='" + value + "']";
-        let el: HTMLElement = this.container ? this.container.querySelector(qs) : null;
-        if (!el && notNull) {
-            return this.container;
+        let ct = this.getContainer();
+
+        if(ct){
+            return ct.querySelector(qs);
+        }else if(notNull){
+            return ct || null;
         }
-        return el;
     }
 
     /**
@@ -598,13 +576,27 @@ export class Module {
      */
     public getContainer(): HTMLElement {
         if(!this.container){
-            this.container = Router.getDependContainer(this.id);
+            if(this.containerKey){
+                this.container = this.getParent().getNode(this.containerKey);
+            }
         }
         return this.container;
     }
 
+    /**
+     * 设置渲染容器
+     * @param el    容器
+     */
     public setContainer(el:HTMLElement){
         this.container = el;
+    }
+
+    /**
+     * 设置渲染容器key
+     * @param key   容器key
+     */
+    public setContainerKey(key:string){
+        this.containerKey = key;
     }
 
     /**
@@ -623,7 +615,7 @@ export class Module {
     public invokeMethod(methodName: string, args: any[]) {
         let foo = this.getMethod(methodName);
         if (foo && typeof foo === 'function') {
-            return foo.apply(this, args);
+            return foo.apply(this.model, args);
         }
     }
 

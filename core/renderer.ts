@@ -14,10 +14,6 @@ export class Renderer {
      * @param module 模块
      */
     public static add(module:Module,force?:boolean) {
-        //非激活状态，不进入渲染列表
-        // if (module.state !== 3) {
-        //     return;
-        // }
         //如果已经在列表中，不再添加
         if (!this.waitList.includes(module.id)) {
             //计算优先级

@@ -117,7 +117,6 @@ export class Router {
         if(!parentModule){
             return;
         }
-        console.log(path);
         //onleave事件，从末往前执行
         for (let i = diff[1].length - 1; i >= 0; i--) {
             const r = diff[1][i];
@@ -131,6 +130,9 @@ export class Router {
             if (Util.isFunction(r.onLeave)) {
                 r.onLeave(module.model);
             }
+            // 清理map映射
+            this.activeFieldMap.delete(module.id);
+            this.moduleDependMap.delete(module.id);
             //module置为不激活
             module.unactive();
         }
@@ -140,7 +142,7 @@ export class Router {
             if (route !== null) {
                 let module:Module = ModuleFactory.get(<number>route.module);
                 // 模块处理
-                handle(module,route,parentModule);
+                this.dependHandle(module,route,parentModule);
             }
         } else { //路由不同
             //加载模块
@@ -167,7 +169,7 @@ export class Router {
                 this.moduleDependMap.set(module.id,parentModule.id);
                 
                 // 模块处理
-                handle(module,route,parentModule);
+                this.dependHandle(module,route,parentModule);
                 //默认全局路由enter事件
                 if (Util.isFunction(this.onDefaultEnter)) {
                     this.onDefaultEnter(module.model);
@@ -193,49 +195,8 @@ export class Router {
         this.currentPath = path;
         //设置start类型为正常start
         this.startStyle = 0;
-        
-        /**
-         * 处理
-         * @param module            模块
-         * @param parentModule      router容器模块
-         * @param route             路由
-         */
-        function handle(module:Module,route:Route,parentModule:Module){
-            //设置首次渲染
-            module.setFirstRender(true);
-            module.active();
-            Router.setActive(parentModule,route.fullPath);
-            
-            //设置参数
-            let o = {
-                path: route.path
-            };
-            if (!Util.isEmpty(route.data)) {
-                o['data'] = route.data;
-            }
-            if (!module.model) {
-                module.model = new Model({}, module);
-            }
-            module.model['$route'] = o;
-        }
     }
 
-    /**
-     * 获取路由依赖容器
-     * @param moduleId  模块id
-     * @returns         依赖容器（存放该模块渲染结果）
-     */
-    public static getDependContainer(moduleId:number){
-        let pid = this.moduleDependMap.get(moduleId);
-        if(!pid){
-            return;
-        }
-        let key = this.routerKeyMap.get(pid);
-        if(!key){
-            return;
-        }
-        return ModuleFactory.get(pid).getNode(key);
-    }
     /*
         * 重定向
         * @param path 	路径
@@ -337,34 +298,59 @@ export class Router {
     }
 
     /**
-     * 修改带active的dom的active状态
+     * 依赖模块相关处理
      * @param module 	模块
+     * @param pm        依赖模块
      * @param path 		view对应的route路径
      */
-    private static setActive(module:Module, path:string) {
-        if(!module || !path){
+    private static dependHandle(module:Module,route:Route,pm:Module){
+        const me = this;
+        //设置首次渲染
+        module.setFirstRender(true);
+        module.active();
+        
+        //设置参数
+        let o = {
+            path: route.path
+        };
+        if (!Util.isEmpty(route.data)) {
+            o['data'] = route.data;
+        }
+        if (!module.model) {
+            module.model = new Model({}, module);
+        }
+        module.model['$route'] = o;
+        
+        if(pm.state === 4){  //被依赖模块处于渲染后状态
+            module.setContainer(pm.getNode(this.routerKeyMap.get(pm.id)));
+            this.setDomActive(pm,route.fullPath);
+        }else{ //被依赖模块不处于被渲染后状态
+            pm.addRenderOps(function(m,p){
+                module.setContainer(m.getNode(Router.routerKeyMap.get(m.id)));
+                me.setDomActive(m,p);
+            },1,[pm,route.fullPath],true);
+        }
+    }
+
+    /**
+     * 设置路由元素激活属性
+     * @param module    模块 
+     * @param path      路径
+     * @returns 
+     */
+    private static setDomActive(module:Module,path:string){
+        let arr = Router.activeFieldMap.get(module.id);
+        if(!arr){
             return;
         }
-        let arr = Router.activeFieldMap.get(module.id);
-        if(arr){  //已存在激活对象序列
-            for(let o of arr){
-                o.model[o.field] = o.path === path;
-            }
-        }else{ //不存在激活对象序列，等待渲染后处理
-            module.addRenderOps(function(p){
-                let arr = Router.activeFieldMap.get(this.id);
-                if(!arr){
-                    return;
-                }
-                for(let o of arr){
-                    o.model[o.field] = o.path === p;
-                }
-                //渲染，因为当前模块还在渲染队列中，需要延迟加载
-                setTimeout(()=>{
-                    Renderer.add(this);
-                },0)
-                
-            },1,[path],true);
+        for(let o of arr){
+            o.model[o.field] = o.path === path;
+        }
+        //渲染，因为当前模块还在渲染队列中，需要延迟加载
+        if(module.state !== 4){
+            setTimeout(()=>{
+                Renderer.add(module);
+            },0)
         }
     }
 
