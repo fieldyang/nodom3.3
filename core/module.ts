@@ -184,6 +184,7 @@ export class Module {
             this.active();
         }
     }
+    
     /**
      * 处理css
      */
@@ -196,7 +197,6 @@ export class Module {
             }
             //得到最后一个sheet
             let sheet: CSSStyleSheet = document.styleSheets[document.styleSheets.length - 1];
-
             for (let css of cssArr) {
                 if (typeof css === 'string') {
                     sheet.insertRule("@import '" + css + "'");
@@ -206,7 +206,7 @@ export class Module {
                         for (let p1 in css[p]) {  //多个样式
                             style += p1 + ':' + css[p][p1] + ';'
                         }
-                        style = p + '}';
+                        style += p + '}';
                         //加入样式表
                         sheet.insertRule(style);
                     }
