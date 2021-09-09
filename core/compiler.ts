@@ -1,12 +1,10 @@
 import { DefineElementManager } from "./defineelementmanager";
 import { Directive } from "./directive";
 import { Element } from "./element";
-import { NError } from "./error";
 import { NEvent } from "./event";
 import { Expression } from "./expression";
 import { ModuleFactory } from "./modulefactory";
 import { ASTObj } from "./types";
-import { Util } from "./util";
 
 export class Compiler {
 
@@ -35,7 +33,6 @@ export class Compiler {
         let regExp = /\<\!\-\-[\s\S]*?\-\-\>/g;
         srcStr = srcStr.replace(regExp,'');
         // 1 识别标签
-        // regExp = /(?<!{{[^<}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^<{]*}})/g;
         regExp = /(?<!\{\{[^<}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^>{{]*?\}\})/g;
         let st = 0;
         //标签串数组,含开始和结束标签
@@ -291,11 +288,11 @@ export class Compiler {
                 // 数据
                 let tempArr = attr[0].split(':');
                 let bindFlag: boolean = false;
-                if (tempArr.length == 2) {
+                if (tempArr.length === 2) {
                     bindFlag = tempArr[1] == 'true' ? true : false;
                 }
-                let name = tempArr[0].split('-')[1];
-                let value = attr[1].substring(2, attr[1].length - 2);
+                let name = tempArr[0].substr(2);
+                let value = tempArr[0];
                 // 变量别名，变量名（原对象.变量名)，双向绑定标志
                 let data = [value, bindFlag];
                 oe.moduleDatas[name] = data;
@@ -313,6 +310,7 @@ export class Compiler {
                 return a.type.prio - b.type.prio;
             });
         }
+        
     }
 
     /**

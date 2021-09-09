@@ -32,10 +32,10 @@ export class Util {
 
     /**
      * 
-     * @param paModule 父模块
-     * @param module 当前模块
-     * @param dom 当前dom
-     * @returns void
+     * @param paModule  父模块
+     * @param module    当前模块
+     * @param dom       当前dom
+     * @returns         void
      */
      /**
      * 
@@ -44,21 +44,21 @@ export class Util {
      * @param dom 当前dom
      * @returns void
      */
-    static async handlesDatas(paModule: Module, module: Module, dom: Element): Promise<void> {
-        const { datas } = dom;
+    static async handleDatas(paModule: Module, module: Module, dom: Element): Promise<void> {
+        const { moduleDatas } = dom;
         const { model } = module;
         const { dataType, name, id } = paModule;
-        if (datas === undefined || !Util.isObject(datas)) {
+        if (moduleDatas === undefined || !Util.isObject(moduleDatas)) {
             return;
         }
         //datas属性
-        const dataNames = Object.getOwnPropertyNames(datas);
+        const dataNames = Object.getOwnPropertyNames(moduleDatas);
 
         for (let i = 0; i < dataNames.length; i++) {
             paModule.subscribes = paModule.subscribes || new LocalStore();
             let prop: string = dataNames[i],
                 subscribes = paModule.subscribes,
-                data = datas[prop],
+                data = moduleDatas[prop],
                 dependencies: ExpressionMd,
                 objModel: Model,
                 valStr: Expression;
@@ -185,14 +185,14 @@ export class Util {
                         if (objModel.hasOwnProperty(field)) {
                             return objModel[field];
                         };
-                        return objModel.$query(field);
+                        return objModel.$get(field);
                     }));
                 }
                 dependencies['obj'] = objFunc ? objFunc.apply(objModel, exp.fields.map(field => {
                     if (objModel.hasOwnProperty(field)) {
                         return objModel[field];
                     };
-                    return objModel.$query(field);
+                    return objModel.$get(field);
                 })) : undefined;
             }
         }
@@ -782,4 +782,79 @@ export class Util {
         return new Function(`return(${evalStr})`)();
     }
 
+    /**
+     * 
+     * @param vDom element元素
+     * @param module 模块   
+     * @param parent 父element  
+     * @param parentEl 父真实dom
+     * @returns 新建一个dom元素
+     */
+     public static newEls(vDom,module,parent,parentEl){
+        let el1;
+        if (vDom.tagName) {
+            el1 = newEl(vDom,parent,parentEl);
+            genSub(el1, vDom);
+        } else {
+            el1 = newText(vDom.textContent);
+        }
+        return el1;
+            /**
+         * 新建element节点
+         * @param vdom 		虚拟dom
+         * @param parent 	父虚拟dom
+         * @param parentEl 	父element
+         * @returns 		新的html element
+         */
+        function newEl(vdom: Element, parent: Element, parentEl?: Node): any {
+        //创建element
+            let el;
+            if (vdom.getTmpParam('isSvgNode')) {  //如果为svg node，则创建svg element
+                el = Util.newSvgEl(vdom.tagName);
+            } else {
+                el = Util.newEl(vdom.tagName);
+            }
+            //设置属性
+            Util.getOwnProps(vdom.props).forEach((k) => {
+                if (typeof vdom.props[k] != 'function')
+                    el.setAttribute(k, vdom.props[k]);
+            });
+
+            el.setAttribute('key', vdom.key);
+            vdom.handleNEvents(module, el, parent, parentEl);
+            vdom.handleAssets(el);
+            return el;
+        }
+
+        /**
+         * 新建文本节点
+         */
+        function newText(text: string | HTMLElement | DocumentFragment, dom?: Element): any {
+            if (!text) {
+                text = '';
+                dom = null;
+            }
+            return document.createTextNode(<string>text);
+        }
+
+        /**
+         * 生成子节点
+         * @param pEl 	父节点
+         * @param vNode 虚拟dom父节点	
+         */
+        function genSub(pEl: Node, vNode: Element) {
+            if (vNode.children && vNode.children.length > 0) {
+                vNode.children.forEach((item) => {
+                    let el1;
+                    if (item.tagName) {
+                        el1 = newEl(item, vNode, pEl);
+                        genSub(el1, item);
+                    } else {
+                        el1 = newText(item.textContent, item);
+                    }
+                    pEl.appendChild(el1);
+                });
+            }
+        }
+    }
 }

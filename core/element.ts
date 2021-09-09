@@ -878,7 +878,6 @@ export class Element {
                 //子节点对比策略
                 let [oldStartIdx, oldStartNode, oldEndIdx, oldEndNode] = [0, dst.children[0], dst.children.length - 1, dst.children[dst.children.length - 1]];
                 let [newStartIdx, newStartNode, newEndIdx, newEndNode] = [0, this.children[0], this.children.length - 1, this.children[this.children.length - 1]];
-                let [newMap, newKeyMap] = [new Map(), new Map()];
                 while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
                     if (sameKey(oldStartNode, newStartNode)) {
                         newStartNode.compare(oldStartNode, retArr, deleteMap, this);
@@ -889,40 +888,40 @@ export class Element {
                         newEndNode = this.children[--newEndIdx];
                         oldEndNode = dst.children[--oldEndIdx];
                     } else if (sameKey(newStartNode, oldEndNode)) {
+                        //新前久后
                         newStartNode.compare(oldEndNode, retArr, deleteMap, this);
+                        //接在待操作老节点前面
+                        addDelKey(oldEndNode, 'insert', [oldStartNode.key])
                         newStartNode = this.children[++newStartIdx];
                         oldEndNode = dst.children[--oldEndIdx];
                     } else if (sameKey(newEndNode, oldStartNode)) {
                         newEndNode.compare(oldStartNode, retArr, deleteMap, this);
+                        //接在老节点后面
+                        addDelKey(oldStartNode, 'insert', [dst.children[oldEndIdx + 1].key])
                         newEndNode = this.children[--newEndIdx];
                         oldStartNode = dst.children[++oldStartIdx];
                     } else {
-                        newMap.set(newStartIdx, newStartNode);
-                        newKeyMap.set(newStartNode.key, newStartIdx);
+                        addDelKey(newStartNode, 'add', [oldStartNode.key]);
                         newStartNode = this.children[++newStartIdx];
                     }
                 }
+                //有新增或删除节点
                 if (oldStartIdx <= oldEndIdx || newStartIdx <= newEndIdx) {
-                    if (newStartIdx <= newEndIdx) {//新增节点
-                        for (let i = newStartIdx; i <= newEndIdx; i++)  retArr.push(new ChangedDom(this.children[i], 'add', this, i));
-                    } else {//有老节点
+                    if (oldStartIdx > oldEndIdx) {
+                        //没有老节点
+                        for (let i = newStartIdx; i <= newEndIdx; i++) {
+                            let ch = this.children[i];
+                            if (ch) {
+                                // 添加到老节点的前面
+                                oldEndNode && addDelKey(ch, 'add', [dst.children[oldEndIdx + 1].key]);
+                            }
+                        }
+                    } else {
+                        //有老节点
                         for (let i = oldStartIdx; i <= oldEndIdx; i++) {
-                            let oldKey = dst.children[i].key;
-                            if (newKeyMap.has(oldKey)) {
-                                newMap.get(newKeyMap.get(oldKey)).compare(dst.children[i], retArr, deleteMap, this);
-                                newMap.delete(newKeyMap.get(oldKey));
-                                newKeyMap.delete(oldKey);
-                            }
-                            else {
-                                addDelKey(dst.children[i]);
-                            }
-                        };
+                            addDelKey(dst.children[i], 'del');
+                        }
                     }
-                }
-                if (newMap.size) {
-                    newMap.forEach((v, k) => {
-                        retArr.push(new ChangedDom(v, 'add', this, k));
-                    });
                 }
             }
         }
@@ -930,14 +929,25 @@ export class Element {
             return newElement.key === oldElement.key;
         }
         //添加刪除替換的key
-        function addDelKey(element: Element, type?: string) {
+        function addDelKey(element: Element, type?: string, insert?: Array<any>) {
             let pKey: string = element.parent.key;
             if (!deleteMap.has(pKey)) {
                 deleteMap.set(pKey, new Array());
             }
-            deleteMap.get(pKey).push(type == 'rep' ? element.parent.children.indexOf(element) + '|' + this.key : element.parent.children.indexOf(element));
+            //添加节点或者更改节点顺序
+            if (insert != undefined) {
+                deleteMap.get(pKey).push(type === 'add' ? [element.key, insert[0], 'add'] : [element.key, insert[0]]);
+            } else {
+                let ans;
+                //老节点的删除不能依据index
+                if (type == 'del') {
+                    ans = [element.key];
+                } else {
+                    ans = type == 'rep' ? element.parent.children.indexOf(element) + '|' + element.key : element.parent.children.indexOf(element);
+                }
+                deleteMap.get(pKey).push(ans);
+            }
         }
-
     }
 
     /**

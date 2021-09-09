@@ -4,7 +4,7 @@ export class LocalStore {
     /**
      * all topic  subscribers
      */
-     subscribers: Map<string | symbol, Array<Function>> = new Map();
+    subscribers: Map<string | symbol, Array<Function>> = new Map();
 
 
     /**

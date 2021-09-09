@@ -1,5 +1,6 @@
 import { Application } from "./application";
 import { NError } from "./error";
+import { Model } from "./model";
 import { Module } from "./module";
 import { NodomMessage, store } from "./nodom";
 import { ResourceManager } from "./resourcemanager";
@@ -69,7 +70,7 @@ export class ModuleFactory {
             instance.init();
             this.classes.set(className,{
                 instance:instance,
-                model:Util.clone(instance.model)
+                model:instance.model
             });
         }else{
             let cfg = this.classes.get(className);
@@ -77,7 +78,7 @@ export class ModuleFactory {
             instance = cfg.instance.clone(moduleName);
             //克隆原始数据
             if(cfg.model){
-                instance.model = Util.clone(cfg.model);
+                instance.model = new Model(Util.clone(cfg.model),instance);
             }
         }
         return instance;

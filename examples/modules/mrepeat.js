@@ -4,6 +4,7 @@ export class MRepeat extends Module{
         return `
         <div class="view">
             <button e-click='pop'>pop</button>
+            <button e-click='push'>push</button>
             <button e-click='addFood'>addFood</button>
             <button e-click='desc'>价格降序</button>
             <div class={{
@@ -85,10 +86,13 @@ export class MRepeat extends Module{
             return a1;
         },
         desc(){
-            this.foods.sort((a,b)=>{if(a.price>b.price)return -1;return 1;})
+            this.foods.sort((a,b)=>{if(a.price>b.price)return 1;return -1;})
         },
         pop(){
             this.foods.pop();
+        },
+        push(){
+            this.foods.push({name:'push菜单',price:50});
         },
         addFood(){
             console.log('ddd');
@@ -103,6 +107,5 @@ export class MRepeat extends Module{
                 }
             )
         }
-        
     }
 }

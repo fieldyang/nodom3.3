@@ -259,23 +259,46 @@ export class Module {
                 //刪除和替換
                 deleteMap.forEach((value, key) => {
                     let dp: HTMLElement = this.getNode(key);
-                    for (let i = value.length - 1; i >= 0; i--) {
+                    let tmp = [];
+                    for (let i = 0; i < value.length; i++) {
                         let index = value[i];
+                        if (typeof index == 'object') {
+                            let els;
+                            //新建替换
+                            if (index[2] != undefined) {
+                                els = dp.querySelectorAll("[key='" + index[1] + "']");
+                                dp.insertBefore((() => {
+                                    const vDom: Element = root.query(index[0]);
+                                    return Util.newEls(vDom, this, vDom.parent, this.getNode(vDom.parent.key));
+                                })(), els[els.length - 1]);
+                            } else if (index.length === 2) {
+                                //更改dom节点顺序
+                                let ele = this.getNode(index[0]);
+                                if (ele) {
+                                    els = dp.querySelectorAll("[key='" + index[1] + "']");
+                                    dp.insertBefore(ele, els[els.length - 1]);
+                                }
+                            } else {
+                                //删除dom节点
+                                els = dp.querySelectorAll("[key='" + index[0] + "']");
+                                dp.removeChild(els[els.length - 1]);
+                            }
+                        } else {
+                            tmp.push(index);
+                        }
+                    }
+                    //替换和删除需要反向操作
+                    for (let i = tmp.length - 1; i >= 0; i--) {
+                        let index = tmp[i];
                         if (typeof index == 'string') {
                             let parm = index.split('|');
                             index = parm[0];
                             const vDom: Element = root.query(parm[1]);
                             dp.insertBefore((() => {
-                                const el: HTMLElement | SVGElement = vDom.getTmpParam('isSvgNode') ? Util.newSvgEl(vDom.tagName) : Util.newEl(vDom.tagName);
-                                //设置属性
-                                Util.getOwnProps(vDom.props).forEach(k => el.setAttribute(k, vDom.props[k]));
-                                el.setAttribute('key', vDom.key);
-                                vDom.handleNEvents(this, el, vDom.parent);
-                                vDom.handleAssets(el);
-                                return el;
+                                return Util.newEls(vDom, this, vDom.parent, this.getNode(vDom.parent.key));
                             })(), dp.childNodes[index++]);
                         }
-                        dp.removeChild(dp.childNodes[index]);
+                        if (dp.childNodes.length > index) dp.removeChild(dp.childNodes[index]);
                     }
                 });
                 deleteMap.clear();

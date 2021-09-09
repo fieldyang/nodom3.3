@@ -168,8 +168,6 @@ export class ModelManager {
      * @param newValue  新值
      */
     public update(model: Model, key: string, oldValue?: any, newValue?: Element) {
-        // console.log(this.module,key,oldValue,newValue);
-        
         if(oldValue && oldValue !== newValue || oldValue === undefined && newValue === undefined){
             Renderer.add(this.module);
         }

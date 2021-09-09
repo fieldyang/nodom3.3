@@ -4,7 +4,6 @@ import { Element } from "../core/element";
 import { NError } from "../core/error";
 import { NEvent } from "../core/event";
 import { Expression } from "../core/expression";
-import { Filter } from "../core/filter";
 import { Model } from "../core/model";
 import { Module } from "../core/module";
 import { ModuleFactory } from "../core/modulefactory";
@@ -97,10 +96,10 @@ export default (function () {
             if (directive.value == '$$') {
                 model = module.model;
             } else {
-                model = model.$query(directive.value);
+                model = model.$get(directive.value);
             }
             if (!model) {
-                model = module.model.$query(directive.value);
+                model = module.model.$get(directive.value);
             }
             if (model) {
                 dom.model = model;
@@ -292,6 +291,63 @@ export default (function () {
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             dom.dontRender = !directive.value;
+        }
+    );
+
+    /**
+     * 指令名 data
+     * 描述：从当前模块获取数据并用于子模块，dom带module指令时有效
+     */
+    DirectiveManager.addType('data',
+        5,
+        (directive: Directive, dom: Element) => {
+            
+        },
+        (directive: Directive, dom: Element, module: Module, parent: Element) => {
+            if(typeof directive.value !== 'object'){
+                return;
+            }
+            let mdlDir = dom.getDirective('module');
+            if(!mdlDir || !mdlDir.extra.moduleId){
+                return;
+            }
+            let obj = directive.value;
+            //子模块
+            let subMdl = ModuleFactory.get(mdlDir.extra.moduleId);
+            //子model
+            let m:Model = subMdl.model;
+            let model = dom.model;
+            Object.getOwnPropertyNames(obj).forEach(p=>{
+                //字段名
+                let field;
+                // 反向修改
+                let reverse = false;
+                if(Array.isArray(obj[p])){
+                    field = obj[p][0];
+                    if(obj[p].length>1){
+                        reverse = obj[p][1];
+                    }
+                    //删除reverse，只保留字段
+                    obj[p] = field;
+                }else{
+                    field = obj[p];
+                }
+
+                let d = model.$get(field);
+                //数据赋值
+                if(d !== undefined){
+                    m[p] = d;
+                }
+                //反向处理
+                if(reverse){
+                    m.$watch(p,function(ov,nv){
+                        console.log(model);
+                        if(model){
+                            model.$set(field,nv);
+                        }
+                    });
+                }
+            });
         }
     );
     /**
@@ -527,7 +583,7 @@ export default (function () {
                 return;
             }
 
-            let dataValue = model.$query(directive.value);
+            let dataValue = model.$get(directive.value);
             //变为字符串
             if (dataValue !== undefined && dataValue !== null) {
                 dataValue += '';
