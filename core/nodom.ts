@@ -1,21 +1,17 @@
-import { Application } from "./application";
 import { DirectiveManager } from "./directivemanager";
 import { NError } from "./error";
 import { NodomMessage_en } from "./locales/msg_en";
-import { NodomMessage_zh } from "./locales/msg_zh";
-import { MessageQueue } from "./messagequeue";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
 import { Renderer } from "./renderer";
 import { Route } from "./route";
 import { Scheduler } from "./scheduler";
-import { IAppCfg, IMdlClassObj, IRouteCfg } from "./types";
+import { IRouteCfg } from "./types";
 import { Util } from "./util";
 
 /**
  * 新建store方法
  */
-// export const newStore=kayaks;
 /**
  * nodom提示消息
  */
@@ -26,12 +22,9 @@ export let store:Object|undefined ;
  * @param config 应用配置
  */
 export function nodom(clazz:Module,el?:string){
-    //消息队列消息处理任务
-    Scheduler.addTask(MessageQueue.handleQueue, MessageQueue);
     //渲染器启动渲染
     Scheduler.addTask(Renderer.render, Renderer);
     //启动调度器
-    // Scheduler.start(config.scheduleCircle);
     Scheduler.start();
     NodomMessage = NodomMessage_en;
     return ModuleFactory.getInstance(clazz,null,{el:el});
@@ -64,14 +57,6 @@ export function createDirective(name: string, priority: number, init: Function, 
         init,
         handler
     );
-}
-
-/**
- * 创建模块
- * @param modules 模块配置数组
- */
-export function addModules(modules: Array<IMdlClassObj>) {
-    ModuleFactory.addModules(modules);
 }
 
 /**
@@ -187,7 +172,3 @@ export async function request(config): Promise<any> {
         }
     });
 }
-
-
-
-

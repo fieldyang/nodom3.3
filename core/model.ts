@@ -6,14 +6,12 @@ import { Util } from "./util";
  * 模型类
  */
 
-export const modelCloneExpKey = ["$moduleId", "$key", "$watch", "$query"]
 
 export class Model {
     /**
      * 模块id
      */
     $moduleId: number;
-
 
     /**
      * @param data 		数据
@@ -23,7 +21,6 @@ export class Model {
     constructor(data: any, module: Module) {
         //模型管理器
         let mm: ModelManager = module.modelManager;
-
         let proxy = new Proxy(data, {
             set: (src: any, key: string, value: any, receiver: any) => {
                 //值未变,proxy 不处理
@@ -48,10 +45,8 @@ export class Model {
             get: (src: any, key: string | symbol, receiver) => {
                 let res = Reflect.get(src, key, receiver);
                 //数组的sort和fill触发强行渲染
-                if(Array.isArray(src) && ['sort','fill'].indexOf(<string>key) !== -1){
-                    setTimeout(()=>{
-                        mm.update(proxy,<string>key);
-                    },0)
+                if(Array.isArray(src) && ['sort','fill'].indexOf(<string>key) !== -1){ //强制渲染
+                    mm.update(proxy,null,null,null,true);
                 }
                 let data = module.modelManager.getFromDataMap(src[key]);
                 if (data) {
@@ -59,17 +54,12 @@ export class Model {
                 }
                 
                 if (res !== null && typeof res === 'object') {
-                    //如果是的对象，则返回代理，便于后续激活get set方法                   
-                    // 判断是否已经代理，如果未代理，则增加代理
+                    //如果是对象，则返回代理，便于后续激活get set方法                   
+                    //判断是否已经代理，如果未代理，则增加代理
                     if (!src[key].$watch) {
                         let p = new Model(res, module);
-                        // receiver[key] = p;
                         return p;
                     }
-                    // else {
-                    //     let data = module.modelManager.getFromDataMap(src[key]);
-                    //     return data ? data : res;
-                    // }
                 }
                 return res;
             },

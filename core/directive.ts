@@ -1,6 +1,5 @@
 import { DirectiveManager } from "./directivemanager";
 import { DirectiveType } from "./directivetype";
-import { Filter } from "./filter";
 import { Element } from "./element";
 import { Module } from "./module";
 import { Util } from "./util";
@@ -29,10 +28,7 @@ export  class Directive {
      * 表达式
      */
     public expression:Expression;
-    /**
-     * 过滤器组
-     */
-    public filters:Filter[];
+    
     /**
      * 附加参数
      */
@@ -51,7 +47,7 @@ export  class Directive {
      * @param filters   过滤器字符串或过滤器对象,如果为过滤器串，则以｜分割
      * @param notSort   不排序
      */
-    constructor(type:string, value:string|Expression,dom?:Element, parent?:Element, filters?:string|Filter[],notSort?:boolean) {
+    constructor(type:string, value:string|Expression,dom?:Element, parent?:Element,notSort?:boolean) {
         this.id = Util.genId();
         this.type = DirectiveManager.getType(type);
         if (Util.isString(value)) {
@@ -60,23 +56,6 @@ export  class Directive {
             this.expression = value;
         }
         
-        if(filters){
-            this.filters = [];
-            if(typeof filters === 'string'){
-                let fa:string[] = filters.split('|');
-                for(let f of fa){
-                    this.filters.push(new Filter(f));
-                }
-            }else if(Util.isArray(filters)){
-                for(let f of filters){
-                    if(typeof f === 'string'){
-                        this.filters.push(new Filter(<string>f));
-                    }else if(f instanceof Filter){
-                        this.filters.push(f);
-                    }
-                }
-            }
-        }
         if (type !== undefined && dom) {
             DirectiveManager.init(this,dom,parent);
             dom.addDirective(this,!notSort);

@@ -1,9 +1,5 @@
-import { Application } from "./application";
-import { NError } from "./error";
 import { Model } from "./model";
 import { Module } from "./module";
-import { NodomMessage, store } from "./nodom";
-import { ResourceManager } from "./resourcemanager";
 import { IMdlClassObj, IModuleCfg } from "./types";
 import { Util } from "./util";
 
@@ -104,71 +100,5 @@ export class ModuleFactory {
      */
     static getMain() {
         return this.mainModule;
-    }
-
-    /**
-     * 添加模块类
-     * @param modules 
-     */
-    public static async addModules(modules: Array<IMdlClassObj>) {
-        for (let cfg of modules) {
-            if (!cfg.path) {
-                throw new NError("paramException", 'modules', 'path');
-            }
-            if (!cfg.class) {
-                throw new NError("paramException", 'modules', 'class');
-            }
-            //lazy默认true
-            if (cfg.lazy === undefined) {
-                cfg.lazy = true;
-            }
-            //singleton默认true
-            if (cfg.singleton === undefined) {
-                cfg.singleton = true;
-            }
-            if (!cfg.lazy) {
-                await this.initModule(cfg);
-            }
-            //存入class工厂
-            this.classes.set(cfg.class, cfg);
-        }
-    }
-
-    /**
-     * 初始化模块
-     * @param cfg 模块类对象
-     */
-    private static async initModule(cfg: IMdlClassObj) {
-        //增加 .js后缀
-        let path: string = cfg.path;
-        if (!path.endsWith('.js')) {
-            path += '.js';
-        }
-        //加载模块类js文件
-        let url: string = Util.mergePath([Application.getPath('module'), path]);
-        await ResourceManager.getResources([{ url: url, type: 'js' }]);
-        // let cls = eval(cfg.class);
-        let cls = Util.eval(cfg.class);
-        if (cls) {
-            let instance = Reflect.construct(cls, [{
-                name: cfg.name,
-                data: cfg.data,
-                lazy: cfg.lazy
-            }]);
-            if (store) {
-                instance.store = store;
-            }
-            //模块初始化
-            await instance.init();
-            cfg.instance = instance;
-            //单例，则需要保存到modules
-            if (cfg.singleton) {
-                this.modules.set(instance.id, instance);
-            }
-            //初始化完成
-            delete cfg.initing;
-        } else {
-            throw new NError('notexist1', NodomMessage.TipWords['moduleClass'], cfg.class);
-        }
     }
 }

@@ -166,13 +166,14 @@ export class ModelManager {
      * @param key       属性
      * @param oldValue  旧值
      * @param newValue  新值
+     * @param force     强制渲染
      */
-    public update(model: Model, key: string, oldValue?: any, newValue?: Element) {
-        if(oldValue && oldValue !== newValue || oldValue === undefined && newValue === undefined){
+    public update(model: Model, key: string, oldValue?: any, newValue?: Element, force?:boolean) {
+        if(oldValue !== newValue || force){
             Renderer.add(this.module);
         }
         //处理观察器函数
-        let watcher = this.getWatcherFromModelMap(model, key);
+        let watcher = this.getWatcherFromModelMap(model, <string>key);
         if (watcher) {
             for (let foo of watcher) {
                 //方法名

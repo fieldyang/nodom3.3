@@ -1,6 +1,5 @@
 import { Compiler } from "./compiler";
 import { Element } from "./element";
-import { LocalStore } from "./localstore";
 import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
 import { ModuleFactory } from "./modulefactory";
@@ -83,11 +82,6 @@ export class Module {
     public state: number;
 
     /**
-     * 局部存储，用于存放父子模块作用域的订阅
-     */
-    private localStore: LocalStore;
-
-    /**
      * 数据模型工厂
      */
     public modelManager: ModelManager;
@@ -116,10 +110,7 @@ export class Module {
      * 后置渲染序列
      */
     private postRenderOps:any[] = [];
-    /**
-     * 订阅
-     */
-    public subscribes: LocalStore;
+    
 
     /**
      * 从其它模块获取数据项的数据类型
@@ -236,6 +227,7 @@ export class Module {
         if (this.state < 3 || !this.virtualDom) {
             return false;
         }
+        
         //克隆新的树
         let root: Element = this.virtualDom.clone();
         //执行前置方法
@@ -317,16 +309,6 @@ export class Module {
         //执行后置方法
         this.doRenderOps(1);
 
-        //通知更新数据
-        if (this.subscribes) {
-            this.subscribes.publish('@data' + this.id, null);
-            this.subscribes.publish('@dataTry' + this.id, null);
-        }
-
-        let md: Module = this.getParent();
-        if (md && md.subscribes !== undefined) {
-            md.subscribes.publish('@dataTry' + this.parentId, null);
-        }
         return true;
     }
 
@@ -383,15 +365,6 @@ export class Module {
         //克隆虚拟dom树
         m.virtualDom = this.virtualDom.clone(true);
         return m;
-    }
-
-    /**
-     * 添加引用数据项到本地存储
-     */
-    public addToLocalStore() {
-        if (!this.localStore) {
-            this.localStore = new LocalStore();
-        }
     }
 
     /**

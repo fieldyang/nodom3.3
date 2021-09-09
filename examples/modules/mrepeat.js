@@ -30,7 +30,7 @@ export class MRepeat extends Module{
                     菜名：{{name}}，价格：{{price}}
                 </div>
             </div>
-            
+            <!--
             <div class=tip>价格升序排序（编号从1开始）</div>
             <div class=code>
                 菜单：
@@ -38,7 +38,7 @@ export class MRepeat extends Module{
                     return 1;return -1;})}}>
                     编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
                 </div>
-            </div>
+            </div>-->
         </div>
         `
     }
@@ -86,7 +86,7 @@ export class MRepeat extends Module{
             return a1;
         },
         desc(){
-            this.foods.sort((a,b)=>{if(a.price>b.price)return 1;return -1;})
+            this.foods.sort((a,b)=>{if(a.price>b.price)return -1;return 1;})
         },
         pop(){
             this.foods.pop();
