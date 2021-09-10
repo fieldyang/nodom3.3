@@ -8,7 +8,7 @@ export class ModuleMain extends Module{
             <div>hello world!</div>
             <div>x.y is {{x.y}}</div>
             <div>y is {{y}}</div>
-           <ModuleA x-data={{getData()}}/>
+            <ModuleA p1=true x-data={{getData()}}/>
            </div>
         `
     }

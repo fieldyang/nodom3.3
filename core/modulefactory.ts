@@ -1,7 +1,6 @@
-import { Model } from "./model";
+import { Compiler } from "./compiler";
 import { Module } from "./module";
-import { IMdlClassObj, IModuleCfg } from "./types";
-import { Util } from "./util";
+import { Element } from "./Element";
 
 /**
  * 过滤器工厂，存储模块过滤器
@@ -13,9 +12,9 @@ export class ModuleFactory {
     private static modules: Map<number, Module> = new Map();
 
     /**
-     * 模块类集合
+     * 模块类集合 {className:instance}
      */
-    private static classes: Map<string, IMdlClassObj> = new Map();
+    public static classes: Map<string, Module> = new Map();
 
     /**
      * 主模块
@@ -29,9 +28,14 @@ export class ModuleFactory {
     public static add(item: Module) {
         //第一个为主模块
         if(this.modules.size === 0){
-            this.mainModule = item
+            this.mainModule = item;
         }
         this.modules.set(item.id, item);
+
+        //加入模块类map
+        if(!this.classes.has(item.constructor.name)){
+            this.classes.set(item.constructor.name,item);
+        }
     }
 
     /**
@@ -54,29 +58,31 @@ export class ModuleFactory {
     /**
      * 获取模块实例（通过类名）
      * @param className     模块类名
-     * @param moduleName    模块名
-     * @param config        模块配置项
+     * @param props         模块外部属性
      */
-    public static getInstance(clazz: any, moduleName?: string,config?:IModuleCfg): Module {
-        let instance;
-        let className:string = (typeof clazz === 'function'?clazz.name:clazz);
-        if(!this.classes.has(className)){
-            config = config || {};
-            instance = Reflect.construct(clazz,[config]);
-            instance.init();
-            this.classes.set(className,{
-                instance:instance,
-                model:instance.model
-            });
-        }else{
-            let cfg = this.classes.get(className);
-            //克隆模块
-            instance = cfg.instance.clone(moduleName);
-            //克隆原始数据
-            if(cfg.model){
-                instance.model = new Model(Util.clone(cfg.model),instance);
-            }
+    public static getInstance(className:string,props?:any): Module {
+        let src = this.classes.get(className);
+        //未初始化
+        if(src.state === 0){
+            src.init();
         }
+        let instance = src.clone();
+        if(src.template){
+            let tp = src.template.apply(src.model,[props]);
+            let root:Element;
+            //当返回为数组时，如果第二个参数为true，则表示不在保留模版函数
+            if(Array.isArray(tp)){
+                root = Compiler.compile(tp[0]);
+                if(tp.length>1 && tp[1]){
+                    src.virtualDom = root;
+                    delete src.template;
+                }
+            }else{ //只返回编译串
+                root = Compiler.compile(tp);
+            }
+            instance.virtualDom = root;
+        }
+        
         return instance;
     }
     /**

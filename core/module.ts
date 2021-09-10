@@ -4,7 +4,7 @@ import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
 import { ModuleFactory } from "./modulefactory";
 import { Renderer } from "./renderer";
-import { ChangedDom, IModuleCfg } from "./types";
+import { ChangedDom} from "./types";
 import { Util } from "./util";
 
 /**
@@ -77,7 +77,7 @@ export class Module {
     public children: Array<number> = [];
 
     /**
-     * 状态 1 create(创建) 2 unactive(渲染后被置为非激活) 3 active(激活，可渲染显示) 4 已渲染
+     * 状态 0 create(创建) 1初始化 2 unactive(渲染后被置为非激活) 3 active(激活，可渲染显示) 4 已渲染
      */
     public state: number;
 
@@ -97,11 +97,6 @@ export class Module {
     private containerKey:string;
 
     /**
-     * 子模块名id映射，如 {模块局部名:模块全局id}，以父子关系形成一个闭环，模块名闭环内唯一
-     */
-    private moduleMap: Map<string, number> = new Map();
-
-    /**
      * 后置渲染序列
      */
     private preRenderOps:any[] = [];
@@ -113,26 +108,11 @@ export class Module {
     
 
     /**
-     * 从其它模块获取数据项的数据类型
-     */
-    public dataType: any;
-
-    /**
      * 构造器
-     * @param config    模块配置
      */
-    constructor(config?: IModuleCfg) {
+    constructor() {
         this.id = Util.genId();
         this.state = 0;
-        // 模块名字
-        if (config && config.name) {
-            this.name = config.name;
-        }
-        //获取container，如果有el选择器，则使用选择器获取，否则使用body
-        if (config && config.el) {
-            this.container = document.querySelector(config.el);
-        }
-
         //加入模块工厂
         ModuleFactory.add(this);
         // 初始化模型工厂
@@ -143,16 +123,12 @@ export class Module {
      * 初始化
      */
     public init() {
+        // 设置状态为初始化
+        this.state = 1;
         //初始化model
         let data = (typeof this.model === 'function' ? this.model() : this.model);
         this.model = new Model(data || {}, this);
-        //调用模版函数，并把this指向model
-        let tStr = (typeof this.template === 'function' ? this.template.apply(this.model) : this.template);
-        if (!tStr) {
-            throw '模版函数需要返回模版串';
-        }
-        delete this.template;
-
+        
         //初始化方法集
         this.methods = (typeof this.methods === 'function' ? this.methods.apply(this.model) : this.methods) || {};
         
@@ -160,20 +136,12 @@ export class Module {
         let mods = (typeof this.modules === 'function' ? this.modules.apply(this.model) : this.modules);
         if (Array.isArray(mods)) {
             for (let cls of mods) {
-                ModuleFactory.getInstance(cls);
+                Reflect.construct(cls,[]);
             }
         }
         delete this.modules;
-        
         //处理css配置
         this.handleCss();
-        // 编译成虚拟dom
-        this.virtualDom = Compiler.compile(tStr);
-
-        // 根模块，进行激活
-        if(this === ModuleFactory.getMain()){
-            this.active();
-        }
     }
     
     /**
@@ -224,7 +192,7 @@ export class Module {
             return true;
         }
         //容器没就位或state不为active则不渲染，返回渲染失败
-        if (this.state < 3 || !this.virtualDom) {
+        if (this.state < 3) {
             return false;
         }
         
@@ -344,15 +312,13 @@ export class Module {
 
     /**
      * 克隆模块
-     * 共享virtual Dom，但是名字为新名字
-     * @param moduleName    新模块名
      */
-    clone(moduleName: string): any {
+    public clone(): Module {
         let me = this;
-        let m: Module = Reflect.construct(this.constructor, [{ name: moduleName }]);
+        let m: Module = Reflect.construct(this.constructor, []);
         //克隆数据
         if (this.model) {
-            let data = Util.clone(this.model, /^\$\S+/);
+            let data = Util.clone(this.model);
             m.model = new Model(data, m);
         }
         let excludes = ['id', 'name', 'model', 'virtualDom', 'container', 'containerKey', 'modelManager'];
@@ -363,7 +329,9 @@ export class Module {
             m[item] = me[item];
         });
         //克隆虚拟dom树
-        m.virtualDom = this.virtualDom.clone(true);
+        if(this.virtualDom){
+            m.virtualDom = this.virtualDom.clone(true);
+        }
         return m;
     }
 
@@ -386,10 +354,6 @@ export class Module {
             let m: Module = ModuleFactory.get(moduleId);
             if (m) {
                 m.parentId = this.id;
-            }
-            //保存name和id映射
-            if (m.name) {
-                this.moduleMap.set(m.name, moduleId);
             }
         }
     }
@@ -480,29 +444,6 @@ export class Module {
             param = [this];
         }
         this.invokeMethod(eventName, param);
-    }
-
-    /**
-     * 获取子孙模块
-     * @param name          模块名 
-     * @param descendant    如果为false,只在子节点内查找，否则在后代节点查找（深度查询），直到找到第一个名字相同的模块
-     */
-    public getChild(name: string, descendant?: boolean): Module {
-        if (this.moduleMap.has(name)) {
-            let mid = this.moduleMap.get(name);
-            return ModuleFactory.get(mid);
-        } else if (descendant) {
-            for (let id of this.children) {
-                let m = ModuleFactory.get(id);
-                if (m) {
-                    let m1 = m.getChild(name, descendant);
-                    if (m1) {
-                        return m1;
-                    }
-                }
-            }
-        }
-        return null;
     }
 
     /**

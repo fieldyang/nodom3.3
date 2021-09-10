@@ -52,10 +52,21 @@ export default (function () {
             if (ext.moduleId) {
                 m = ModuleFactory.get(ext.moduleId);
             } else {
-                m = ModuleFactory.getInstance(directive.value, dom.getProp('moduleName'));
+                let props = {};
+                
+                Object.getOwnPropertyNames(dom.props).forEach(p=>{
+                    props[p] = dom.props[p];
+                });
+                Object.getOwnPropertyNames(dom.exprProps).forEach(p=>{
+                    props[p] = dom.exprProps[p].val(dom.model);
+                });
+                m = ModuleFactory.getInstance(directive.value,props);
+                
                 if (!m) {
                     return;
                 }
+                // delete dom.props;
+                // delete dom.exprProps;
                 //保留modelId
                 directive.extra = { moduleId: m.id };
                 //添加到父模块
@@ -65,10 +76,6 @@ export default (function () {
                 //添加到渲染器
                 m.active();
             }
-            //处理d- 开头的附加参数
-            // Util.handlesDatas(module, m, dom);
-            //用一次后删除dom的datas熟悉
-            // delete dom.datas;
         }
     );
 
@@ -82,11 +89,6 @@ export default (function () {
             let value: string = <string>directive.value;
             //处理以.分割的字段，没有就是一个
             if (Util.isString(value)) {
-                // //从根数据获取
-                // if(value.startsWith('$$')){
-                //     directive.extra = 1;
-                //     value = value.substr(2);
-                // }
                 directive.value = value;
             }
         },
@@ -876,31 +878,6 @@ export default (function () {
         }
     );
 
-    /**
-     * 增加ignore指令
-     * 只渲染子节点到dom树
-     */
-    DirectiveManager.addType('ignoreself',
-        10,
-        (directive, dom) => {
-            dom.dontRenderSelf = true;
-        },
-        (directive, dom, module, parent) => {
-
-        }
-    );
-
-    /**
-     * 粘指令，粘在前一个dom节点上，如果前一个节点repeat了多个分身，则每个分身都粘上
-     * 如果未指定model，则用被粘节点的model
-     */
-    DirectiveManager.addType('stick',
-        10,
-        (directive, dom: Element) => {
-        },
-        (directive, dom, module, parent) => {
-        }
-    );
     /**
      * 插槽指令
      * 配合slot标签使用

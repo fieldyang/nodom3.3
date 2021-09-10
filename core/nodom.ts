@@ -19,15 +19,21 @@ export var NodomMessage;
 export let store:Object|undefined ;
 /**
  * 新建一个App
- * @param config 应用配置
+ * @param clazz     模块类
+ * @param el        el选择器
  */
-export function nodom(clazz:Module,el?:string){
+export function nodom(clazz:any,el:string){
     //渲染器启动渲染
     Scheduler.addTask(Renderer.render, Renderer);
     //启动调度器
     Scheduler.start();
     NodomMessage = NodomMessage_en;
-    return ModuleFactory.getInstance(clazz,null,{el:el});
+
+    Reflect.construct(clazz,[]);
+    let mdl = ModuleFactory.getInstance(clazz.name);
+    mdl.setContainer(document.querySelector(el));
+    mdl.active();
+    
 }
 
 /**
