@@ -234,7 +234,7 @@ export class Compiler {
         }
         if (selfCloseStr == '/') {
             // 这个标签是自闭合标签
-            if (stack1.length > 1) {
+            if (stack1.length > 0) {
                 stack1[stack1.length - 1].children.push({
                     tagName,
                     children: [],
