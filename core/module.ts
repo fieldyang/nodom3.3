@@ -177,8 +177,10 @@ export class Module {
 
     /**
      * 模版函数
+     * @params props    模块外部属性
+     * @returns         模版串或[模版串,true] 如果为true，表示不再编译
      */
-    public template(): string {
+    public template(props?:any): string {
         return null;
     }
 
