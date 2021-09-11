@@ -32,7 +32,7 @@ export class Expression {
             this.execFunc = new Function('$model','$methods',`
                 with($model){
                     with($methods){
-                        return ${exprStr};
+                        return ${exprStr.trim()};
                     }
                 }
             `);
@@ -135,7 +135,7 @@ export class Expression {
         
         let v;
         try {
-            v = this.execFunc(model,module.methods||{});
+            v = this.execFunc.apply(module.model,[model,module.methods||{}]);
         } catch (e) {
             console.error(e);
         }

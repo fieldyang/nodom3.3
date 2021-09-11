@@ -1,12 +1,11 @@
 import { DefineElementManager } from "./defineelementmanager";
 import { Directive } from "./directive";
 import { Element } from "./element";
-import { NError } from "./error";
+import { NError } from './error';
 import { NEvent } from "./event";
 import { Expression } from "./expression";
 import { ModuleFactory } from "./modulefactory";
 import { ASTObj } from "./types";
-
 
 export class Compiler {
 
@@ -25,7 +24,6 @@ export class Compiler {
 
         return oe;
     }
-
     /**
      * 把AST编译成虚拟dom
      * @param oe 虚拟dom的根容器
@@ -89,7 +87,6 @@ export class Compiler {
      */
     public static handleAstAttrs(oe: Element, attrs: Map<string, any>, parent: Element) {
         //指令数组 先处理普通属性在处理指令
-        console.log('111');
         let directives = [];
         if (!attrs) { return }
         for (let [key, value] of attrs) {
@@ -102,28 +99,13 @@ export class Compiler {
                 // 事件
                 let e = key.substr(2);
                 oe.addEvent(new NEvent(e, value.trim()));
-            } else if (key.startsWith("d-")) {
-                // 数据
-                let tempArr = key.split(':');
-                let bindFlag = 'false';
-                if (tempArr.length == 2) {
-                    bindFlag = tempArr[1] == 'true' ? 'true' : 'false';
-                }
-                let name = tempArr[0].split('-')[1];
-                if (/\{\{.+?\}\}/.test(value) === false) {
-                    throw new NError('数据必须是由大括号包裹');
-                }
-                value = value.substring(2, value.length - 2);
-                // 变量别名，变量名（原对象.变量名)，双向绑定标志
-                let data = [value, bindFlag];
-                oe.datas[name] = data;
             } else {
                 oe.setProp(key, value, value instanceof Expression);
             }
         }
         //处理属性
         for (let attr of directives) {
-            new Directive(attr.key.substr(2), attr.value, oe, parent, null, true);
+            new Directive(attr.key.substring(2), attr.value, oe, parent, true);
         }
         if (directives.length > 1) {
             //指令排序
@@ -230,7 +212,7 @@ export class Compiler {
         let [, , tagName, attrString, selfCloseStr] = startTag;
         if (ModuleFactory.has(tagName)) {
             // 是模块标签
-            attrString += `x-module=${tagName}`;
+            attrString += ` x-module=${tagName}`;
         }
         if (selfCloseStr == '/') {
             // 这个标签是自闭合标签

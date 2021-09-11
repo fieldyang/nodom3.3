@@ -1,11 +1,6 @@
 import { NError } from "./error";
 import { NodomMessage } from "./nodom";
 import { Element } from "./element";
-import { Expression } from "./expression";
-import { LocalStore } from "./localstore";
-import { Module } from "./module";
-import { ExpressionMd } from "./types";
-import { Model } from "./model";
 
 /**
  * 基础服务库
@@ -29,174 +24,6 @@ export class Util {
         'Array','Date','eval','function','hasOwnProperty','Infinity','isFinite','isNaN',
         'isPrototypeOf','length','Math','NaN','Number','Object','prototype','String','undefined','valueOf'
     ];
-
-    /**
-     * 
-     * @param paModule 父模块
-     * @param module 当前模块
-     * @param dom 当前dom
-     * @returns void
-     */
-     /**
-     * 
-     * @param paModule 父模块
-     * @param module 当前模块
-     * @param dom 当前dom
-     * @returns void
-     */
-    static async handlesDatas(paModule: Module, module: Module, dom: Element): Promise<void> {
-        const { datas } = dom;
-        const { model } = module;
-        const { dataType, name, id } = paModule;
-        if (datas === undefined || !Util.isObject(datas)) {
-            return;
-        }
-        //datas属性
-        const dataNames = Object.getOwnPropertyNames(datas);
-
-        for (let i = 0; i < dataNames.length; i++) {
-            paModule.subscribes = paModule.subscribes || new LocalStore();
-            let prop: string = dataNames[i],
-                subscribes = paModule.subscribes,
-                data = datas[prop],
-                dependencies: ExpressionMd,
-                objModel: Model,
-                valStr: Expression;
-
-            //表达式
-            let exp: Expression = new Expression(data[0]);
-            //处理依赖
-            handlesDependencies(data[0]);
-            //默认值
-            dependencies.obj = dependencies.obj || paModule.model;
-
-            //获取的到数据对象
-            if (dependencies.obj !== '') {
-                updated(dependencies);
-            } else {
-                let unSubScribe: Function = subscribes.subscribe('@dataTry' + id, () => {
-                    handlesDependencies(data[0]);
-                    if (dependencies.obj !== '') {
-                        updated(dependencies);
-                        //取消订阅
-                        unSubScribe();
-                    }
-                })
-            }
-            //找到依赖对象以后进行进一步操作
-            function updated(Dependence: ExpressionMd) {
-                Dependence.obj = Dependence.obj || paModule.model;
-                const { key, obj, moduleName } = Dependence;
-                let expData = (valStr || exp).val(objModel);
-
-                //预留 数据类型验证
-                if (dataType != undefined && Object.keys(dataType).indexOf(prop) !== -1) {
-                    if (dataType[prop].type !== typeof expData && (dataType[prop].type == 'array' && !Array.isArray(expData))) {
-                        return;
-                    }
-                }
-                model[prop] = expData;
-
-                //双向绑定
-                if (data[1]) {
-                    model.$watch(prop, async (oldValue, newValue) => {
-                        //防止栈溢出
-                        obj[key] = await newValue;
-                    });
-                }
-                let tid: number;
-                if (name == moduleName) {
-                    tid = id;
-                } else {
-                    //获取模块
-                    let subscribeMd = paModule.getChild(moduleName);
-                    if (subscribeMd !== null) {
-                        tid = subscribeMd.id;
-                        if (subscribeMd.subscribes == undefined) {
-                            subscribes = subscribeMd.subscribes = new LocalStore();
-                        }
-                    }
-                }
-
-                let change = false;
-                //单向绑定基本数据类型
-                obj && obj.$watch(key, async () => {
-                    change = true;
-
-                })
-                //订阅,反作用
-                subscribes.subscribe('@data' + tid, () => {
-                    //基本数据类型可以做到双向绑定，对象为单向数据流
-                    if (Util.isObject(obj[key]) || change) {
-                        model[prop] = obj[key];
-                        change = false;
-                    }
-                });
-            }
-            //处理依赖关系
-            function handlesDependencies(execStr: string) {
-                let index = execStr.lastIndexOf('.');
-                let keyFunc: Function,
-                    objFunc: Function,
-                    keyArray: Array<string>,
-                    //数据源模块
-                    objMd: Module
-                    ;
-                if (index !== -1) {
-                    dependencies = {
-                        obj: execStr.substring(0, index),
-                        key: execStr.substring(index + 1),
-                        moduleName: execStr.substring(0, execStr.indexOf('.'))
-                    }
-                    let { key, moduleName } = dependencies;
-                    let keys = [];
-                    //key有关键词
-                    if (exp.fields.reduce((pre, v) => {
-                        if (key.indexOf(v) !== -1) {
-                            keys.push(v);
-                            return pre + 1;
-                        }
-                    }, 0)) {
-                        keyFunc = new Function(`return function(${keys.join(',')}  ){return  ${key}  }`)();
-                        keyArray = keys;
-                    }
-                    valStr = new Expression(execStr.replace(moduleName + '.', ''));
-                } else {
-                    dependencies = {
-                        key: execStr,
-                        obj: '',
-                        moduleName: ''
-                    }
-                }
-                let { obj, moduleName } = dependencies;
-                if (dependencies.moduleName === '') {
-                    //赋值模块名
-                    dependencies.moduleName = paModule.name;
-                    objMd = paModule;
-                } else {
-                    dependencies.obj = obj.replace(moduleName, 'this');
-                    objMd = paModule.getChild(moduleName) || module;
-                    objFunc = new Function(`return function(${exp.fields.join(',')}  ){return  ${dependencies.obj}  }`)();
-                }
-                objModel = objMd.model;
-
-                if (keyFunc !== undefined) {
-                    dependencies['key'] = keyFunc.apply(objMd, keyArray.map(field => {
-                        if (objModel.hasOwnProperty(field)) {
-                            return objModel[field];
-                        };
-                        return objModel.$query(field);
-                    }));
-                }
-                dependencies['obj'] = objFunc ? objFunc.apply(objModel, exp.fields.map(field => {
-                    if (objModel.hasOwnProperty(field)) {
-                        return objModel[field];
-                    };
-                    return objModel.$query(field);
-                })) : undefined;
-            }
-        }
-    }
 
     /******对象相关******/
 
@@ -446,7 +273,7 @@ export class Util {
      */
     public static findObjByProps(obj: Object, props: Object, one: boolean): Array<Object> | Object {
         if (!this.isObject(obj)) {
-            throw new NError('invoke', 'this.findObjByProps', '0', 'Object');
+            throw new NError('invoke', 'Util.findObjByProps', '0', 'Object');
         }
 
         //默认false
@@ -782,4 +609,79 @@ export class Util {
         return new Function(`return(${evalStr})`)();
     }
 
+    /**
+     * 
+     * @param vDom element元素
+     * @param module 模块   
+     * @param parent 父element  
+     * @param parentEl 父真实dom
+     * @returns 新建一个dom元素
+     */
+     public static newEls(vDom,module,parent,parentEl){
+        let el1;
+        if (vDom.tagName) {
+            el1 = newEl(vDom,parent,parentEl);
+            genSub(el1, vDom);
+        } else {
+            el1 = newText(vDom.textContent);
+        }
+        return el1;
+            /**
+         * 新建element节点
+         * @param vdom 		虚拟dom
+         * @param parent 	父虚拟dom
+         * @param parentEl 	父element
+         * @returns 		新的html element
+         */
+        function newEl(vdom: Element, parent: Element, parentEl?: Node): any {
+        //创建element
+            let el;
+            if (vdom.getTmpParam('isSvgNode')) {  //如果为svg node，则创建svg element
+                el = Util.newSvgEl(vdom.tagName);
+            } else {
+                el = Util.newEl(vdom.tagName);
+            }
+            //设置属性
+            Util.getOwnProps(vdom.props).forEach((k) => {
+                if (typeof vdom.props[k] != 'function')
+                    el.setAttribute(k, vdom.props[k]);
+            });
+
+            el.setAttribute('key', vdom.key);
+            vdom.handleNEvents(module, el, parent, parentEl);
+            vdom.handleAssets(el);
+            return el;
+        }
+
+        /**
+         * 新建文本节点
+         */
+        function newText(text: string | HTMLElement | DocumentFragment, dom?: Element): any {
+            if (!text) {
+                text = '';
+                dom = null;
+            }
+            return document.createTextNode(<string>text);
+        }
+
+        /**
+         * 生成子节点
+         * @param pEl 	父节点
+         * @param vNode 虚拟dom父节点	
+         */
+        function genSub(pEl: Node, vNode: Element) {
+            if (vNode.children && vNode.children.length > 0) {
+                vNode.children.forEach((item) => {
+                    let el1;
+                    if (item.tagName) {
+                        el1 = newEl(item, vNode, pEl);
+                        genSub(el1, item);
+                    } else {
+                        el1 = newText(item.textContent, item);
+                    }
+                    pEl.appendChild(el1);
+                });
+            }
+        }
+    }
 }

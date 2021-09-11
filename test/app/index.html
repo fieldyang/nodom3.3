@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>nodom test</title>
-    <script src='../../dist/nodom.js'></script>
+    <!-- <script src='../../dist/nodom.js'></script> -->
     <!-- <script src='index.js' type='module'></script> -->
     <script type='module'>
         // let Module1=()=>{}
@@ -17,9 +17,9 @@
 </body>
 <script type='module'>
     // import('../../dist/nodom.js')
-    // import * as nodom from '../../dist/nodom.js'
+    import {nodom} from '../../dist/nodom.js'
     import {ModuleMain} from './modules/main.js'
-    app(ModuleMain,'div');
+    nodom(ModuleMain,'div');
     // import('./modules/main.js').then((m)=>{
     //     console.log(m);
     //     // let m1 = new m;

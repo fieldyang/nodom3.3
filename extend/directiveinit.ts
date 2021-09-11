@@ -4,7 +4,6 @@ import { Element } from "../core/element";
 import { NError } from "../core/error";
 import { NEvent } from "../core/event";
 import { Expression } from "../core/expression";
-import { Filter } from "../core/filter";
 import { Model } from "../core/model";
 import { Module } from "../core/module";
 import { ModuleFactory } from "../core/modulefactory";
@@ -53,23 +52,30 @@ export default (function () {
             if (ext.moduleId) {
                 m = ModuleFactory.get(ext.moduleId);
             } else {
-                m = ModuleFactory.getInstance(directive.value, dom.getProp('modulename'));
+                let props = {};
+                
+                Object.getOwnPropertyNames(dom.props).forEach(p=>{
+                    props[p] = dom.props[p];
+                });
+                Object.getOwnPropertyNames(dom.exprProps).forEach(p=>{
+                    props[p] = dom.exprProps[p].val(dom.model);
+                });
+                m = ModuleFactory.getInstance(directive.value,props);
+                
                 if (!m) {
                     return;
                 }
+                // delete dom.props;
+                // delete dom.exprProps;
                 //保留modelId
                 directive.extra = { moduleId: m.id };
                 //添加到父模块
                 module.addChild(m.id);
-                //设置容器key
-                m.containerKey = dom.key;
+                //设置容器
+                m.setContainerKey(dom.key);
                 //添加到渲染器
-                Renderer.add(m);
+                m.active();
             }
-            //处理d- 开头的附加参数
-            // Util.handlesDatas(module, m, dom);
-            //用一次后删除dom的datas熟悉
-            // delete dom.datas;
         }
     );
 
@@ -83,11 +89,6 @@ export default (function () {
             let value: string = <string>directive.value;
             //处理以.分割的字段，没有就是一个
             if (Util.isString(value)) {
-                // //从根数据获取
-                // if(value.startsWith('$$')){
-                //     directive.extra = 1;
-                //     value = value.substr(2);
-                // }
                 directive.value = value;
             }
         },
@@ -97,10 +98,10 @@ export default (function () {
             if (directive.value == '$$') {
                 model = module.model;
             } else {
-                model = model.$query(directive.value);
+                model = model.$get(directive.value);
             }
             if (!model) {
-                model = module.model.$query(directive.value);
+                model = module.model.$get(directive.value);
             }
             if (model) {
                 dom.model = model;
@@ -125,15 +126,8 @@ export default (function () {
                 return;
             }
             dom.dontRender = false;
-            //有过滤器，处理数据集合
-            if (directive.filters && directive.filters.length > 0) {
-                for (let f of directive.filters) {
-                    rows = f.exec(rows, module);
-                }
-            }
             let chds = [];
             let key = dom.key;
-
             // 移除指令
             dom.removeDirectives(['repeat']);
             for (let i = 0; i < rows.length; i++) {
@@ -150,7 +144,6 @@ export default (function () {
                 rows[i].$index = i;
                 chds.push(node);
             }
-
             //找到并追加到dom后
             if (chds.length > 0) {
                 for (let i = 0, len = parent.children.length; i < len; i++) {
@@ -300,6 +293,63 @@ export default (function () {
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             dom.dontRender = !directive.value;
+        }
+    );
+
+    /**
+     * 指令名 data
+     * 描述：从当前模块获取数据并用于子模块，dom带module指令时有效
+     */
+    DirectiveManager.addType('data',
+        5,
+        (directive: Directive, dom: Element) => {
+            
+        },
+        (directive: Directive, dom: Element, module: Module, parent: Element) => {
+            if(typeof directive.value !== 'object'){
+                return;
+            }
+            let mdlDir = dom.getDirective('module');
+            if(!mdlDir || !mdlDir.extra.moduleId){
+                return;
+            }
+            let obj = directive.value;
+            //子模块
+            let subMdl = ModuleFactory.get(mdlDir.extra.moduleId);
+            //子model
+            let m:Model = subMdl.model;
+            let model = dom.model;
+            Object.getOwnPropertyNames(obj).forEach(p=>{
+                //字段名
+                let field;
+                // 反向修改
+                let reverse = false;
+                if(Array.isArray(obj[p])){
+                    field = obj[p][0];
+                    if(obj[p].length>1){
+                        reverse = obj[p][1];
+                    }
+                    //删除reverse，只保留字段
+                    obj[p] = field;
+                }else{
+                    field = obj[p];
+                }
+
+                let d = model.$get(field);
+                //数据赋值
+                if(d !== undefined){
+                    m[p] = d;
+                }
+                //反向处理
+                if(reverse){
+                    m.$watch(p,function(ov,nv){
+                        console.log(model);
+                        if(model){
+                            model.$set(field,nv);
+                        }
+                    });
+                }
+            });
         }
     );
     /**
@@ -535,7 +585,7 @@ export default (function () {
                 return;
             }
 
-            let dataValue = model.$query(directive.value);
+            let dataValue = model.$get(directive.value);
             //变为字符串
             if (dataValue !== undefined && dataValue !== null) {
                 dataValue += '';
@@ -752,46 +802,65 @@ export default (function () {
     DirectiveManager.addType('route',
         10,
         (directive: Directive, dom: Element) => {
-            let value = directive.value;
-            if (Util.isEmpty(value)) {
-                return;
-            }
-
             //a标签需要设置href
             if (dom.tagName.toLowerCase() === 'a') {
                 dom.setProp('href', 'javascript:void(0)');
             }
+            if(dom.hasProp('active')){
+                let ac = dom.getProp('active');
+                //active 转expression
+                dom.setProp('active',new Expression(ac),true);
+                //保存activeName
+                directive.extra = {activeName:ac};
+            }
+            // 不重复添加route event
+            let evt = dom.getEvent('click');
+            if(evt){
+                if(Array.isArray(evt)){
+                    for(let ev of evt){ //已存在路由事件
+                        if(ev.getExtraParam('routeEvent')){
+                            return;
+                        }
+                    }
+                }else if(evt.getExtraParam('routeEvent')){
+                    return;
+                }
+            }
+            
             //添加click事件
-            dom.addEvent(new NEvent('click',
+            evt = new NEvent('click',
                 (dom, module, e) => {
-                    let path: string = directive.value;
+                    let path = dom.getProp('path');
+                    
+                    if(!path){
+                        let dir:Directive = dom.getDirective('route');
+                        path = dir.value;
+                    }
+                    
                     if (Util.isEmpty(path)) {
                         return;
                     }
                     Router.go(path);
                 }
-            ));
+            );
+            //设置路由标识
+            evt.setExtraParam('routeEvent',true);
+            dom.addEvent(evt);
         },
-
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            let path: string = directive.value;
-            //添加到router的activeDomMap
-            let domArr: string[] = Router.activeDomMap.get(module.id);
-            if (!domArr) {
-                Router.activeDomMap.set(module.id, [dom.key]);
-            } else {
-                if (!domArr.includes(dom.key)) {
-                    domArr.push(dom.key);
+            // 设置激活字段
+            if(directive.extra){
+                Router.addActiveField(module,directive.value,dom.model,directive.extra.activeName);
+            }
+            dom.setProp('path',directive.value);
+
+            //延迟激活（指令执行后才执行属性处理，延迟才能获取active prop的值）
+            setTimeout(()=>{
+                // 路由路径以当前路径开始
+                if(dom.getProp('active') === true && directive.value.startsWith(Router.currentPath)){
+                    Router.go(directive.value);
                 }
-            }
-            if (!path || path === Router.currentPath) {
-                return;
-            }
-            //active需要跳转路由（当前路由为该路径对应的父路由）
-            if (dom.hasProp('active') && dom.getProp('active') && (!Router.currentPath || path.indexOf(Router.currentPath) === 0)) {
-                //可能router尚未渲染出来
-                setTimeout(() => { Router.go(path) }, 0);
-            }
+            },0);
         }
     );
 
@@ -809,31 +878,6 @@ export default (function () {
         }
     );
 
-    /**
-     * 增加ignore指令
-     * 只渲染子节点到dom树
-     */
-    DirectiveManager.addType('ignoreself',
-        10,
-        (directive, dom) => {
-            dom.dontRenderSelf = true;
-        },
-        (directive, dom, module, parent) => {
-
-        }
-    );
-
-    /**
-     * 粘指令，粘在前一个dom节点上，如果前一个节点repeat了多个分身，则每个分身都粘上
-     * 如果未指定model，则用被粘节点的model
-     */
-    DirectiveManager.addType('stick',
-        10,
-        (directive, dom: Element) => {
-        },
-        (directive, dom, module, parent) => {
-        }
-    );
     /**
      * 插槽指令
      * 配合slot标签使用

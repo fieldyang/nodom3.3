@@ -6,14 +6,12 @@ import { Util } from "./util";
  * 模型类
  */
 
-export const modelCloneExpKey = ["$moduleId", "$key", "$watch", "$query"]
 
 export class Model {
     /**
      * 模块id
      */
     $moduleId: number;
-
 
     /**
      * @param data 		数据
@@ -23,10 +21,8 @@ export class Model {
     constructor(data: any, module: Module) {
         //模型管理器
         let mm: ModelManager = module.modelManager;
-
         let proxy = new Proxy(data, {
             set: (src: any, key: string, value: any, receiver: any) => {
-
                 //值未变,proxy 不处理
                 if (src[key] === value) {
                     return true;
@@ -36,7 +32,7 @@ export class Model {
                 if (excludes.includes(<string>key)) {
                     return true;
                 }
-                const excArr = ['$watch', "$moduleId", "$query", "$key", "$index"];
+                const excArr = ['$watch', "$moduleId", "$set","$get", "$key", "$index"];
                 //不进行赋值
                 if (typeof value !== 'object' || (value === null || !value.$watch)) {
                     //更新渲染
@@ -48,22 +44,22 @@ export class Model {
             },
             get: (src: any, key: string | symbol, receiver) => {
                 let res = Reflect.get(src, key, receiver);
+                //数组的sort和fill触发强行渲染
+                if(Array.isArray(src) && ['sort','fill'].indexOf(<string>key) !== -1){ //强制渲染
+                    mm.update(proxy,null,null,null,true);
+                }
                 let data = module.modelManager.getFromDataMap(src[key]);
                 if (data) {
                     return data;
                 }
-                if (typeof res === 'object' && res !== null) {
-                    //如果是的对象，则返回代理，便于后续激活get set方法                   
-                    // 判断是否已经代理，如果未代理，则增加代理
+                
+                if (res !== null && typeof res === 'object') {
+                    //如果是对象，则返回代理，便于后续激活get set方法                   
+                    //判断是否已经代理，如果未代理，则增加代理
                     if (!src[key].$watch) {
                         let p = new Model(res, module);
-                        // receiver[key] = p;
                         return p;
                     }
-                    // else {
-                    //     let data = module.modelManager.getFromDataMap(src[key]);
-                    //     return data ? data : res;
-                    // }
                 }
                 return res;
             },
@@ -79,7 +75,8 @@ export class Model {
         });
         proxy.$watch = this.$watch;
         proxy.$moduleId = module.id;
-        proxy.$query = this.$query;
+        proxy.$get = this.$get;
+        proxy.$set = this.$set;
         proxy.$key = Util.genId();
         mm.addToDataMap(data, proxy);
         mm.addModelToModelMap(proxy, data);
@@ -98,7 +95,7 @@ export class Model {
         let index = -1;
         //如果带'.'，则只取最里面那个对象
         if ((index = key.lastIndexOf('.')) !== -1) {
-            model = this.$query(key.substr(0, index));
+            model = this.$get(key.substr(0, index));
             key = key.substr(index + 1);
         }
         if (!model) {
@@ -116,7 +113,7 @@ export class Model {
      * @param key   子属性，可以分级，如 name.firstName
      * @returns     属性对应model proxy
      */
-    $query(key: string) {
+    $get(key: string) {
         let model: Model = this;
         if (key.indexOf('.') !== -1) {    //层级字段
             let arr = key.split('.');
@@ -133,6 +130,27 @@ export class Model {
         }
         return model[key];
     }
+
+    /**
+     * 设置值
+     * @param key       子属性，可以分级，如 name.firstName
+     * @param value     属性值
+     */
+    $set(key:string,value:any){
+        let model: Model = this;
+        if (key.indexOf('.') !== -1) {    //层级字段
+            let arr = key.split('.');
+            for (let i = 0; i < arr.length - 1; i++) {
+                //不存在，则创建新的model
+                if (!model[arr[i]]) {
+                    model[arr[i]] = new Model({},ModuleFactory.get(this.$moduleId));
+                }
+            }
+            key = arr[arr.length - 1];
+        }
+        model[key] = value;
+    }
+
     /**
      * 执行模块方法
      * @param methodName    方法名
