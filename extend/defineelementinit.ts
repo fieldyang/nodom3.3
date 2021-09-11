@@ -107,7 +107,16 @@ class CASE extends DefineElement{
     }
 }
 
-
+class PLUG extends DefineElement{
+    constructor(node: ASTObj){
+        super(node);
+        //条件
+        let cond = node.attrs.get('name');
+        let cond1=node.attrs.get('plugName');
+        node.attrs.set('plug',cond||cond1||'default');
+        node.tagName='div';
+    }
+}
 // DefineElementManager.add('SLOT', {
 //     init: function (element: Element, parent?: Element) {
 //         element.tagName = 'div';
@@ -116,4 +125,4 @@ class CASE extends DefineElement{
 //     }
 // });
 
-DefineElementManager.add([MODULE,FOR,RECUR,IF,ELSE,ELSEIF,SWITCH,CASE]);
+DefineElementManager.add([MODULE,FOR,RECUR,IF,ELSE,ELSEIF,SWITCH,CASE,PLUG]);

@@ -7,8 +7,11 @@ export class ModuleMain extends Module{
             <button e-click='change'>change</button>
             <div>hello world!</div>
             <div>x.y is {{x.y}}</div>
+           
             <div>y is {{y}}</div>
-            <ModuleA p1=true x-data={{getData()}}/>
+            <ModuleA p1=true x-data={{getData()}}>
+            <plug plugName='aa'>aaaaa</plug>
+            </ModuleA>
            </div>
         `
     }
