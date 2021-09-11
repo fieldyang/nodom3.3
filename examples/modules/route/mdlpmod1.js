@@ -1,6 +1,7 @@
 import {Module,Router} from '../../../dist/nodom.js'
 export class MdlPMod1 extends Module {
-    template = `
+    template(){
+        return `
         <div class='result code1'>
             <div style='border-bottom: 1px solid #999'>
                 <a x-route='/router/route1/home'  class={{home?'colorimp':''}} active='home'>首页</a> &nbsp;
@@ -12,6 +13,7 @@ export class MdlPMod1 extends Module {
             <div x-router test='1'></div>
         </div>	
         `;
+    } 
     model = {
         home: true,
         list: false,

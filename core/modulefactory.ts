@@ -1,6 +1,6 @@
-import { Compiler } from "./compiler";
 import { Module } from "./module";
 import { Element } from "./Element";
+import { Compiler } from "./compiler";
 
 /**
  * 过滤器工厂，存储模块过滤器
@@ -60,13 +60,27 @@ export class ModuleFactory {
      * @param className     模块类名
      * @param props         模块外部属性
      */
-    public static getInstance(className:string,props?:any): Module {
+    public static getInstance(clazz:any,props?:any): Module {
+        let className = (typeof clazz === 'string')?clazz:clazz.name;
+        // 初始化模块
+        if(!this.classes.has(className) && typeof clazz === 'function'){
+            Reflect.construct(clazz,[]);
+        }
         let src = this.classes.get(className);
+        if(!src){
+            return;
+        }
+        
+        // 模块实例
+        let instance;
         //未初始化
         if(src.state === 0){
             src.init();
+            instance = src;
+        }else{
+            instance = src.clone();
         }
-        let instance = src.clone();
+        
         if(src.template){
             let tp = src.template.apply(src.model,[props]);
             let root:Element;

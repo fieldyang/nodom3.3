@@ -106,13 +106,12 @@ export class Router {
         if(diff[0] === null){
             parentModule = ModuleFactory.getMain();
         }else{
-            if(typeof diff[0].module === 'function'){
+            if(typeof diff[0].module === 'function'){  //模块尚未实例化
                 parentModule = ModuleFactory.getInstance(diff[0].module);
             }else{
                 parentModule = ModuleFactory.get(diff[0].module);
             }
         }
-        
         //父模块不存在，不继续处理
         if(!parentModule){
             return;
@@ -307,8 +306,8 @@ export class Router {
         const me = this;
         //设置首次渲染
         module.setFirstRender(true);
+        //激活
         module.active();
-        
         //设置参数
         let o = {
             path: route.path
@@ -316,11 +315,8 @@ export class Router {
         if (!Util.isEmpty(route.data)) {
             o['data'] = route.data;
         }
-        if (!module.model) {
-            module.model = new Model({}, module);
-        }
-        module.model['$route'] = o;
         
+        module.model['$route'] = o;
         if(pm.state === 4){  //被依赖模块处于渲染后状态
             module.setContainer(pm.getNode(this.routerKeyMap.get(pm.id)));
             this.setDomActive(pm,route.fullPath);

@@ -83,9 +83,9 @@ export interface IRouteCfg {
     path?: string;
     
     /**
-     * 模块
+     * 模块类
      */
-    module?:Module;
+    module?:any;
     /**
      * 子路由数组
      */

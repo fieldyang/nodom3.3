@@ -1,4 +1,4 @@
-import { Compiler } from "./compiler";
+import { Compiler } from "..";
 import { Element } from "./element";
 import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
@@ -140,6 +140,11 @@ export class Module {
             }
         }
         delete this.modules;
+        // 如果为字符串，则处理模版，否则在获取模块实例时处理
+        if(typeof this.template === 'string'){
+            this.virtualDom = Compiler.compile(this.template);
+            delete this.template;
+        }
         //处理css配置
         this.handleCss();
     }
@@ -194,10 +199,9 @@ export class Module {
             return true;
         }
         //容器没就位或state不为active则不渲染，返回渲染失败
-        if (this.state < 3) {
+        if (this.state < 3 || !this.getContainer()) {
             return false;
         }
-        
         //克隆新的树
         let root: Element = this.virtualDom.clone();
         //执行前置方法
@@ -275,7 +279,6 @@ export class Module {
 
         //设置已渲染状态
         this.state = 4;
-
         //执行后置方法
         this.doRenderOps(1);
 
@@ -303,7 +306,6 @@ export class Module {
         
         //清空子元素
         Util.empty(this.container);
-        
         //渲染到html
         root.renderToHtml(this, <ChangedDom>{ type: 'fresh' });
         //删除首次渲染标志

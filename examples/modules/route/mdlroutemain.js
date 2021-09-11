@@ -1,13 +1,14 @@
 import {Module, Router, Util} from '../../../dist/nodom.js'
 export class MdlRouteMain extends Module {
-    template = `
-    <div>
-        <div>当前时间:{{formatDate(date1)}}</div>
-        <!--<a x-route='/router' class={{page1?'colorimp':''}} active='page1'>page1</a> -->
-        <a x-route='/router' >page1</a>
-        <div x-router></div>
-    </div>
-    `;
+    template(){
+        return `
+        <div>
+            <div>当前时间:{{formatDate(date1)}}</div>
+            <a x-route='/router' class={{page1?'colorimp':''}} active='page1'>page1</a>
+            <div x-router></div>
+        </div>
+        `;
+    }
     model={
         page1: true,
         page2: false,

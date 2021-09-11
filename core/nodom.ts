@@ -28,12 +28,9 @@ export function nodom(clazz:any,el:string){
     //启动调度器
     Scheduler.start();
     NodomMessage = NodomMessage_en;
-
-    Reflect.construct(clazz,[]);
-    let mdl = ModuleFactory.getInstance(clazz.name);
+    let mdl = ModuleFactory.getInstance(clazz);
     mdl.setContainer(document.querySelector(el));
     mdl.active();
-    
 }
 
 /**

@@ -1,3 +1,4 @@
+import { Module } from "./module";
 import { Router } from "./router";
 import { IRouteCfg } from "./types";
 import { Util } from "./util";
@@ -64,10 +65,8 @@ import { Util } from "./util";
         for(let o in config){
             this[o] = config[o];   
         }
-        
         this.id = Util.genId();
         Router.addRoute(this, config.parent);
-        
         //子路由
         if (config.routes && Array.isArray(config.routes)) {
             config.routes.forEach((item) => {
