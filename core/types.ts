@@ -83,9 +83,14 @@ export interface IRouteCfg {
     path?: string;
     
     /**
-     * 模块类
+     * 路由对应模块对象或类或模块类名
      */
     module?:any;
+
+    /**
+     * 模块路径，当module为类名时需要，默认执行延迟加载
+     */
+    modulePath?:string;
     /**
      * 子路由数组
      */

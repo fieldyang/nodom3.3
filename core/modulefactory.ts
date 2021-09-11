@@ -40,10 +40,15 @@ export class ModuleFactory {
 
     /**
      * 获得模块
-     * @param id    模块id
+     * @param name  类、类名或实例id
+     * @param props 传递给子模块的外部属性(用于产生模版)
      */
-    public static get(id: number): Module {
-        return this.modules.get(id);
+    public static get(name:any,props?:any): Module {
+        if(typeof name === 'number'){
+            return this.modules.get(name);
+        }else{
+            return this.getInstance(name,props);
+        }
     }
 
     /**
@@ -60,7 +65,7 @@ export class ModuleFactory {
      * @param className     模块类名
      * @param props         模块外部属性
      */
-    public static getInstance(clazz:any,props?:any): Module {
+    private static getInstance(clazz:any,props?:any): Module {
         let className = (typeof clazz === 'string')?clazz:clazz.name;
         // 初始化模块
         if(!this.classes.has(className) && typeof clazz === 'function'){
@@ -84,7 +89,7 @@ export class ModuleFactory {
         if(src.template){
             let tp = src.template.apply(src.model,[props]);
             let root:Element;
-            //当返回为数组时，如果第二个参数为true，则表示不在保留模版函数
+            //当返回为数组时，如果第二个参数为true，则表示不再保留模版函数
             if(Array.isArray(tp)){
                 root = Compiler.compile(tp[0]);
                 if(tp.length>1 && tp[1]){

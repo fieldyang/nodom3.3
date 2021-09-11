@@ -28,7 +28,7 @@ export function nodom(clazz:any,el:string){
     //启动调度器
     Scheduler.start();
     NodomMessage = NodomMessage_en;
-    let mdl = ModuleFactory.getInstance(clazz);
+    let mdl = ModuleFactory.get(clazz);
     mdl.setContainer(document.querySelector(el));
     mdl.active();
 }

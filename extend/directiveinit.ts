@@ -60,7 +60,7 @@ export default (function () {
                 Object.getOwnPropertyNames(dom.exprProps).forEach(p=>{
                     props[p] = dom.exprProps[p].val(dom.model);
                 });
-                m = ModuleFactory.getInstance(directive.value,props);
+                m = ModuleFactory.get(directive.value,props);
                 
                 if (!m) {
                     return;

@@ -32,6 +32,15 @@ export class Module {
     public methods: any;
 
     /**
+     * 模版
+     * 可以是模版串或模版函数
+     * 用于动态产生模版串，模版函数说明：
+     * 参数: props对象，在模版容器dom中进行配置
+     * 返回值: 模版串或[模版串,true] 如果为true，表示后续不再产生新的模版串，不再重新编译
+     */
+    public template:any;
+
+    /**
      * 子模块，类名数组，函数或数组
      */
     public modules: any;
@@ -106,7 +115,6 @@ export class Module {
      */
     private postRenderOps:any[] = [];
     
-
     /**
      * 构造器
      */
@@ -178,15 +186,6 @@ export class Module {
             }
         }
         delete this.css;
-    }
-
-    /**
-     * 模版函数
-     * @params props    模块外部属性
-     * @returns         模版串或[模版串,true] 如果为true，表示不再编译
-     */
-    public template(props?:any): string {
-        return null;
     }
 
     /**

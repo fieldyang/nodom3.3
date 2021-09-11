@@ -1,8 +1,5 @@
-import { NError } from "./error";
-import { Model } from "./model";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
-import { NodomMessage } from "./nodom";
 import { Renderer } from "./renderer";
 import { Route } from "./route";
 import { Util } from "./util";
@@ -90,27 +87,24 @@ export class Router {
             return;
         }
         let path:string = this.waitList.shift();
-        this.start(path);
-        //继续加载
-        this.load();
+        this.start(path).then(()=>{
+            //继续加载
+            this.load();
+        });
     }
 
     /**
      * 切换路由
      * @param path 	路径
      */
-    private static start(path:string) {
+    private static async start(path:string) {
         let diff = this.compare(this.currentPath, path);
         // 当前路由依赖的容器模块
         let parentModule:Module;
         if(diff[0] === null){
             parentModule = ModuleFactory.getMain();
         }else{
-            if(typeof diff[0].module === 'function'){  //模块尚未实例化
-                parentModule = ModuleFactory.getInstance(diff[0].module);
-            }else{
-                parentModule = ModuleFactory.get(diff[0].module);
-            }
+            parentModule = await this.getModule(diff[0]);
         }
         //父模块不存在，不继续处理
         if(!parentModule){
@@ -122,7 +116,7 @@ export class Router {
             if (!r.module) {
                 continue;
             }
-            let module:Module = ModuleFactory.get(r.module);
+            let module:Module = await this.getModule(r);
             if (Util.isFunction(this.onDefaultLeave)) {
                 this.onDefaultLeave(module.model);
             }
@@ -139,7 +133,7 @@ export class Router {
         if (diff[2].length === 0) { //路由相同，参数不同
             let route:Route = diff[0];
             if (route !== null) {
-                let module:Module = ModuleFactory.get(<number>route.module);
+                let module:Module = await this.getModule(route);
                 // 模块处理
                 this.dependHandle(module,route,parentModule);
             }
@@ -152,18 +146,8 @@ export class Router {
                 if (!route || !route.module) {
                     continue;
                 }
-                let module:Module;
-                //首次使用，可能是模块类，初始化模块
-                if(typeof route.module === 'function'){
-                    module = ModuleFactory.getInstance(route.module);
-                    if(!module){
-                        throw new NError('notexist1',NodomMessage.TipWords['module'],route.module.name);
-                    }
-                    route.module = module.id;
-                }else{ //路由已绑定模块id，直接从工厂获取
-                    module = ModuleFactory.get(<number>route.module);      
-                }
-
+                
+                let module:Module = await this.getModule(route);
                 //添加路由容器依赖
                 this.moduleDependMap.set(module.id,parentModule.id);
                 
@@ -204,6 +188,29 @@ export class Router {
         this.go(path);
     }
 
+    /**
+     * 获取module
+     * @param route 路由对象 
+     * @returns     路由对应模块
+     */
+    private static async getModule(route:Route){
+        let module = route.module;
+        //已经是模块实例
+        if(typeof module === 'object'){
+            return module;
+        }
+        //延迟加载
+        if(typeof module === 'string' && route.modulePath){ //模块路径
+            module = await import(route.modulePath);
+            module = module[route.module];
+        }
+         //模块类
+        if(typeof module === 'function'){ 
+            module = ModuleFactory.get(module);
+        }
+        route.module = module;
+        return module;
+    }
     /**
      * 比较两个路径对应的路由链
      * @param path1 	第一个路径

@@ -3,9 +3,9 @@ import {MdlRouteDir} from "./mdlroutedir.js";
 import {MdlPMod1} from "./mdlpmod1.js";
 import {MdlPMod2} from "./mdlpmod2.js";
 import {MdlPMod3} from "./mdlpmod3.js";
-import {MdlMod1} from "./mdlmod1.js";
-import {MdlMod2} from "./mdlmod2.js";
-import {MdlMod3} from "./mdlmod3.js";
+// import {MdlMod1} from "./mdlmod1.js";
+// import {MdlMod2} from "./mdlmod2.js";
+// import {MdlMod3} from "./mdlmod3.js";
 import {MdlMod4} from "./mdlmod4.js";
 import {MdlMod5} from "./mdlmod5.js";
 import {MdlMod6} from "./mdlmod6.js";
@@ -22,13 +22,16 @@ export function initRoute(){
                 module: MdlPMod1,
                 routes: [{
                     path: '/home',
-                    module: MdlMod1
+                    module: 'MdlMod1',
+                    modulePath:'/examples/modules/route/mdlmod1.js'
                 }, {
                     path: '/list',
-                    module: MdlMod2
+                    module: 'MdlMod2',
+                    modulePath:'/examples/modules/route/mdlmod2.js'
                 }, {
                     path: '/data',
-                    module: MdlMod3
+                    module: 'MdlMod3',
+                    modulePath:'/examples/modules/route/mdlmod3.js'
                 }],
                 onLeave:function(model){
                     // console.log(this,model);

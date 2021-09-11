@@ -1,4 +1,3 @@
-import { Module } from "./module";
 import { Router } from "./router";
 import { IRouteCfg } from "./types";
 import { Util } from "./util";
@@ -43,11 +42,17 @@ import { Util } from "./util";
      * 完整路径
      */
     fullPath:string;
+
     /**
-     * 路由对应模块id或类
+     * 路由对应模块对象或类或模块类名
      */
     module:any;
     
+    /**
+     * 模块路径，当module为类名时需要，默认执行延迟加载
+     */
+    modulePath:string;
+
     /**
      * 父路由
      */
@@ -92,7 +97,6 @@ import { Util } from "./util";
     clone(){
         let r = new Route();
         Object.getOwnPropertyNames(this).forEach(item=>{
-            // if(item.startsWith('$') || item === 'data'){
             if(item === 'data'){    
                 return;
             }
