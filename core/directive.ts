@@ -54,6 +54,8 @@ export  class Directive {
             this.value = (<string>value).trim();
         }else if(value instanceof Expression){
             this.expression = value;
+        }else{
+            this.value = value;
         }
         
         if (type !== undefined && dom) {

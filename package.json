@@ -1,28 +1,24 @@
 {
-    "name": "nodom",
-    "version": "1.0.0",
+    "name": "nodom3",
+    "version": "3.0.0",
     "description": "",
     "private": true,
     "main": "index.ts",
     "directories": {
-        "example": "examples",
-        "test": "test"
+        "example": "examples"
     },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "build": "rollup -c"
     },
     "author": "",
-    "license": "ISC",
+    "license": "MIT",
     "browser": "dist/nodom.js",
     "devDependencies": {
         "@rollup/plugin-commonjs": "^18.1.0",
         "@rollup/plugin-node-resolve": "^13.0.0",
         "rollup": "^2.47.0",
-        "rollup-plugin-typescript2": "^0.30.0"
-    },
-    "dependencies": {
-        "kayaks": "^1.0.4",
+        "rollup-plugin-typescript2": "^0.30.0",
         "typescript": "^4.2.4"
     }
 }
