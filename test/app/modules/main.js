@@ -8,25 +8,36 @@ export class ModuleMain extends Module{
             <div>hello world!</div>
             <div>x.y is {{x.y}}</div>
             <div>y is {{y}}</div>
-            <ModuleA p1=true x-data={{getData()}}/>
+            <ModuleA x-repeat={{rows}} x-data={{getData()}}/>
            </div>
         `
     }
     model = {
+            show:true,
             x:{
                 y:123
             },
-            y:'hello'
+            y:'hello',
+            rows:[
+                {name:'yang'},
+                {name:'lei'},
+            ]
         }
     
     methods = {
         getData(){
-            return {
+            // return {
+            //     x1:'x.y',
+            //     x2:['y',true]
+            // }
+            return{
+                n:'name',
                 x1:'x.y',
                 x2:['y',true]
             }
         },
         change(){
+            this.show = false;
             this.y = 'aaaa';
             console.log(this);
         }

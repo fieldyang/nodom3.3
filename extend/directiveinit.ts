@@ -25,23 +25,15 @@ export default (function () {
      * module 指令
      * 用于指定该元素为模块容器，表示该模块的子模块
      * 用法
-     *   x-module='moduleclass|modulename|dataurl'
-     *   moduleclass 为模块类名
-     *   modulename  为模块对象名，可选
-     * 可增加 data 属性，用于指定数据url
-     * 可增加 name 属性，用于设置模块name，如果x-module已设置，则无效
+     *   x-module='moduleClassName'
      */
-    DirectiveManager.addType('module', 0,
+    DirectiveManager.addType('module', 10,
         (directive: Directive, dom: Element) => {
             let value: string = <string>directive.value;
             let valueArr: string[] = value.split('|');
             directive.value = valueArr[0];
             //设置dom role
             dom.setProp('role', 'module');
-            //设置module name
-            if (valueArr.length > 1) {
-                dom.setProp('moduleName', valueArr[1]);
-            }
             directive.extra = {};
         },
 
