@@ -52,13 +52,14 @@ export  class DirectiveManager {
      * 指令初始化
      * @param directive     指令
      * @param dom           虚拟dom
+     * @param module        模块
      * @param parent        父虚拟dom
      */
         
-    public static init(directive:Directive,dom:Element,parent?:Element) {
+    public static init(directive:Directive,dom:Element,module?:Module,parent?:Element) {
         let dt = directive.type;
         if (dt) {
-            return dt.init(directive,dom,parent);
+            return dt.init(directive,dom,module,parent);
         }
     }
 

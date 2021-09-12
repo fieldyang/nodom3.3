@@ -44,10 +44,10 @@ export  class Directive {
      * @param type  	类型名
      * @param value 	指令值
      * @param dom       指令对应的dom
-     * @param filters   过滤器字符串或过滤器对象,如果为过滤器串，则以｜分割
+     * @param module    模块  
      * @param notSort   不排序
      */
-    constructor(type:string, value:string|Expression,dom?:Element, parent?:Element,notSort?:boolean) {
+    constructor(type:string, value:string|Expression,dom?:Element,module?:Module, parent?:Element,notSort?:boolean) {
         this.id = Util.genId();
         this.type = DirectiveManager.getType(type);
         if (Util.isString(value)) {
@@ -59,7 +59,7 @@ export  class Directive {
         }
         
         if (type !== undefined && dom) {
-            DirectiveManager.init(this,dom,parent);
+            DirectiveManager.init(this,dom,module,parent);
             dom.addDirective(this,!notSort);
         }
     }

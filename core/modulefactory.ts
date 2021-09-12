@@ -84,20 +84,20 @@ export class ModuleFactory {
             instance = src;
         }else{
             instance = src.clone();
+            console.log(instance.virtualDom);
         }
-        
         if(src.template){
             let tp = src.template.apply(src.model,[props]);
             let root:Element;
             //当返回为数组时，如果第二个参数为true，则表示不再保留模版函数
             if(Array.isArray(tp)){
-                root = Compiler.compile(tp[0]);
+                root = Compiler.compile(tp[0],src);
                 if(tp.length>1 && tp[1]){
                     src.virtualDom = root;
                     delete src.template;
                 }
             }else{ //只返回编译串
-                root = Compiler.compile(tp);
+                root = Compiler.compile(tp,src);
             }
             instance.virtualDom = root;
         }

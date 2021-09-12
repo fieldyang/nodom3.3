@@ -3,6 +3,7 @@ import { Directive } from "./directive";
 import { Element } from "./element";
 import { NEvent } from "./event";
 import { Expression } from "./expression";
+import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
 import { ASTObj } from "./types";
 
@@ -10,15 +11,16 @@ export class Compiler {
 
     /**
     * 编译
-    * @param elementStr    待编译html串
-    * @returns             虚拟dom
+    * @param elementStr     待编译html串
+    * @param module         模块 
+    * @returns              虚拟dom
     */
-    public static compile(elementStr: string): Element {
+    public static compile(elementStr: string,module:Module): Element {
         // 这里是把模板串通过正则表达式匹配 生成AST
         let ast = this.compileTemplateToAst(elementStr);
         let oe = new Element('div');
         // 将AST编译成抽象语法树
-        this.compileAST(oe, ast);
+        this.compileAST(oe, ast,module);
         return oe;
     }
 
@@ -226,9 +228,9 @@ export class Compiler {
      * @param ast 抽象语法树也就是JSON对象
      * @returns oe 虚拟dom的根容器
      */
-    public static compileAST(oe: Element, ast: ASTObj): Element {
+    public static compileAST(oe: Element, ast: ASTObj,module:Module): Element {
         if (!ast) return;
-        ast.tagName?this.handleAstNode(oe, ast):this.handleAstText(oe, ast);
+        ast.tagName?this.handleAstNode(oe, ast,module):this.handleAstText(oe, ast);
         return oe;
     }
 
@@ -251,14 +253,14 @@ export class Compiler {
      * @param oe 虚拟dom   
      * @param astObj 
      */
-    public static handleAstNode(parent: Element, astObj: ASTObj) {
+    public static handleAstNode(parent: Element, astObj: ASTObj,module:Module) {
         //前置处理
         this.preHandleNode(astObj);
         let child = new Element(astObj.tagName);
         parent.add(child);
-        this.handleAstAttrs(child, astObj.attrs, parent);
+        this.handleAstAttrs(child, astObj.attrs,module, parent);
         for(let a of astObj.children){
-            this.compileAST(child, a);
+            this.compileAST(child, a,module);
         }
     }
     
@@ -268,7 +270,7 @@ export class Compiler {
      * @param attrs     需要编译成虚拟dom的attrs
      * @param parent    父虚拟dom节点
      */
-    public static handleAstAttrs(oe: Element, attrs: Map<string,any>, parent: Element) {
+    public static handleAstAttrs(oe: Element, attrs: Map<string,any>,module:Module, parent: Element) {
         //指令数组 先处理普通属性在处理指令
         let directives = [];
         if (!attrs) { return }
@@ -302,7 +304,7 @@ export class Compiler {
         }
         //处理属性
         for (let attr of directives) {
-            new Directive(attr.name, attr.value, oe, parent, true);
+            new Directive(attr.name, attr.value, oe,module, parent, true);
         }
         if (directives.length > 1) {
             //指令排序

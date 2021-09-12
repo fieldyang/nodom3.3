@@ -63,7 +63,7 @@ export class Module {
     /**
      * 是否是首次渲染
      */
-    private firstRender: boolean = true;
+    public firstRender: boolean = true;
 
     /**
      * 根虚拟dom
@@ -114,6 +114,11 @@ export class Module {
      * 后置渲染序列
      */
     private postRenderOps:any[] = [];
+
+    /**
+     * 插头map  插头名
+     */
+    // public plugMap:Map<string,Element>;
     
     /**
      * 构造器
@@ -150,7 +155,7 @@ export class Module {
         delete this.modules;
         // 如果为字符串，则处理模版，否则在获取模块实例时处理
         if(typeof this.template === 'string'){
-            this.virtualDom = Compiler.compile(this.template);
+            this.virtualDom = Compiler.compile(this.template,this);
             delete this.template;
         }
         //处理css配置
@@ -324,7 +329,7 @@ export class Module {
             let data = Util.clone(this.model);
             m.model = new Model(data, m);
         }
-        let excludes = ['id', 'name', 'model', 'virtualDom', 'container', 'containerKey', 'modelManager'];
+        let excludes = ['id', 'name', 'model', 'virtualDom', 'container', 'containerKey', 'modelManager','plugMap'];
         Object.getOwnPropertyNames(this).forEach((item) => {
             if (excludes.includes(item)) {
                 return;
@@ -596,3 +601,4 @@ export class Module {
         }
     }
 }
+

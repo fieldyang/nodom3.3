@@ -4,11 +4,22 @@ export class ModuleMain extends Module{
     template(){
         return `
             <div>
-            <button e-click='change'>change</button>
-            <div>hello world!</div>
-            <div>x.y is {{x.y}}</div>
-            <div>y is {{y}}</div>
-            <ModuleA x-repeat={{rows}} x-data={{getData()}}/>
+                <button e-click='change'>change</button>
+                <div>hello world!</div>
+                <div>x.y is {{x.y}}</div>
+                <h2>默认plug</h2>
+                <ModuleA x-data={{getData()}} xxx='111'>
+                    <plug name='aa'>
+                        <h3 style='color:blue'> hello change plug 1</h3>    
+                    </plug>
+                </ModuleA>
+
+                <h2>替换plug</h2>
+                <ModuleA x-data={{getData()}} xxx='222'>
+                    <plug name='aa'>
+                        <h3 style='color:red'> hello change plug 2</h3>    
+                    </plug>
+                </ModuleA>
            </div>
         `
     }
@@ -18,6 +29,7 @@ export class ModuleMain extends Module{
                 y:123
             },
             y:'hello',
+            name:'yanglei',
             rows:[
                 {name:'yang'},
                 {name:'lei'},

@@ -121,10 +121,10 @@ export class Element {
      * @returns         渲染成功（dontRender=false） true,否则false
      */
     public render(module: Module, parent?: Element): Boolean {
-        if (this.dontRender) {
-            this.doDontRender(parent);
-            return false;
-        }
+        // if (this.dontRender) {
+        //     this.doDontRender(parent);
+        //     return false;
+        // }
 
         // 设置父对象
         if (parent) {
@@ -152,16 +152,20 @@ export class Element {
                 return false;
             }
             this.handleProps(module);
-            
         } else { //textContent
             this.handleTextContent(module);
         }
 
+        if(this.hasProp('moduleId')){
+            let m = ModuleFactory.get(parseInt(this.getProp('moduleId')));
+            
+            
+        }
         //子节点渲染，子模块不渲染
-        if (!this.hasDirective('module')) {
+        if (!this.hasDirective('module') || ModuleFactory.get(parseInt(this.getProp('moduleId'))).firstRender) {
             for (let i = 0; i < this.children.length; i++) {
                 let item = this.children[i];
-                if (!item.render(module, this)) {
+                if(!item.render(module, this)) {
                     item.doDontRender(this);
                     i--;
                 }
@@ -568,6 +572,29 @@ export class Element {
         // 移除
         if (Util.isArray(this.children) && (ind = this.children.indexOf(dom)) !== -1) {
             this.children.splice(ind, 1);
+        }
+    }
+
+    /**
+     * 移除 某个节点
+     * @param key   节点key
+     */
+    public remove(key:string){
+        let r = find(this,key);
+        if(r.length>1){
+            r[1].removeChild(r[0]);
+        }
+        function find(dom:Element,key:string,parent?:Element){
+            if(dom.key === key){
+                return [dom,parent];
+            }
+
+            for(let c of dom.children){
+                let r = find(c,key,dom);
+                if(r){
+                    return r;
+                }
+            }
         }
     }
 
@@ -985,25 +1012,15 @@ export class Element {
      *  1 节点(子节点)含有module指令，需要unactive
      */
     public doDontRender(parent?:Element) {
-        //对于模块容器，对应module需unactive
-        if (this.hasDirective('module')) {
-            let d: Directive = this.getDirective('module');
-            if (d.extra && d.extra.moduleId) {
-                let mdl: Module = ModuleFactory.get(d.extra.moduleId);
-                if (mdl) {
-                    mdl.unactive();
-                }
-            }
-        }
-        
-        //子节点递归
-        for (let c of this.children) {
-            c.doDontRender(this);
-        }
-
-        //从虚拟dom树中移除
         if(parent){
             parent.removeChild(this);
+        }
+        //对于模块容器，对应module需unactive
+        if (this.hasDirective('module')) {
+            let mdl = ModuleFactory.get(parseInt(this.getProp('moduleId')));
+            if(mdl){
+                mdl.unactive();
+            }
         }
     }
 
