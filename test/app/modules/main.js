@@ -9,16 +9,18 @@ export class ModuleMain extends Module{
                 <div>x.y is {{x.y}}</div>
                 <h2>默认plug</h2>
                 <ModuleA x-data={{getData()}} xxx='111'>
-                    <plug name='aa'>
+                    <swap name='s1'>
                         <h3 style='color:blue'> hello change plug 1</h3>    
-                    </plug>
+                    </swap>
+                    <swap name='s2'>替换的第二个swap</swap>
                 </ModuleA>
+                <p>hello</p>
 
                 <h2>替换plug</h2>
                 <ModuleA x-data={{getData()}} xxx='222'>
-                    <plug name='aa'>
+                    <swap name='s1'>
                         <h3 style='color:red'> hello change plug 2</h3>    
-                    </plug>
+                    </swap>
                 </ModuleA>
            </div>
         `
@@ -51,7 +53,7 @@ export class ModuleMain extends Module{
         change(){
             this.show = false;
             this.y = 'aaaa';
-            console.log(this);
+            // console.log(this);
         }
         
     }

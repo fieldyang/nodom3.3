@@ -116,9 +116,9 @@ export class Module {
     private postRenderOps:any[] = [];
 
     /**
-     * 插头map  插头名
+     * 交换器  {交换器名(默认default):要替代的dom}
      */
-    // public plugMap:Map<string,Element>;
+    public swapMap:Map<string,Element>;
     
     /**
      * 构造器
@@ -264,6 +264,7 @@ export class Module {
                             let parm = index.split('|');
                             index = parm[0];
                             const vDom: Element = root.query(parm[1]);
+                            console.log(vDom);
                             dp.insertBefore((() => {
                                 return Util.newEls(vDom, this, vDom.parent, this.getNode(vDom.parent.key));
                             })(), dp.childNodes[index++]);
@@ -329,7 +330,7 @@ export class Module {
             let data = Util.clone(this.model);
             m.model = new Model(data, m);
         }
-        let excludes = ['id', 'name', 'model', 'virtualDom', 'container', 'containerKey', 'modelManager','plugMap'];
+        let excludes = ['id', 'name', 'model', 'virtualDom', 'container', 'containerKey', 'modelManager','swapMap'];
         Object.getOwnPropertyNames(this).forEach((item) => {
             if (excludes.includes(item)) {
                 return;

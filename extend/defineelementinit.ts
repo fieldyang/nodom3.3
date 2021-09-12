@@ -107,13 +107,16 @@ class CASE extends DefineElement{
     }
 }
 
-class PLUG extends DefineElement{
+/**
+ * 替换器
+ */
+class SWAP extends DefineElement{
     constructor(node: ASTObj){
         super(node);
         //条件
         let cond = node.attrs.get('name') || 'default';
-        node.attrs.set('x-plug',cond);
+        node.attrs.set('x-swap',cond);
     }
 }
 
-DefineElementManager.add([MODULE,FOR,RECUR,IF,ELSE,ELSEIF,SWITCH,CASE,PLUG]);
+DefineElementManager.add([MODULE,FOR,RECUR,IF,ELSE,ELSEIF,SWITCH,CASE,SWAP]);

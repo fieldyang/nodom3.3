@@ -281,14 +281,7 @@ export default (function () {
     DirectiveManager.addType('show',
         5,
         (directive: Directive, dom: Element) => {
-            if (typeof directive.value === 'string') {
-                let value = directive.value;
-                if (!value) {
-                    throw new NError("paramException", "x-show");
-                }
-                let expr = new Expression(value);
-                directive.value = expr;
-            }
+            
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             dom.dontRender = !directive.value;
@@ -713,7 +706,7 @@ export default (function () {
      * 插头指令
      * 用于模块中，可实现同名替换
      */
-    DirectiveManager.addType('plug',
+    DirectiveManager.addType('swap',
         5,
         (directive:Directive, dom: Element,module:Module,parent:Element) => {
             if(!module){
@@ -722,6 +715,7 @@ export default (function () {
             directive.value = directive.value || 'default';
         },
         (directive:Directive, dom:Element, module:Module, parent:Element) => {
+            console.log(dom);
             let pd:Directive = parent.getDirective('module');
             if(pd){ //父模块替代dom，替换子模块中的plug
                 if(module.children.length===0){
@@ -730,44 +724,42 @@ export default (function () {
                 let m = ModuleFactory.get(module.children[module.children.length-1]);
                 if(m){
                     // 加入等待替换map
-                    addPlug(m,directive.value,dom);
+                    add(m,directive.value,dom);
                 }
                 //设置不渲染
                 dom.dontRender = true;
-                //不再需要，从virtualDom树中删除
-                module.virtualDom.remove(dom.key);
+                // module.virtualDom.remove(dom.key);
             }else{ // 原模版plug指令
-                // 如果父dom带module指令，则表示为使用时，不加入plug map
-                replacePlug(module,directive.value,dom);
-                //加入后，移除plug指令
-                // dom.removeDirectives(['plug']);
+                // 如果父dom带module指令，则表示为替换，不加入plug map
+                replace(module,directive.value,dom);
             }
 
             /**
-             * 添加plug
+             * 添加到待替换的swap map
              * @param mm 
              * @param name 
              * @param dom 
              */
-            function addPlug(module:Module,name:string,dom:Element){
-                if(!module['plugMap']){
-                    module['plugMap'] = new Map();
+            function add(module:Module,name:string,dom:Element){
+                if(!module.swapMap){
+                    module.swapMap = new Map();
                 }
-                console.log('add plug');
-                module['plugMap'].set(name,dom);
+                module.swapMap.set(name,dom);
+                console.log(name,dom.key);
             }
 
             /**
-             * 替换虚拟dom树中的插头
+             * 替换dom树中swap
              * @param name      
              * @param dom 
              */
-            function replacePlug(module:Module,name:string,dom:Element){
-                if(!module['plugMap'] || !module['plugMap'].has(name)){
+            function replace(module:Module,name:string,dom:Element){
+                if(!module.swapMap || !module.swapMap.has(name)){
                     return;
                 }
-                let rdom = module['plugMap'].get(name);
-                dom.children = rdom.children.slice(0);
+                let rdom = module.swapMap.get(name);
+                //替换源swap节点的子节点
+                dom.children = rdom.children;
             }
         }
     );
