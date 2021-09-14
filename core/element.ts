@@ -121,10 +121,10 @@ export class Element {
      * @returns         渲染成功（dontRender=false） true,否则false
      */
     public render(module: Module, parent?: Element): Boolean {
-        if (this.dontRender) {
-            this.doDontRender(parent);
-            return false;
-        }
+        // if (this.dontRender) {
+        //     this.doDontRender(parent);
+        //     return false;
+        // }
 
         // 设置父对象
         if (parent) {
@@ -139,7 +139,7 @@ export class Element {
             this.model = module.model;
         }
         //先执行model指令
-        if(this.hasDirective('model')){
+        if (this.hasDirective('model')) {
             let d = this.getDirective('model');
             d.exec(module, this, this.parent);
         }
@@ -152,13 +152,17 @@ export class Element {
                 return false;
             }
             this.handleProps(module);
-            
         } else { //textContent
             this.handleTextContent(module);
         }
 
+        if (this.hasProp('moduleId')) {
+            let m = ModuleFactory.get(parseInt(this.getProp('moduleId')));
+
+
+        }
         //子节点渲染，子模块不渲染
-        if (!this.hasDirective('module')) {
+        if (!this.hasDirective('module') || ModuleFactory.get(parseInt(this.getProp('moduleId'))).firstRender) {
             for (let i = 0; i < this.children.length; i++) {
                 let item = this.children[i];
                 if (!item.render(module, this)) {
@@ -297,7 +301,7 @@ export class Element {
          */
         function newText(text: string | HTMLElement | DocumentFragment): any {
             return document.createTextNode(<string>text || '');
-           
+
         }
 
         /**
@@ -354,7 +358,7 @@ export class Element {
         for (let c of this.children) {
             dst.add(c.clone(changeKey));
         }
-        
+
         return dst;
     }
 
@@ -365,10 +369,10 @@ export class Element {
     public handleDirectives(module: Module) {
         for (let d of this.directives.values()) {
             //model指令已经执行，不再执行
-            if(d.type.name === 'model'){
+            if (d.type.name === 'model') {
                 continue;
             }
-            if(d.expression){
+            if (d.expression) {
                 d.value = d.expression.val(this.model);
             }
             d.exec(module, this, this.parent);
@@ -566,6 +570,29 @@ export class Element {
         // 移除
         if (Util.isArray(this.children) && (ind = this.children.indexOf(dom)) !== -1) {
             this.children.splice(ind, 1);
+        }
+    }
+
+    /**
+     * 移除 某个节点
+     * @param key   节点key
+     */
+    public remove(key: string) {
+        let r = find(this, key);
+        if (r.length > 1) {
+            r[1].removeChild(r[0]);
+        }
+        function find(dom: Element, key: string, parent?: Element) {
+            if (dom.key === key) {
+                return [dom, parent];
+            }
+
+            for (let c of dom.children) {
+                let r = find(c, key, dom);
+                if (r) {
+                    return r;
+                }
+            }
         }
     }
 
@@ -894,8 +921,8 @@ export class Element {
                         oldEndNode = dst.children[--oldEndIdx];
                     } else if (sameKey(newEndNode, oldStartNode)) {
                         newEndNode.compare(oldStartNode, retArr, deleteMap, this);
-                        //接在老节点后面
-                        addDelKey(oldStartNode, 'insert', [dst.children[oldEndIdx + 1]?.key])
+                        //接在老节点后面 
+                        addDelKey(oldStartNode, 'insert', ['|' + oldEndNode.key])
                         newEndNode = this.children[--newEndIdx];
                         oldStartNode = dst.children[++oldStartIdx];
                     } else {
@@ -908,11 +935,7 @@ export class Element {
                     if (oldStartIdx > oldEndIdx) {
                         //没有老节点
                         for (let i = newStartIdx; i <= newEndIdx; i++) {
-                            let ch = this.children[i];
-                            if (ch) {
-                                // 添加到老节点的前面
-                                oldEndNode && addDelKey(ch, 'add', [dst.children[oldEndIdx + 1].key]);
-                            }
+                            retArr.push(new ChangedDom(this.children[i], 'add', this, i))
                         }
                     } else {
                         //有老节点
@@ -974,7 +997,7 @@ export class Element {
      * @param eventName     事件名
      * @returns             事件对象或事件对象数组
      */
-    public getEvent(eventName:string){
+    public getEvent(eventName: string) {
         return this.events.get(eventName);
     }
     /**
@@ -982,26 +1005,16 @@ export class Element {
      * 关联操作，包括:
      *  1 节点(子节点)含有module指令，需要unactive
      */
-    public doDontRender(parent?:Element) {
+    public doDontRender(parent?: Element) {
+        if (parent) {
+            parent.removeChild(this);
+        }
         //对于模块容器，对应module需unactive
         if (this.hasDirective('module')) {
-            let d: Directive = this.getDirective('module');
-            if (d.extra && d.extra.moduleId) {
-                let mdl: Module = ModuleFactory.get(d.extra.moduleId);
-                if (mdl) {
-                    mdl.unactive();
-                }
+            let mdl = ModuleFactory.get(parseInt(this.getProp('moduleId')));
+            if (mdl) {
+                mdl.unactive();
             }
-        }
-        
-        //子节点递归
-        for (let c of this.children) {
-            c.doDontRender(this);
-        }
-
-        //从虚拟dom树中移除
-        if(parent){
-            parent.removeChild(this);
         }
     }
 

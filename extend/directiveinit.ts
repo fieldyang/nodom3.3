@@ -31,13 +31,11 @@ export default (function () {
      * 可增加 data 属性，用于指定数据url
      * 可增加 name 属性，用于设置模块name，如果x-module已设置，则无效
      */
-    DirectiveManager.addType('module', 0,
+    DirectiveManager.addType('module', 8,
         (directive: Directive, dom: Element) => {
             let value: string = <string>directive.value;
             let valueArr: string[] = value.split('|');
             directive.value = valueArr[0];
-            //设置dom role
-            dom.setProp('role', 'module');
             //设置module name
             if (valueArr.length > 1) {
                 dom.setProp('moduleName', valueArr[1]);
@@ -46,14 +44,12 @@ export default (function () {
         },
 
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            const ext = directive.extra;
             let m: Module;
             //存在moduleId，表示已经渲染过，不渲染
-            if (ext.moduleId) {
-                m = ModuleFactory.get(ext.moduleId);
+            if (dom.hasProp('moduleId')) {
+                m = ModuleFactory.get(parseInt(dom.getProp('moduleId')));
             } else {
                 let props = {};
-
                 Object.getOwnPropertyNames(dom.props).forEach(p => {
                     props[p] = dom.props[p];
                 });
@@ -61,59 +57,23 @@ export default (function () {
                     props[p] = dom.exprProps[p].val(dom.model);
                 });
                 m = ModuleFactory.get(directive.value,props);
-                
                 if (!m) {
                     return;
                 }
-                
-                //插槽
-                if (dom.children.length > 0) {
-                    let plugMap: Map<string, Element> = new Map();
-                    dom.children.forEach((v) => {
-                        if (v.hasProp('plugName')&&v.hasProp('plug')) {
-                            plugMap.set(v.getProp('plugName'), v);
-                            v.delProp(['plug','plugName']);
-                        }
-                    });
-                    //有指令
-                    if (plugMap.size > 0) {
-                        let oldMap = findPlug(m.virtualDom);
-                        //原模块
-                        oldMap.forEach(obj => {
-                            const { index, plugName, pd } = obj;
-                            if (plugMap.has(plugName)&&plugName!=='default') {
-                                pd.children.splice(index, 1, plugMap.get(plugName));
-                            }
-                        });
-                        plugMap.clear();
-                    }
-                    dom.children=[]
-                }
+                // 设置模块id,在virtualDom中
+                let dom1 = module.getElement(dom.key,true);
+                dom1.setProp('moduleId',m.id);
+                dom.setProp('moduleId',m.id);
                 // delete dom.props;
                 // delete dom.exprProps;
-                //保留modelId
-                directive.extra = { moduleId: m.id };
+                //保留modelId和当前子模块
+                directive.extra = { moduleId: m.id};
                 //添加到父模块
                 module.addChild(m.id);
                 //设置容器
                 m.setContainerKey(dom.key);
                 //添加到渲染器
                 m.active();
-                //插槽
-                function findPlug(dom: Element, res = new Array()) {
-                    if (dom.hasProp('name')&&dom.hasProp('plug')) {
-                        res.push({
-                            index: dom.parent.children.indexOf(dom),
-                            plugName: dom.getProp('plug'),
-                            pd: dom.parent
-                        });
-                        return;
-                    }
-                    dom.children.forEach(v => {
-                        findPlug(v, res);
-                    })
-                    return res;
-                }
             }
         }
     );
@@ -237,7 +197,7 @@ export default (function () {
             //处理内部递归节点
             if (data) {
                 if (Array.isArray(data)) { //为数组，则遍历生成多个节点
-                    // 先克隆一个用作基本节点，避免在循环中为基本节点增加子节点
+                    // 先克隆一个用作基本节点，避免在循环中为基本节点增加子节点
                     let node: Element = dom.clone(true);
                     for (let d of data) {
                         let nod: Element = node.clone(true);
@@ -260,7 +220,7 @@ export default (function () {
      * 描述：条件指令
      */
     DirectiveManager.addType('if',
-        10,
+        5,
         (directive: Directive, dom: Element, parent: Element) => {
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
@@ -273,7 +233,7 @@ export default (function () {
      * 描述：else指令
      */
     DirectiveManager.addType('else',
-        10,
+        5,
         (directive: Directive, dom: Element, parent: Element) => {
 
         },
@@ -305,7 +265,7 @@ export default (function () {
     /**
      * elseif 指令
      */
-    DirectiveManager.addType('elseif', 10,
+    DirectiveManager.addType('elseif', 5,
         (directive: Directive, dom: Element, parent: Element) => {
 
         },
@@ -319,16 +279,9 @@ export default (function () {
      * 描述：显示指令
      */
     DirectiveManager.addType('show',
-        10,
+        5,
         (directive: Directive, dom: Element) => {
-            if (typeof directive.value === 'string') {
-                let value = directive.value;
-                if (!value) {
-                    throw new NError("paramException", "x-show");
-                }
-                let expr = new Expression(value);
-                directive.value = expr;
-            }
+            
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             dom.dontRender = !directive.value;
@@ -340,7 +293,7 @@ export default (function () {
      * 描述：从当前模块获取数据并用于子模块，dom带module指令时有效
      */
     DirectiveManager.addType('data',
-        5,
+        9,
         (directive: Directive, dom: Element) => {
 
         },
@@ -390,174 +343,7 @@ export default (function () {
             });
         }
     );
-    /**
-     * 指令名 
-     * 描述：显示指令
-     */
-    DirectiveManager.addType('animation',
-        9,
-        (directive: Directive, dom: Element) => {
-            let arr = directive.value.trim().split('|');
-            let privateName = ['fade', 'scale-fixtop', 'scale-fixleft', 'scale-fixbottom', 'scale-fixright', 'scale-fixcenterX', 'scale-fixcenterY']
-            if (privateName.includes(arr[0].trim())) {
-                arr[0] = arr[0].trim();
-            } else {
-                arr[0] = new Expression(arr[0].trim());
-            }
-            // 渲染标志
-            if (arr[1]) {
-                arr[1] = new Expression(arr[1].trim());
-            } else {
-                // 如果没有传入渲染标志，则说明只需要在元素渲染的时候启用动画。直接吧渲染标志设置成true
-                arr[1] = true;
-            }
-            directive.value = arr;
-        },
-        (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            let arr = directive.value;
-            let clsArr: Array<string> = [];
-            let cls: string = dom.getProp('class');
-            let model = dom.model;
-            if (Util.isString(cls) && !Util.isEmpty(cls)) {
-                clsArr = cls.trim().split(/\s+/);
-            }
-
-            let confObj = arr[0];
-            if (arr[0] instanceof Expression) {
-                confObj = confObj.val(model, dom);
-            } else {
-                confObj = {
-                    name: confObj
-                }
-            }
-
-            if (!Util.isObject(confObj)) {
-                return new NError('未找到animation配置对象');
-            }
-            let renderFlag = arr[1];
-            let nameEnter = confObj.name?.enter || confObj.name;
-            let nameLeave = confObj.name?.leave || confObj.name;
-            let hiddenMode = confObj.hiddenMode || 'display';
-            let durationEnter = confObj.duration?.enter || '0.3s';
-            let durationLeave = confObj.duration?.leave || '0.3s';
-            let delayEnter = confObj.delay?.enter || '0s'; // 如果不配置则默认不延迟
-            let delayLeave = confObj.delay?.leave || '0s';// 如果不配置则默认不延迟
-            if (renderFlag instanceof Expression) {
-                renderFlag = renderFlag.val(model);
-            }
-            let el: HTMLElement = document.querySelector(`[key='${dom.key}']`)
-            // 定义动画结束回调。
-            let handler = () => {
-                // 离开动画结束之后隐藏元素
-                if (!renderFlag || renderFlag === 'false') {
-                    if (hiddenMode && hiddenMode == 'visibility') {
-                        el.style.visibility = 'hidden';
-                    } else {
-                        el.style.display = 'none';
-                    }
-                }
-                el.classList.remove("nd-animation-" + nameEnter + "-enter");
-                el.classList.remove("nd-animation-" + nameLeave + "-leave");
-                el.removeEventListener('animationend', handler);
-            }
-            if (!renderFlag || renderFlag === 'false') {
-                // 从显示切换到隐藏。
-                if (el) {
-                    if (el.style.visibility == 'hidden' || el.style.display == 'none') {
-                        // 当前处于隐藏，没有必要播放动画
-                        if (hiddenMode && hiddenMode == 'visibility') {
-                            el.style.visibility = 'hidden';
-                            dom.addStyle('visibility:hidden');
-                        } else {
-                            el.style.display = 'none';
-                            dom.addStyle('display:none');
-                        }
-                        return;
-                    }
-                    // 为了触发动画
-                    //  1. 删除原来的动画属性
-                    el.classList.remove("nd-animation-" + nameEnter + "-enter");
-                    // 操作了真实dom，虚拟dom也要做相应的变化，否则可能导致第二次渲染属性不一致
-                    dom.removeClass("nd-animation-" + nameEnter + "-enter");
-                    //  2.重新定位一次元素。 本来是el.offsetWidth=el.offsetWidth的
-                    //    下面是严格模式下的替代方案
-                    void el.offsetWidth
-                    // 控制播放时间
-                    el.style.animationDuration = durationLeave;
-                    el.style.animationDelay = delayLeave;
-                    dom.addStyle(`animation-duration:${durationEnter};animation-delay:${delayEnter}`);
-                    //  3.添加新的动画
-                    el.classList.add("nd-animation-" + nameLeave + "-leave");
-                    // 操作了真实dom，虚拟dom也要做相应的变化，否则可能导致第二次渲染属性不一致
-                    dom.addClass("nd-animation-" + nameLeave + "-leave");
-                    // 添加动画结束监听
-                    el.addEventListener('animationend', handler);
-                } else {
-                    // 不显示，并且也没有el 比如poptip
-                    if (hiddenMode && hiddenMode == 'visibility') {
-                        dom.addStyle("visibility:hidden");
-                    } else {
-                        dom.addStyle("display:none");
-                    }
-                    dom.dontRender = false;
-                }
-            } else {
-                // 从隐藏切换到显示
-                if (el) {
-                    if (el.style.visibility == 'hidden' || el.style.display == 'none') {
-                        // 当前处于隐藏
-                        // 手动设置延时
-                        let delay = parseFloat(delayEnter) * 1000;
-                        // 因为下面是异步执行,所有这一次不能让元素先展示出来
-                        if (hiddenMode && hiddenMode == 'visibility') {
-                            el.style.visibility = 'hidden';
-                            dom.addStyle('visibility:hidden');
-                        } else {
-                            el.style.display = 'none';
-                            dom.addStyle('display:none');
-                        }
-                        // 进入动画要手动设置延时.否则通过animation-delay属性会先显示元素,然后计算延时,然后再播放动画.
-                        setTimeout(() => {
-                            // 先切换成显示状态,再触发动画
-                            if (hiddenMode && hiddenMode == 'visibility') {
-                                el.style.visibility = 'visible';
-                            } else {
-                                el.style.display = '';
-                            }
-                            //  1. 删除原来的动画属性
-                            el.classList.remove("nd-animation-" + nameLeave + "-leave");
-                            // 操作了真实dom，虚拟dom也要做相应的变化，否则可能导致第二次渲染属性不一致
-                            dom.removeClass("nd-animation-" + nameLeave + "-leave");
-                            //  2.重新定位一次元素。 本来是el.offsetWidth=el.offsetWidth的
-                            //    下面是严格模式下的替代方案
-                            void el.offsetWidth
-                            // 控制播放时间
-                            el.style.animationDuration = durationEnter;
-                            // 动画延时播放时间
-                            el.style.animationDelay = "0s";
-                            dom.addStyle(`animation-duration:${durationEnter};animation-delay:0s`);//
-                            //  3.添加新的动画
-                            el.classList.add("nd-animation-" + nameEnter + "-enter");
-                            // 操作了真实dom，虚拟dom也要做相应的变化，否则可能导致第二次渲染属性不一致
-                            dom.addClass('nd-animation-' + nameEnter + '-enter');
-                            // 添加动画结束监听
-                            el.addEventListener('animationend', handler);
-                        }, delay);
-
-                    } else {
-                        // 当前处于显示状态 
-                        // 为了不重复播放显示动画，这里直接返回
-                        dom.addClass('nd-animation-' + nameEnter + '-enter');
-                        return;
-                    }
-                } else {
-                    dom.addClass('nd-animation-' + nameEnter + '-enter');
-                    dom.dontRender = false;
-                }
-            }
-        }
-    );
-
+    
     /**
      * 指令名 field
      * 描述：字段指令
@@ -908,8 +694,7 @@ export default (function () {
     DirectiveManager.addType('router',
         10,
         (directive, dom) => {
-            //修改节点role
-            dom.setProp('role', 'module');
+            
         },
         (directive, dom, module, parent) => {
             Router.routerKeyMap.set(module.id, dom.key);
@@ -917,15 +702,64 @@ export default (function () {
     );
 
     /**
-     * 插槽指令
-     * 配合slot标签使用
+     * 插头指令
+     * 用于模块中，可实现同名替换
      */
-    DirectiveManager.addType('slot',
-        3,
-        (directive, dom: Element) => {
-            dom.setProp('slotName', directive.value);
+    DirectiveManager.addType('swap',
+        5,
+        (directive:Directive, dom: Element,module:Module,parent:Element) => {
+            if(!module){
+                return;
+            }
+            directive.value = directive.value || 'default';
         },
-        (directive, dom, module, parent) => {
+        (directive:Directive, dom:Element, module:Module, parent:Element) => {
+            console.log(dom);
+            let pd:Directive = parent.getDirective('module');
+            if(pd){ //父模块替代dom，替换子模块中的plug
+                if(module.children.length===0){
+                    return;
+                }
+                let m = ModuleFactory.get(module.children[module.children.length-1]);
+                if(m){
+                    // 加入等待替换map
+                    add(m,directive.value,dom);
+                }
+                //设置不渲染
+                dom.dontRender = true;
+                // module.virtualDom.remove(dom.key);
+            }else{ // 原模版plug指令
+                // 如果父dom带module指令，则表示为替换，不加入plug map
+                replace(module,directive.value,dom);
+            }
+
+            /**
+             * 添加到待替换的swap map
+             * @param mm 
+             * @param name 
+             * @param dom 
+             */
+            function add(module:Module,name:string,dom:Element){
+                if(!module.swapMap){
+                    module.swapMap = new Map();
+                }
+                module.swapMap.set(name,dom);
+                console.log(name,dom.key);
+            }
+
+            /**
+             * 替换dom树中swap
+             * @param name      
+             * @param dom 
+             */
+            function replace(module:Module,name:string,dom:Element){
+                if(!module.swapMap || !module.swapMap.has(name)){
+                    return;
+                }
+                let rdom = module.swapMap.get(name);
+                //替换源swap节点的子节点
+                dom.children = rdom.children;
+            }
         }
     );
-}())
+}());

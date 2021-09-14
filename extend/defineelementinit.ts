@@ -107,22 +107,16 @@ class CASE extends DefineElement{
     }
 }
 
-class PLUG extends DefineElement{
+/**
+ * 替换器
+ */
+class SWAP extends DefineElement{
     constructor(node: ASTObj){
         super(node);
         //条件
-        let cond = node.attrs.get('name');
-        let cond1=node.attrs.get('plugName');
-        node.attrs.set('plug',cond||cond1||'default');
-        node.tagName='div';
+        let cond = node.attrs.get('name') || 'default';
+        node.attrs.set('x-swap',cond);
     }
 }
-// DefineElementManager.add('SLOT', {
-//     init: function (element: Element, parent?: Element) {
-//         element.tagName = 'div';
-//         if(element.hasProp('name'))
-//         element.setTmpParam('slotName',element.getProp('name'));
-//     }
-// });
 
-DefineElementManager.add([MODULE,FOR,RECUR,IF,ELSE,ELSEIF,SWITCH,CASE,PLUG]);
+DefineElementManager.add([MODULE,FOR,RECUR,IF,ELSE,ELSEIF,SWITCH,CASE,SWAP]);
