@@ -1,40 +1,50 @@
-import {Module} from '../../../dist/nodom.js'
-import {ModuleA} from './modulea.js'
-export class ModuleMain extends Module{
-    template(){
+import {
+    Module
+} from '../../../dist/nodom.js'
+import {
+    ModuleA
+} from './modulea.js'
+export class ModuleMain extends Module {
+    template() {
         return `
             <div>
             <button e-click='change'>change</button>
             <div>hello world!</div>
             <div>x.y is {{x.y}}</div>
-           
             <div>y is {{y}}</div>
-            <ModuleA p1=true x-data={{getData()}}>
-            <plug plugName='aa'>aaaaa</plug>
-            </ModuleA>
-           </div>
-        `
+            <ModuleA p1=true x-data={{getData()}} e-click='log'/>
+
+           <!-- 
+                <div>hello world!</div>
+            <div>x.y is {{x.y}}</div>
+            <div>y is {{y}}</div>
+    -->
+            </div>
+            `
     }
+    // first={{"<div first data='add'></div>"}} second={{"<div>x.y is {{x.y}}</div>"}}
     model = {
-            x:{
-                y:123
-            },
-            y:'hello'
-        }
-    
+        x: {
+            y: 123
+        },
+        y: 'hello'
+    }
     methods = {
-        getData(){
+        getData() {
             return {
-                x1:'x.y',
-                x2:['y',true]
+                x1: 'x.y',
+                x2: ['y', true]
             }
         },
-        change(){
+        change() {
             this.y = 'aaaa';
             console.log(this);
+        },
+        log() {
+            console.log(11);
         }
-        
+
     }
     modules = [ModuleA]
-    
+
 }

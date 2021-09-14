@@ -240,8 +240,13 @@ export class Module {
                                 //更改dom节点顺序
                                 let ele = this.getNode(index[0]);
                                 if (ele) {
+                                    //最后一个节点
+                                   if(index[1]===undefined){
+                                    dp.appendChild(ele);
+                                   }else{
                                     els = dp.querySelectorAll("[key='" + index[1] + "']");
                                     dp.insertBefore(ele, els[els.length - 1]);
+                                   } 
                                 }
                             } else {
                                 //删除dom节点

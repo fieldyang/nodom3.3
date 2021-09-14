@@ -191,7 +191,6 @@ export class Element {
                 el = module.getNode(parent.key);
             } else {
                 el = module.getContainer();
-                // console.log(el);
             }
         } else if (this.tagName !== undefined) { //element节点才可以查找
             el = module.getNode(this.key);
@@ -422,7 +421,6 @@ export class Element {
                 if (k === 'style') {
                     this.addStyle(this.exprProps[k].val(this.model))
                 } else {
-                    // console.log('prop is',k,this.exprProps[k].execFunc);
                     this.props[k] = this.exprProps[k].val(this.model);
                 }
             }
@@ -897,7 +895,7 @@ export class Element {
                     } else if (sameKey(newEndNode, oldStartNode)) {
                         newEndNode.compare(oldStartNode, retArr, deleteMap, this);
                         //接在老节点后面
-                        addDelKey(oldStartNode, 'insert', [dst.children[oldEndIdx + 1].key])
+                        addDelKey(oldStartNode, 'insert', [dst.children[oldEndIdx + 1]?.key])
                         newEndNode = this.children[--newEndIdx];
                         oldStartNode = dst.children[++oldStartIdx];
                     } else {

@@ -1,14 +1,15 @@
-import {Module} from '../../dist/nodom.js'
-export class MRepeat extends Module{
-    template(){
+import {
+    Module
+} from '../../dist/nodom.js'
+export class MRepeat extends Module {
+    template() {
         return `
         <div class="view">
             <button e-click='pop'>pop</button>
             <button e-click='push'>push</button>
             <button e-click='addFood'>addFood</button>
             <button e-click='desc'>价格降序</button>
-            <div class={{
-                xxx?'cls1':'cls2'}}>hahahaha</div>
+            <div class={{xxx?'cls1':'cls2'}}>hahahaha</div>
             <div class="tip">基本使用</div>
             <div class="code">
                 菜单：
@@ -38,15 +39,18 @@ export class MRepeat extends Module{
                     return 1;return -1;})}}>
                     编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
                 </div>
-            </div>-->
+            </div>
+        -->
         </div>
         `
     }
-    model={
-        show:0,
-        date1:new Date().getTime(),
-        discount:{data:0.9},
-        xxx:true,
+    model = {
+        show: 0,
+        date1: new Date().getTime(),
+        discount: {
+            data: 0.9
+        },
+        xxx: true,
         foods: [{
             name: '夫妻肺片',
             price: 25
@@ -67,45 +71,51 @@ export class MRepeat extends Module{
             price: 24
         }]
     }
-    methods={
-        top(arr){
+    methods = {
+        top(arr) {
             var a = [];
-            for(let i=0;i<3;i++){
+            for (let i = 0; i < 3; i++) {
                 a.push(arr[i]);
             }
-            
+
             return a;
         },
-        getOdd(arr){
+        getOdd(arr) {
             let a1 = [];
-            for(let i=0;i<arr.length;i++){
-                if(i%2){
+            for (let i = 0; i < arr.length; i++) {
+                if (i % 2) {
                     a1.push(arr[i]);
                 }
             }
             return a1;
         },
-        desc(){
-            this.foods.sort((a,b)=>{if(a.price>b.price)return -1;return 1;})
+        desc() {
+            this.foods.sort((a, b) => {
+                if (a.price > b.price) return -1;
+                return 1;
+            })
         },
-        pop(){
+        pop() {
             this.foods.pop();
         },
-        push(){
-            this.foods.push({name:'push菜单',price:50});
+        push() {
+            this.foods.push({
+                name: 'push菜单',
+                price: 50
+            });
         },
-        addFood(){
+        addFood() {
             console.log('ddd');
-            this.foods.splice(2,0,
-                {
-                    name: '新增1',
-                    price: 20
-                },
-                {
-                    name: '新增2',
-                    price: 30
-                }
-            )
-        }
+            this.foods.splice(2, 0, {
+                name: '新增1',
+                price: 20
+            }, {
+                name: '新增2',
+                price: 30
+            })
+        },
+        onFirstRender:function(model){
+           console.log(this,model);
+        },
     }
 }

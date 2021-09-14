@@ -382,7 +382,6 @@ export default (function () {
                 //反向处理
                 if (reverse) {
                     m.$watch(p, function (ov, nv) {
-                        console.log(model);
                         if (model) {
                             model.$set(field, nv);
                         }
