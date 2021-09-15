@@ -1,14 +1,6 @@
-import { Application } from "./application";
-import { DefineElementManager } from "./defineelementmanager";
-import { Directive } from "./directive";
-import { Element } from "./element";
-import { NError } from "./error";
-import { Model } from "./model";
 import { Module } from "./module";
-import { NodomMessage } from "./nodom";
-import { ResourceManager } from "./resourcemanager";
-import { IMdlClassObj } from "./types";
-import { Util } from "./util";
+import { Element } from "./Element";
+import { Compiler } from "./compiler";
 
 /**
  * 过滤器工厂，存储模块过滤器
@@ -20,9 +12,9 @@ export class ModuleFactory {
     private static modules: Map<number, Module> = new Map();
 
     /**
-     * 模块类集合
+     * 模块类集合 {className:instance}
      */
-    private static classes: Map<string, IMdlClassObj> = new Map();
+    public static classes: Map<string, Module> = new Map();
 
     /**
      * 主模块
@@ -34,67 +26,83 @@ export class ModuleFactory {
      * @param item  模块存储对象
      */
     public static add(item: Module) {
+        //第一个为主模块
+        if(this.modules.size === 0){
+            this.mainModule = item;
+        }
         this.modules.set(item.id, item);
+
+        //加入模块类map
+        if(!this.classes.has(item.constructor.name)){
+            this.classes.set(item.constructor.name,item);
+        }
     }
 
     /**
      * 获得模块
-     * @param id    模块id
+     * @param name  类、类名或实例id
+     * @param props 传递给子模块的外部属性(用于产生模版)
      */
-    public static get(id: number): Module {
-        return this.modules.get(id);
+    public static get(name:any,props?:any): Module {
+        if(typeof name === 'number'){
+            return this.modules.get(name);
+        }else{
+            return this.getInstance(name,props);
+        }
+    }
+
+    /**
+     * 是否存在模块类
+     * @param clazzName     模块类名
+     * @returns     true/false
+     */
+    public static has(clazzName:string):boolean{
+        return this.classes.has(clazzName);
     }
 
     /**
      * 获取模块实例（通过类名）
      * @param className     模块类名
-     * @param moduleName    模块名
-     * @param data          数据或数据url
+     * @param props         模块外部属性
      */
-    public static async getInstance(className: string, moduleName?: string, data?: any): Promise<Module> {
-        if (!this.classes.has(className)) {
-            throw new NError('notexist1', NodomMessage.TipWords['moduleClass'], className);
+    private static getInstance(clazz:any,props?:any): Module {
+        let className = (typeof clazz === 'string')?clazz:clazz.name;
+        // 初始化模块
+        if(!this.classes.has(className) && typeof clazz === 'function'){
+            Reflect.construct(clazz,[]);
         }
-        let cfg: IMdlClassObj = this.classes.get(className);
-        if (moduleName) {
-            cfg.name = moduleName;
+        let src = this.classes.get(className);
+        if(!src){
+            return;
         }
-        if (!cfg.instance) {
-            if (!cfg.initing) {
-                cfg.initing = true;
-                await this.initModule(cfg);
-            }
-
-            return new Promise((res, rej) => {
-                check();
-                function check() {
-                    if (!cfg.initing) {
-                        res(get(cfg));
-                    } else {
-                        setTimeout(check, 0);
-                    }
+        
+        // 模块实例
+        let instance;
+        //未初始化
+        if(src.state === 0){
+            src.init();
+            instance = src;
+        }else{
+            instance = src.clone();
+            console.log(instance.virtualDom);
+        }
+        if(src.template){
+            let tp = src.template.apply(src.model,[props]);
+            let root:Element;
+            //当返回为数组时，如果第二个参数为true，则表示不再保留模版函数
+            if(Array.isArray(tp)){
+                root = Compiler.compile(tp[0],src);
+                if(tp.length>1 && tp[1]){
+                    src.virtualDom = root;
+                    delete src.template;
                 }
-            });
-        } else {
-            return get(cfg);
-        }
-        function get(cfg: IMdlClassObj): Module {
-            if (cfg.singleton) {
-                return cfg.instance;
-            } else {
-                let mdl: Module = cfg.instance.clone(moduleName);
-                //处理数据
-                if (data) {
-                    //如果为url，则设置dataurl和loadnewdata标志
-                    if (typeof data === 'string') {
-                        mdl.setDataUrl(data);
-                    } else { //数据模型化
-                        mdl.model = new Model(data, mdl);
-                    }
-                }
-                return mdl;
+            }else{ //只返回编译串
+                root = Compiler.compile(tp,src);
             }
+            instance.virtualDom = root;
         }
+        
+        return instance;
     }
     /**
      * 从工厂移除模块
@@ -109,7 +117,6 @@ export class ModuleFactory {
      */
     static setMain(m: Module) {
         this.mainModule = m;
-        m.setMain();
     }
 
     /**
@@ -118,78 +125,5 @@ export class ModuleFactory {
      */
     static getMain() {
         return this.mainModule;
-    }
-
-    /**
-     * 添加模块类
-     * @param modules 
-     */
-    public static async addModules(modules: Array<IMdlClassObj>) {
-        for (let cfg of modules) {
-            if (!cfg.path) {
-                throw new NError("paramException", 'modules', 'path');
-            }
-            if (!cfg.class) {
-                throw new NError("paramException", 'modules', 'class');
-            }
-            //lazy默认true
-            if (cfg.lazy === undefined) {
-                cfg.lazy = true;
-            }
-            //singleton默认true
-            if (cfg.singleton === undefined) {
-                cfg.singleton = true;
-            }
-            //自定义标签名
-            if(cfg.className){
-                DefineElementManager.add(cfg.className.toLocaleUpperCase(),{
-                    init:function(element:Element,parent?:Element){
-                        element.tagName = 'div';
-                        new Directive('module',cfg.class,element,parent);
-                    }
-                });
-                
-            }
-            if (!cfg.lazy) {
-                await this.initModule(cfg);
-            }
-            //存入class工厂
-            this.classes.set(cfg.class, cfg);
-        }
-    }
-
-    /**
-     * 初始化模块
-     * @param cfg 模块类对象
-     */
-    private static async initModule(cfg: IMdlClassObj) {
-        //增加 .js后缀
-        let path: string = cfg.path;
-        if (!path.endsWith('.js')) {
-            path += '.js';
-        }
-        //加载模块类js文件
-        let url: string = Util.mergePath([Application.getPath('module'), path]);
-        await ResourceManager.getResources([{ url: url, type: 'js' }]);
-        let cls = eval(cfg.class);
-        if (cls) {
-            let instance = Reflect.construct(cls, [{
-                name: cfg.name,
-                data: cfg.data,
-                lazy: cfg.lazy
-            }]);
-
-            //模块初始化
-            await instance.init();
-            cfg.instance = instance;
-            //单例，则需要保存到modules
-            if (cfg.singleton) {
-                this.modules.set(instance.id, instance);
-            }
-            //初始化完成
-            delete cfg.initing;
-        } else {
-            throw new NError('notexist1', NodomMessage.TipWords['moduleClass'], cfg.class);
-        }
     }
 }

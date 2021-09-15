@@ -1,5 +1,6 @@
 import { NError } from "./error";
 import { NodomMessage } from "./nodom";
+import { Element } from "./element";
 
 /**
  * 基础服务库
@@ -11,6 +12,19 @@ export class Util {
     public static genId() {
         return this.generatedId++;
     }
+
+    /**
+     * js 保留关键字
+     */
+    static keyWords = [
+        'arguments','boolean','break','byte','catch','char','const','default','delete','do',
+        'double','else','enum','eval','false','float','for','function','goto','if',
+        'in','instanceof','int','let','long','new','null','return','short','switch',
+        'this','throw','throws','true','try','typeof','var','void','while','with',
+        'Array','Date','eval','function','hasOwnProperty','Infinity','isFinite','isNaN',
+        'isPrototypeOf','length','Math','NaN','Number','Object','prototype','String','undefined','valueOf'
+    ];
+
     /******对象相关******/
 
     /**
@@ -24,6 +38,7 @@ export class Util {
     public static clone(srcObj: Object, expKey?: RegExp | string[], extra?: any): any {
         let me = this;
         let map: WeakMap<Object, any> = new WeakMap();
+        // let map: Map<Object, any> = new Map();
         return clone(srcObj, expKey, extra);
 
         /**
@@ -256,7 +271,7 @@ export class Util {
      */
     public static findObjByProps(obj: Object, props: Object, one: boolean): Array<Object> | Object {
         if (!this.isObject(obj)) {
-            throw new NError('invoke', 'this.findObjByProps', '0', 'Object');
+            throw new NError('invoke', 'Util.findObjByProps', '0', 'Object');
         }
 
         //默认false
@@ -448,7 +463,7 @@ export class Util {
      * @param value 属性值，获取属性时不需要设置
      * @returns     属性值
      */
-    public static attr(el: Element, param: string | Object, value?: any): any {
+    public static attr(el, param: string | Object, value?: any): any {
         const me = this;
         if (!me.isEl(el)) {
             throw new NError('invoke', 'this.attr', '0', 'Element');
@@ -581,5 +596,90 @@ export class Util {
      */
     public static mergePath(paths: string[]): string {
         return paths.join('/').replace(/(\/{2,})|\\\//g, '\/');
+    }
+
+    /**
+     * eval
+     * @param evalStr   eval串
+     * @returns         eval值
+     */
+    public static eval(evalStr: string): any {
+        return new Function(`return(${evalStr})`)();
+    }
+
+    /**
+     * 
+     * @param vDom element元素
+     * @param module 模块   
+     * @param parent 父element  
+     * @param parentEl 父真实dom
+     * @returns 新建一个dom元素
+     */
+     public static newEls(vDom,module,parent,parentEl){
+        let el1;
+        if (vDom.tagName) {
+            el1 = newEl(vDom,parent,parentEl);
+            genSub(el1, vDom);
+        } else {
+            el1 = newText(vDom.textContent);
+        }
+        return el1;
+            /**
+         * 新建element节点
+         * @param vdom 		虚拟dom
+         * @param parent 	父虚拟dom
+         * @param parentEl 	父element
+         * @returns 		新的html element
+         */
+        function newEl(vdom: Element, parent: Element, parentEl?: Node): any {
+        //创建element
+            let el;
+            if (vdom.getTmpParam('isSvgNode')) {  //如果为svg node，则创建svg element
+                el = Util.newSvgEl(vdom.tagName);
+            } else {
+                el = Util.newEl(vdom.tagName);
+            }
+            //设置属性
+            Util.getOwnProps(vdom.props).forEach((k) => {
+                if (typeof vdom.props[k] != 'function')
+                    el.setAttribute(k, vdom.props[k]);
+            });
+
+            el.setAttribute('key', vdom.key);
+            vdom.handleNEvents(module, el, parent, parentEl);
+            vdom.handleAssets(el);
+            return el;
+        }
+
+        /**
+         * 新建文本节点
+         */
+        function newText(text: string | HTMLElement | DocumentFragment, dom?: Element): any {
+            if (!text) {
+                text = '';
+                dom = null;
+            }
+            return document.createTextNode(<string>text);
+        }
+
+        /**
+         * 生成子节点
+         * @param pEl 	父节点
+         * @param vNode 虚拟dom父节点	
+         */
+        function genSub(pEl: Node, vNode: Element) {
+            if (vNode.children && vNode.children.length > 0) {
+                vNode.children.forEach((item) => {
+                    let el1;
+                    if (item.tagName) {
+                        el1 = newEl(item, vNode, pEl);
+                        genSub(el1, item);
+                    } else {
+                        el1 = newText(item.textContent, item);
+                    }
+                    pEl.appendChild(el1);
+                });
+            }
+        }
     }
 }

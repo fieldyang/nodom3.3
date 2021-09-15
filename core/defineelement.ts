@@ -1,127 +1,15 @@
-import { Element } from "./element";
-import { Model } from "./model";
-import { Module } from "./module";
-import { ModuleFactory } from "./modulefactory";
-import { Util } from "./util";
-
+import { ASTObj } from "./types";
 /**
- * 插件，插件为自定义元素方式实现
+ * 自定义元素
+ * 用于扩充定义，主要对ast obj进行前置处理
  */
 export class DefineElement {
-    /**
-     * tag name
-     */
-    tagName: string;
-
-    /**
-     * 绑定的element
-     */
-    element: Element;
-
-    /**
-     * module id
-     */
-    moduleId: number;
-
-    /**
-     * model
-     */
-    model: Model;
-
-    /**
-     * 绑定的dom key
-     */
-    key: string;
-
-    /**
-     * 插件名，在module中唯一
-     */
-    name: string;
-
-    /**
-     * 是否需要前置渲染
-     */
-    needPreRender: boolean;
-
-    /**
-     * 附加数据项名
-     */
-    extraDataName: string;
-
-    /**
-     * 需要改绑的model名
-     */
-    parentDataName: string;
-
-    constructor(params: HTMLElement | Object | Element) {
-    }
-
-    /**
-     * 初始化 子类必须实现init方法
-     */
-    public init(dom: Element, parent?: Element) { };
-
-    /**
-     * 前置渲染方法(dom render方法中获取modelId和parentKey后执行)
-     * @param module    模块
-     * @param uidom     虚拟dom
-     */
-    public beforeRender(module: Module, uidom: Element) {
-        this.element = uidom;
-        this.moduleId = module.id;
-        // 如果需要改绑model，则改绑model
-        if (this.parentDataName && this.parentDataName != '') {
-            uidom.model = uidom.model[this.parentDataName];
-        }
-        if (!this.model || uidom.key !== this.key) {
-            this.key = uidom.key;
-            // 插件默认把model绑定在根model上
-            this.model = uidom.model;
-            //添加到模块
-            if (uidom.hasProp('name')) {
-                // module.addNPlugin(uidom.getProp('name'),this);       
-                this.name = uidom.getProp('name');
-            }
-            this.needPreRender = true;
+    constructor(node:ASTObj){
+        if (node.attrs.has('tag')) {
+            node.tagName = node.attrs.get('tag');
+            node.attrs.delete('tag');
         } else {
-            this.needPreRender = false;
+            node.tagName = 'div';
         }
-    }
-    /**
-     * 后置渲染方法(dom render结束后，渲染到html之前)
-     * @param module    模块
-     * @param uidom     虚拟dom
-     */
-    public afterRender(module: Module, uidom: Element) { }
-
-    /**
-     * 克隆
-     */
-    public clone(dst?: Element) {
-        let plugin = Reflect.construct(this.constructor, []);
-        
-        //不拷贝属性
-        let excludeProps: string[] = ['key', 'element', 'modelId', 'moduleId'];
-        Util.getOwnProps(this).forEach((prop) => {
-            if (excludeProps.includes(prop)) {
-                return;
-            }
-            plugin[prop] = Util.clone(this[prop]);
-        });
-        if (dst) {
-            plugin.element = dst;
-        }
-        return plugin;
-    }
-
-    /**
-     * 获取model
-     */
-    public getModel(): Model {
-        let module: Module = ModuleFactory.get(this.moduleId);
-        if (!module) {
-            return null;
-        }
-        return this.model || null;
     }
 }

@@ -26,6 +26,20 @@
 			.cls3 {
 				background-color: blue;
 			}
+			.first{
+				background:#ccc;
+				margin:2px 0;
+				padding:5px;
+			}
+			.secondct{
+				background:#ff9900;
+				padding:5px 20px;
+				margin:5px 0;
+			}
+			.second{
+				padding:5px;
+				background-color:beige;
+			}
 		</style>
 	</head>
 
@@ -33,7 +47,7 @@
 		<h2>递归指令</h2>
 		<div class="view">
 			<button e-click="show">show</button>
-			<h3>简单使用</h3>
+			<!-- <h3>简单使用</h3>
 			<div x-recur="ritem">
 				<span class="{{cls}}">{{title}}</span>
 			</div>
@@ -42,6 +56,13 @@
 				<ul class="{{cls}}">
 					<li x-repeat="items">{{title}}</li>
 				</ul>
+			</div> -->
+			<h3>递归带数组</h3>
+			<div x-repeat='items'>
+				<div class='first'>{{title}}</div>
+				<div class='secondct' x-recur='items'>
+					<div class='second'>{{title}}</div>
+				</div>
 			</div>
 		</div>
 	</body>
@@ -76,6 +97,43 @@
 							},
 						},
 					},
+					// recItem:{
+						items:[
+							{
+								title:'aaa',
+								items:[{
+									title:'aaa1',
+									items:[
+										{title:'aaa11',items:[
+											{title:'aaa111'},
+											{title:'aaa112'}
+										]},
+										{title:'aaa12'},
+										{title:'aaa13'}
+									]},{
+									title:'aaa2',
+									items:[
+										{title:'aaa21'},
+										{title:'aaa22'}
+									]}
+								]
+							},{
+								title:'bbb',
+								items:[{
+									title:'bbb1',
+									items:[
+										{title:'bbb11'},
+										{title:'bbb12'}
+									]},{
+									title:'bbb2',
+									items:[
+										{title:'bbb21'},
+										{title:'bbb22'}
+									]}
+								]
+							}
+						]
+					// }
 				},
 				methods: {
 					show: function (dom, model) {

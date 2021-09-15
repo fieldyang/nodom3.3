@@ -5,7 +5,7 @@ import { Module } from "./module";
 import { Util } from "./util";
 
 /**
- * 方法工厂，每个模块一个
+ * 方法工厂
  */
 export class MethodFactory extends NFactory {
     private module:Module;

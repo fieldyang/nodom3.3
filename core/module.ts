@@ -1,17 +1,10 @@
-import { Application } from "./application";
-import { Compiler } from "./compiler";
-import { DefineElementManager } from "./defineelementmanager";
-import { Directive } from "./directive";
+import { Compiler } from "..";
 import { Element } from "./element";
-import { MessageQueue } from "./messagequeue";
-import { MethodFactory } from "./methodfactory";
 import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
 import { ModuleFactory } from "./modulefactory";
-import { request } from "./nodom";
 import { Renderer } from "./renderer";
-import { ResourceManager } from "./resourcemanager";
-import { ChangedDom, IModuleCfg, IResourceObj, RegisterOps } from "./types";
+import { ChangedDom } from "./types";
 import { Util } from "./util";
 
 /**
@@ -28,19 +21,48 @@ export class Module {
     public name: string;
 
     /**
-     * 模型
+     * 模型，函数或对象
      */
-    public model: Model;
+    public model: any;
 
     /**
-     * 是否主模块，一个app只有一个根模块
+     * 方法集合，函数或对象
      */
-    private isMain: boolean;
+    public methods: any;
+
+    /**
+     * 模版
+     * 可以是模版串或模版函数
+     * 用于动态产生模版串，模版函数说明：
+     * 参数: props对象，在模版容器dom中进行配置
+     * 返回值: 模版串或[模版串,true] 如果为true，表示后续不再产生新的模版串，不再重新编译
+     */
+    public template: any;
+
+    /**
+     * 子模块，类名数组，函数或数组
+     */
+    public modules: any;
+
+    /**
+     * css样式
+     * 函数或数组，如果数组元素为object，则为样式名和键值对，否则为url,url为主页面相对路径
+     * [{
+     *  '.cls1:{
+     *      color:'red',
+     *      font-size:'12px'
+     *  },
+     *  '.cls2':{
+     *      ...
+     *  }
+     * },'css1.css']
+     */
+    public css: any;
 
     /**
      * 是否是首次渲染
      */
-    private firstRender: boolean = true;
+    public firstRender: boolean = true;
 
     /**
      * 根虚拟dom
@@ -53,7 +75,7 @@ export class Module {
     private renderTree: Element;
 
     /**
-     * 父模块名
+     * 父模块 id
      */
     private parentId: number;
 
@@ -63,34 +85,9 @@ export class Module {
     public children: Array<number> = [];
 
     /**
-     * 模块对应容器选择器
+     * 状态 0 create(创建) 1初始化 2 unactive(渲染后被置为非激活) 3 active(激活，可渲染显示) 4 已渲染
      */
-    private selector: string;
-
-    /**
-     * 模块创建时执行操作
-     */
-    private createOps: Array<Function> = [];
-
-    /**
-     * 状态 0 create(创建)、1 init(初始化，已编译)、2 unactive(渲染后被置为非激活) 3 active(激活，可渲染显示)
-     */
-    public state: number = 0;
-
-    /**
-     * 数据url
-     */
-    private dataUrl: string;
-
-    /**
-     * 需要加载新数据
-     */
-    private loadNewData: boolean = false;
-
-    /**
-     * 方法工厂
-     */
-    private methodFactory: MethodFactory;
+    public state: number;
 
     /**
      * 数据模型工厂
@@ -98,24 +95,9 @@ export class Module {
     public modelManager: ModelManager;
 
     /**
-     * 待渲染的虚拟dom数组
-     */
-    private renderDoms: Array<ChangedDom> = [];
-
-    /**
-     * 初始配置
-     */
-    private initConfig: IModuleCfg;
-
-    /**
      * 放置模块的容器
      */
-    private container: HTMLElement = null;
-
-    /**
-     * 模版串
-     */
-    private template: string;
+    private container: HTMLElement;
 
     /**
      * 容器key
@@ -123,177 +105,91 @@ export class Module {
     private containerKey: string;
 
     /**
-     * 子模块名id映射，如 {modulea:1}
+     * 后置渲染序列
      */
-    private moduleMap: Map<string, number> = new Map();
+    private preRenderOps: any[] = [];
 
+    /**
+     * 后置渲染序列
+     */
+    private postRenderOps: any[] = [];
+
+    /**
+     * 交换器  {交换器名(默认default):要替代的dom}
+     */
+    public swapMap: Map<string, Element>;
 
     /**
      * 构造器
-     * @param config    模块配置
      */
-    constructor(config?: IModuleCfg) {
+    constructor() {
         this.id = Util.genId();
-        // 模块名字
-        if (config && config.name) {
-            this.name = config.name;
-        } else {
-            this.name = 'Module' + this.id;
-        }
+        this.state = 0;
+        //加入模块工厂
         ModuleFactory.add(this);
-        this.methodFactory = new MethodFactory(this);
+        // 初始化模型工厂
         this.modelManager = new ModelManager(this);
-        //执行创建后操作
-        for (let foo of this.createOps) {
-            foo.call(this);
-        }
-        //执行创建事件
-        this.doModuleEvent('onCreate');
-        //无配置对象，不需要处理
-        if (!config) {
-            return;
-        }
-
-        //保存config，存在延迟初始化情况
-        this.initConfig = config;
-        //设置选择器
-        this.selector = config.el;
-        //方法加入工厂
-        if (Util.isObject(config.methods)) {
-            Util.getOwnProps(config.methods).forEach((item) => {
-                this.methodFactory.add(item, config.methods[item]);
-            });
-        }
-
-        //清除container的内部内容
-        if (this.getContainer()) {
-            // 处理特殊字符
-            this.template = this.container.innerHTML.trim();
-            let transferWords = { 'lt': '<', 'gt': '>', 'nbsp': ' ', 'amp': '&', 'quot': '"' };
-            this.template = this.template.replace(/&(lt|gt|nbsp|amp|quot);/ig, function (all, t) { return transferWords[t]; });
-            this.container.innerHTML = '';
-        }
     }
 
     /**
-     * 初始化模块（加载和编译）
+     * 初始化
      */
-    private async init(): Promise<any> {
-        let config = this.initConfig;
-        let urlArr: Array<Object> = []; //请求url数组
-        let cssPath: string = Application.getPath('css');
-        let templatePath: string = Application.getPath('template');
-        let jsPath: string = Application.getPath('js');
-        //加载文件
-        if (config && Util.isArray(config.requires) && config.requires.length > 0) {
-            config.requires.forEach((item) => {
-                let type: string;
-                let url: string = '';
-                if (Util.isObject(item)) { //为对象，可能是css或js
-                    type = item['type'] || 'js';
-                    url = item['url'];
-                } else { //js文件
-                    type = 'js';
-                    url = <string>item;
-                }
-                //转换路径
-                let path: string = type === 'js' ? jsPath : cssPath;
-                urlArr.push({ url: Util.mergePath([path, url]), type: type });
-            });
-        }
+    public init() {
+        // 设置状态为初始化
+        this.state = 1;
+        //初始化model
+        let data = (typeof this.model === 'function' ? this.model() : this.model);
+        this.model = new Model(data || {}, this);
 
-        //模版串
-        let templateStr: string = this.template;
-        //模版信息
-        if (config.template) {
-            config.template = config.template.trim();
-            if (config.template.startsWith('<')) { //html模版串
-                templateStr = config.template;
-            } else {  //文件
-                urlArr.push({
-                    url: Util.mergePath([templatePath, config.template]),
-                    type: config.template.endsWith('.nd') ? 'nd' : 'template'
-                });
+        //初始化方法集
+        this.methods = (typeof this.methods === 'function' ? this.methods.apply(this.model) : this.methods) || {};
+
+        //初始化子模块实例
+        let mods = (typeof this.modules === 'function' ? this.modules.apply(this.model) : this.modules);
+        if (Array.isArray(mods)) {
+            for (let cls of mods) {
+                Reflect.construct(cls, []);
             }
         }
-        //删除template
-        delete this.template;
+        delete this.modules;
+        // 如果为字符串，则处理模版，否则在获取模块实例时处理
+        if (typeof this.template === 'string') {
+            this.virtualDom = Compiler.compile(this.template, this);
+            delete this.template;
+        }
+        //处理css配置
+        this.handleCss();
+    }
 
-        //注册自定义标签模块
-        if (this.methodFactory.has('registerModule')) {
-            let registers: Array<RegisterOps> = Reflect.apply(this.methodFactory.get('registerModule'), null, []);
-            if (Array.isArray(registers) && registers.length > 0) {
-                registers.forEach(v => {
-                    DefineElementManager.add(v.name.toUpperCase(), {
-                        init: function (element: Element, parent?: Element) {
-                            element.tagName = 'div';
-                            element.setProp('modulename', v.name);
-                            new Directive('module', v.class, element, parent);
+    /**
+     * 处理css
+     */
+    private handleCss() {
+        let cssArr = (typeof this.css === 'function' ? this.css.apply(this.model) : this.css);
+        if (Array.isArray(cssArr) && cssArr.length > 0) {
+            //如果不存在stylesheet或最后一个stylesheet是link src，则新建一个style标签
+            if (document.styleSheets.length === 0 || document.styleSheets[document.styleSheets.length - 1].href) {
+                document.head.appendChild(document.createElement('style'));
+            }
+            //得到最后一个sheet
+            let sheet: CSSStyleSheet = document.styleSheets[document.styleSheets.length - 1];
+            for (let css of cssArr) {
+                if (typeof css === 'string') {
+                    sheet.insertRule("@import '" + css + "'");
+                } else if (typeof css === 'object') {
+                    for (let p in css) {
+                        let style = p + '{';
+                        for (let p1 in css[p]) {  //多个样式
+                            style += p1 + ':' + css[p][p1] + ';'
                         }
-                    })
-                })
-            }
-        }
-
-        //如果已存在templateStr，则直接编译
-        if (!Util.isEmpty(templateStr)) {
-            this.virtualDom = Compiler.compile(templateStr);
-        }
-
-        //数据
-        if (config.data) { //数据
-            if (Util.isObject(config.data)) { //数据
-                this.model = new Model(config.data, this);
-            } else { //数据url
-                urlArr.push({
-                    url: config.data,
-                    type: 'data'
-                });
-                this.dataUrl = <string>config.data;
-            }
-        } else { //空数据
-            this.model = new Model({}, this);
-        }
-
-        //批量请求文件
-        if (urlArr.length > 0) {
-            let rets: IResourceObj[] = await ResourceManager.getResources(urlArr);
-            for (let r of rets) {
-                if (r.type === 'template' || r.type === 'nd') {
-                    this.virtualDom = <Element>r.content;
-                } else if (r.type === 'data') {
-                    this.model = new Model(r.content, this);
+                        style += p + '}';
+                        //加入样式表
+                        sheet.insertRule(style);
+                    }
                 }
             }
         }
-
-
-
-        //处理子模块
-        if (this.initConfig.modules) {
-            for (let cfg of this.initConfig.modules) {
-                let mdl: Module = new Module(cfg);
-                mdl.parentId = this.id;
-                this.addChild(mdl.id);
-            }
-        }
-        changeState(this);
-        delete this.initConfig;
-        /**
-         * 修改状态
-         * @param mod 	模块
-         */
-        function changeState(mod: Module) {
-            if (mod.isMain) {
-                mod.state = 3;
-                //可能不能存在数据，需要手动添加到渲染器
-                Renderer.add(mod);
-            } else if (mod.parentId) {
-                mod.state = ModuleFactory.get(mod.parentId).state;
-            } else {
-                mod.state = 1;
-            }
-        }
+        delete this.css;
     }
 
     /**
@@ -306,28 +202,15 @@ export class Module {
             return true;
         }
         //容器没就位或state不为active则不渲染，返回渲染失败
-        if (this.state !== 3 || !this.virtualDom || !this.getContainer()) {
+        if (this.state < 3 || !this.getContainer()) {
             return false;
         }
         //克隆新的树
         let root: Element = this.virtualDom.clone();
-
+        //执行前置方法
+        this.doRenderOps(0);
         if (this.firstRender) {
-            //model无数据，如果存在dataUrl，则需要加载数据
-            if (this.loadNewData && this.dataUrl) {
-                request({
-                    url: this.dataUrl,
-                    type: 'json'
-                }).then(
-                    (r) => {
-                        this.model = new Model(r, this);
-                        this.doFirstRender(root);
-                        this.loadNewData = false;
-                    }
-                );
-            } else {
-                this.doFirstRender(root);
-            }
+            this.doFirstRender(root);
         } else { //增量渲染
             //执行每次渲染前事件
             this.doModuleEvent('onBeforeRender');
@@ -337,53 +220,28 @@ export class Module {
                 this.renderTree = root;
                 //渲染
                 root.render(this, null);
-                this.clearDontRender(root);
                 this.doModuleEvent('onBeforeRenderToHtml');
                 let deleteMap = new Map();
+                let renderDoms: ChangedDom[] = [];
                 // 比较节点
-                root.compare(oldTree, this.renderDoms, deleteMap);
+                root.compare(oldTree, renderDoms, deleteMap);
                 //刪除和替換
-                deleteMap.forEach((value, key) => {
-                    let dp = this.getNode(key);
-                    for (let i = value.length - 1; i >= 0; i--) {
-                        let index = value[i];
-                        if (typeof index == 'string') {
-                            let parm = index.split('|');
-                            index = parm[0];
-                            let vdom = root.query(parm[1]);
-                            dp.insertBefore((() => {
-                                let el;
-                                if (vdom.getTmpParam('isSvgNode')) {
-                                    el = Util.newSvgEl(vdom.tagName);
-                                } else {
-                                    el = Util.newEl(vdom.tagName);
-                                }
-                                //设置属性
-                                Util.getOwnProps(vdom.props).forEach((k) => {
-                                    el.setAttribute(k, vdom.props[k]);
-                                });
-                                el.setAttribute('key', vdom.key);
-                                vdom.handleNEvents(module, el, parent);
-                                vdom.handleAssets(el);
-                                return el;
-                            })(), dp.childNodes[index++]);
-                        }
-                        if (index != null && index != undefined)
-                            dp.removeChild(dp.childNodes[index]);
-                    }
-                });
-                deleteMap.clear();
-
+                this.handleRenderMap(deleteMap,root);
+                
                 // 渲染
-                this.renderDoms.forEach((item) => {
+                renderDoms.forEach((item) => {
                     item.node.renderToHtml(this, item);
                 });
             }
             //执行每次渲染后事件
             this.doModuleEvent('onRender');
         }
-        //数组还原
-        this.renderDoms = [];
+
+        //设置已渲染状态
+        this.state = 4;
+        //执行后置方法
+        this.doRenderOps(1);
+
         return true;
     }
 
@@ -398,10 +256,14 @@ export class Module {
         if (this.model) {
             root.model = this.model;
         }
-
         root.render(this, null);
-        this.clearDontRender(root);
         this.doModuleEvent('onBeforeFirstRenderToHTML');
+
+        //无容器，不执行
+        if (!this.getContainer()) {
+            return;
+        }
+
         //清空子元素
         Util.empty(this.container);
         //渲染到html
@@ -414,18 +276,16 @@ export class Module {
 
     /**
      * 克隆模块
-     * 共享virtual Dom，但是名字为新名字
-     * @param moduleName    新模块名
      */
-    clone(moduleName: string): any {
+    public clone(): Module {
         let me = this;
-        let m: Module = new Module({ name: moduleName });
+        let m: Module = Reflect.construct(this.constructor, []);
         //克隆数据
         if (this.model) {
-            let data = Util.clone(this.model, /^\$\S+/);
+            let data = Util.clone(this.model);
             m.model = new Model(data, m);
         }
-        let excludes = ['id', 'name', 'model', 'virtualDom', 'container', 'containerKey', 'modelManager', 'defineElements'];
+        let excludes = ['id', 'name', 'model', 'virtualDom', 'container', 'containerKey', 'modelManager', 'swapMap'];
         Object.getOwnPropertyNames(this).forEach((item) => {
             if (excludes.includes(item)) {
                 return;
@@ -433,39 +293,11 @@ export class Module {
             m[item] = me[item];
         });
         //克隆虚拟dom树
-        m.virtualDom = this.virtualDom.clone(true);
+        if (this.virtualDom) {
+            m.virtualDom = this.virtualDom.clone(true);
+        }
         return m;
     }
-
-    /**
-     * 检查容器是否存在，如果不存在，则尝试找到
-     */
-    public getContainer() {
-        //根模块，直接使用el
-        if (this.selector) {
-            this.container = document.querySelector(this.selector);
-        } else {  //非根模块，根据容器key获得
-            this.container = document.querySelector("[key='" + this.containerKey + "']");
-        }
-        return this.container;
-    }
-
-    /**
-     * 设置模块容器 key
-     * @param key   模块容器key
-     */
-    public setContainerKey(key: string) {
-        this.containerKey = key;
-    }
-
-    /**
-     * 获取模块容器 key
-     * @param key   模块容器key
-     */
-    public getContainerKey() {
-        return (this.containerKey);
-    }
-
 
     /**
      * 数据改变
@@ -487,75 +319,6 @@ export class Module {
             if (m) {
                 m.parentId = this.id;
             }
-            //保存name和id映射
-            this.moduleMap.set(m.name, moduleId);
-
-            //执行无主消息检测
-            MessageQueue.move(m.name, moduleId, this.id);
-        }
-    }
-
-    /**
-     * 发送
-     * @param toName 		接收模块名或模块id，如果为模块id，则直接发送，不需要转换
-     * @param data 			消息内容
-     */
-    public send(toName: string | number, data: any) {
-        if (typeof toName === 'number') {
-            MessageQueue.add(this.id, toName, data);
-            return;
-        }
-
-        let m: Module;
-        let pm: Module = ModuleFactory.get(this.parentId);
-        //1 比对父节点名
-        //2 比对兄弟节点名
-        //3 比对孩子节点名
-        if (pm) {
-            if (pm.name === toName) { //父亲
-                m = pm
-            } else { //兄弟
-                m = pm.getChild(toName);
-            }
-        }
-        if (!m) { //孩子节点
-            m = this.getChild(toName);
-        }
-        if (m) {
-            MessageQueue.add(this.id, m.id, data);
-        }
-    }
-
-
-    /**
-     * 广播给父、兄弟和孩子（第一级）节点
-     */
-    public broadcast(data: any) {
-        //兄弟节点
-        if (this.parentId) {
-            let pmod: Module = ModuleFactory.get(this.parentId);
-            if (pmod) {
-                //父模块
-                this.send(this.parentId, data);
-                if (pmod.children) {
-                    pmod.children.forEach((item) => {
-                        //自己不发
-                        if (item === this.id) {
-                            return;
-                        }
-                        let m: Module = ModuleFactory.get(item);
-                        //兄弟模块
-                        this.send(m.id, data);
-                    });
-                }
-            }
-        }
-
-        if (this.children !== undefined) {
-            this.children.forEach((item) => {
-                let m: Module = ModuleFactory.get(item);
-                this.send(m.id, data);
-            });
         }
     }
 
@@ -571,26 +334,14 @@ export class Module {
     /**
      * 激活模块(添加到渲染器)
      */
-    public async active() {
-        //激活状态不用激活，创建状态不能激活
-        if (this.state === 3) {
-            return;
-        }
-        //未初始化，需要先初始化
-        if (this.state === 0) {
-            await this.init();
-        }
+    public active() {
         this.state = 3;
-        //添加到渲染器
         Renderer.add(this);
-        //孩子节点激活
-        if (Util.isArray(this.children)) {
-            this.children.forEach(async (item) => {
-                let m: Module = ModuleFactory.get(item);
-                if (m) {
-                    await m.active();
-                }
-            });
+        for (let id of this.children) {
+            let m = ModuleFactory.get(id);
+            if (m) {
+                m.active();
+            }
         }
     }
 
@@ -598,25 +349,30 @@ export class Module {
      * 取消激活
      */
     public unactive() {
-        //主模块不允许取消
-        if (this.isMain || this.state === 2) {
+        if (ModuleFactory.getMain() === this || this.state === 2) {
             return;
         }
+        //设置状态
         this.state = 2;
+        //删除容器
+        delete this.container;
         //设置首次渲染标志
         this.firstRender = true;
-        if (Util.isArray(this.children)) {
-            this.children.forEach((item) => {
-                let m: Module = ModuleFactory.get(item);
-                if (m) {
-                    m.unactive();
-                }
-            });
+        //处理子节点
+        for (let id of this.children) {
+            let m = ModuleFactory.get(id);
+            if (m) {
+                m.unactive();
+            }
         }
     }
 
     /**
+<<<<<<< HEAD
      * 模块终结
+=======
+     * 模块销毁
+>>>>>>> 0f210403ad7c5e6f6cbf1972f95ed84affa169e8
      */
     public destroy() {
         if (Util.isArray(this.children)) {
@@ -631,6 +387,17 @@ export class Module {
         ModuleFactory.remove(this.id);
     }
 
+    /**
+     * 获取父模块
+     * @returns     父模块   
+     */
+    public getParent(): Module {
+        if (!this.parentId) {
+            return;
+        }
+        return ModuleFactory.get(this.parentId);
+    }
+
     /*************事件**************/
 
     /**
@@ -639,79 +406,12 @@ export class Module {
      * @param param 		参数，为数组
      */
     private doModuleEvent(eventName: string, param?: Array<any>) {
-        const foo: Function = this.methodFactory.get(eventName);
-        if (!foo) {
-            return;
-        }
-        //模块作为第一个参数
         if (param) {
             param.unshift(this);
         } else {
             param = [this];
         }
-        //调用方法
-        Util.apply(foo, this.model, param);
-    }
-
-    /**
-     * 添加实例化后操作
-     * @param foo  	操作方法
-     */
-    public addCreateOperation(foo: Function) {
-        if (!Util.isFunction(foo)) {
-            return;
-        }
-        if (!this.createOps.includes(foo)) {
-            this.createOps.push(foo);
-        }
-    }
-
-    /**
-     * 清理不渲染节点
-     * @param dom   节点
-     */
-    clearDontRender(dom: Element) {
-        for (let i = 0; i < dom.children.length; i++) {
-            let item = dom.children[i];
-            if (item.dontRender) {
-                dom.children.splice(i, 1);
-                return;
-            }
-            //不渲染自己，子节点前进一级
-            if (item.dontRenderSelf) {
-                let arr = [];
-                for (let d of item.children) {
-                    d.parent = dom.parent;
-                    d.parentKey = dom.parentKey;
-                    arr.push(d);
-                }
-                dom.children.splice.apply(dom.children, [i, 1].concat(arr));
-                continue;
-            }
-            this.clearDontRender(item);
-        }
-    }
-    /**
-     * 获取子孙模块
-     * @param name          模块名 
-     * @param descendant    如果为false,只在子节点内查找，否则在后代节点查找（深度查询），直到找到第一个名字相同的模块
-     */
-    public getChild(name: string, descendant?: boolean): Module {
-        if (this.moduleMap.has(name)) {
-            let mid = this.moduleMap.get(name);
-            return ModuleFactory.get(mid);
-        } else if (descendant) {
-            for (let id of this.children) {
-                let m = ModuleFactory.get(id);
-                if (m) {
-                    let m1 = m.getChild(name, descendant);
-                    if (m1) {
-                        return m1;
-                    }
-                }
-            }
-        }
-        return null;
+        this.invokeMethod(eventName, param);
     }
 
     /**
@@ -720,7 +420,7 @@ export class Module {
      * @returns     方法
      */
     public getMethod(name: string): Function {
-        return this.methodFactory.get(name);
+        return this.methods[name];
     }
 
     /**
@@ -729,7 +429,7 @@ export class Module {
      * @param foo   方法函数
      */
     public addMethod(name: string, foo: Function) {
-        this.methodFactory.add(name, foo);
+        this.methods[name] = foo;
     }
 
     /**
@@ -737,17 +437,7 @@ export class Module {
      * @param name  方法名
      */
     public removeMethod(name: string) {
-        this.methodFactory.remove(name);
-    }
-
-    /**
-     * 设置数据url
-     * @param url   数据url
-     */
-    public setDataUrl(url: string) {
-        this.dataUrl = url;
-        //设置新加载数据标志
-        this.loadNewData = true;
+        delete this.methods[name];
     }
 
     /**
@@ -767,11 +457,13 @@ export class Module {
             value = key[keyName];
         }
         let qs: string = "[" + keyName + "='" + value + "']";
-        let el: HTMLElement = this.container ? this.container.querySelector(qs) : null;
-        if (!el && notNull) {
-            return this.container;
+        let ct = this.getContainer();
+
+        if (ct) {
+            return ct.querySelector(qs);
+        } else if (notNull) {
+            return ct || null;
         }
-        return el;
     }
 
     /**
@@ -785,33 +477,147 @@ export class Module {
     }
 
     /**
-     * 判断是否为容器key
-     * @param key   element key
+     * 获取模块容器
      */
-    public isContainerKey(key: string): boolean {
-        return this.containerKey === key;
+    public getContainer(): HTMLElement {
+        if (!this.container) {
+            if (this.containerKey) {
+                this.container = this.getParent().getNode(this.containerKey);
+            }
+        }
+        return this.container;
+    }
+
+    /**
+     * 设置渲染容器
+     * @param el    容器
+     */
+    public setContainer(el: HTMLElement) {
+        this.container = el;
+    }
+
+    /**
+     * 设置渲染容器key
+     * @param key   容器key
+     */
+    public setContainerKey(key: string) {
+        this.containerKey = key;
     }
 
     /**
      * 设置首次渲染标志
      * @param flag  首次渲染标志true/false
      */
-    setFirstRender(flag: boolean) {
+    public setFirstRender(flag: boolean) {
         this.firstRender = flag;
     }
 
     /**
-     * 设置为主模块
+     * 调用方法
+     * @param methodName    方法名
+     * @param args          参数数组
      */
-    setMain() {
-        this.isMain = true;
+    public invokeMethod(methodName: string, args: any[]) {
+        let foo = this.getMethod(methodName);
+        if (foo && typeof foo === 'function') {
+            return foo.apply(this.model, args);
+        }
     }
 
     /**
-     * 设置模块容器选择器
-     * @param selector 
+     * 添加渲染方法
+     * @param foo   方法函数    
+     * @param flag  标志 0:渲染前执行 1:渲染后执行
+     * @param args  参数
+     * @param once  是否只执行一次，如果为true，则执行后删除
      */
-    setSelector(selector: string) {
-        this.selector = selector;
+    public addRenderOps(foo: Function, flag: number, args?: any[], once?: boolean) {
+        if (typeof foo !== 'function') {
+            return;
+        }
+        let arr = flag === 0 ? this.preRenderOps : this.postRenderOps;
+        arr.push({
+            foo: foo,
+            args: args,
+            once: once
+        });
+    }
+
+    /**
+     * 执行渲染方法
+     * @param flag 类型 0:前置 1:后置
+     */
+    private doRenderOps(flag: number) {
+        let arr = flag === 0 ? this.preRenderOps : this.postRenderOps;
+        if (arr) {
+            for (let i = 0; i < arr.length; i++) {
+                let o = arr[i];
+                o.foo.apply(this, o.args);
+                // 执行后删除
+                if (o.once) {
+                    arr.splice(i--, 1);
+                }
+            }
+        }
+    }
+    /**
+     * 处理 增量渲染中 节点交换与依序删除操作
+     * @param deleteMap 增量渲染map
+     */
+    private handleRenderMap(deleteMap: Map<any, any>,root:Element) {
+        deleteMap.forEach((value, key) => {
+            let dp: HTMLElement = this.getNode(key);
+            let tmp = [];
+            for (let i = 0; i < value.length; i++) {
+                let index = value[i];
+                if (typeof index == 'object') {
+                    let els;
+                    //新建替换
+                    if (index[2] != undefined) {
+                        els = dp.querySelectorAll("[key='" + index[1] + "']");
+                        dp.insertBefore((() => {
+                            const vDom: Element = root.query(index[0]);
+                            return Util.newEls(vDom, this, vDom.parent, this.getNode(vDom.parent.key));
+                        })(), els[els.length - 1]);
+                    } else if (index.length === 2) {
+                        //更改dom节点顺序
+                        let ele = this.getNode(index[0]);
+                        if (ele) {
+                            //插入到后面
+                            if (index[1].charAt(0) == '|') {
+                                let els = dp.querySelectorAll("[key='" + index[1].substring(1) + "']");
+                                let next = els[els.length - 1].nextSibling;
+                                if (next !== null) dp.insertBefore(ele, next);
+                                else dp.appendChild(ele);
+                            } else {//插入到前面
+                                els = dp.querySelectorAll("[key='" + index[1] + "']");
+                                dp.insertBefore(ele, els[els.length - 1]);
+                            }
+                        }
+                    } else {
+                        //删除dom节点
+                        els = dp.querySelectorAll("[key='" + index[0] + "']");
+                        dp.removeChild(els[els.length - 1]);
+                    }
+                } else {
+                    tmp.push(index);
+                }
+            }
+            //替换和删除需要反向操作
+            for (let i = tmp.length - 1; i >= 0; i--) {
+                let index = tmp[i];
+                if (typeof index == 'string') {
+                    let parm = index.split('|');
+                    index = parm[0];
+                    const vDom: Element = root.query(parm[1]);
+                    dp.insertBefore((() => {
+                        return Util.newEls(vDom, this, vDom.parent, this.getNode(vDom.parent.key));
+                    })(), dp.childNodes[index++]);
+                }
+                if (dp.childNodes.length > index) dp.removeChild(dp.childNodes[index]);
+            }
+        });
+        deleteMap.clear();
     }
 }
+

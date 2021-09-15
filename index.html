@@ -1,104 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<title>route</title>
 
-<head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-	<title>route</title>
+		<script type="text/javascript" src="./dist/nodom.js"></script>
+	</head>
 
-	<script type="text/javascript" src="./dist/nodom.js"></script>
-</head>
-
-<body>
-	<div>
-		<button e-click="change">render</button>
-		<ul>
-			<li x-repeat="rows">{{name}}'s address is {{addr}}</li>
-		</ul>
-		11
-		<br>
-		{{sum.call(null,star,star1)}}
-		<div x-if='show'>asd</div>
-		<div x-show='show'>asd</div>
-		<div x-if='flag'> aa</div>  
-		{{show}}
-		<div>{{name}}</div>
-		<div><span x-elseif="grade>=60 && grade<70"> 及格 </span></div>
-		<div x-class="{red:'red'}">test</div>
-		<input type="text" x-field='text'>
-	</div>
-
-</body>
-<script>
-	nodom.app({
-		module: {
-			el: "div",
-			// template:'/child.html'
-			// class: "MdlRouteMain",
-			methods: {
-				onBeforeFirstRender: function () {},
-				change: function (dom, module, e, el) {
-					// console.log(dom,module,e,el);
-					this.rows.push({
-						name: 'zhang',
-						addr: 'mianyang'
-					});
-					this.show = false;
-					this.name = 'gg';
-					this.red = false;
-					delete this.$time;
-					this.sum = function (a, b) {
-						return a;
-					}
-					this.flag=false;
+	<body>
+		<div>
+			<ui-text value="{{data}}"></ui-text>
+		</div>
+	</body>
+	<script>
+		nodom.app({
+			module: {
+				el: "div",
+				// template:'/child.html'
+				// class: "MdlRouteMain",
+				data: {
+					data: 123,
 				},
-				cac: function (a, b) {
-					return a + b;
-				}
+				methods: {
+					onBeforeFirstRender: function () {},
+					change: function (dom, module, e, el) {
+						// console.log(dom,module,e,el);
+						this.rows.push({
+							name: "zhang",
+							addr: "mianyang",
+						});
+						this.show = false;
+						this.name = "gg";
+						this.red = false;
+						delete this.$time;
+						this.sum = function (a, b) {
+							return a;
+						};
+						this.flag = false;
+					},
+					cac: function (a, b) {
+						return a + b;
+					},
+				},
+				data: {
+					path: "name",
+					star: 1,
+					star1: 2,
+					show: true,
+					name: "kyle",
+					red: true,
+					text: "",
+					flag: true,
+					$time: {
+						a: 1,
+					},
+					sum: function (a, b) {
+						return a + b;
+					},
+					rows: [
+						{
+							name: "yang",
+							addr: "chengdu",
+							pre: "./examples/data/img/logo.png",
+							src: "./examples/data/img/1.jpg",
+						},
+						{
+							name: "zhang",
+							addr: "mianyang",
+							pre: "./examples/data/img/logo.png",
+							src: "./examples/data/img/1.jpg",
+						},
+						{
+							name: "chen",
+							addr: "luoyang",
+							pre: "./examples/data/img/logo.png",
+							src: "./examples/data/img/1.jpg",
+						},
+						{
+							name: "tang",
+							addr: "beijing",
+							pre: "./examples/data/img/logo.png",
+							src: "./examples/data/img/1.jpg",
+						},
+					],
+				},
 			},
-			data: {
-				path: 'name',
-				star: 1,
-				star1: 2,
-				show: true,
-				name: 'kyle',
-				red: true,
-				text: '',
-				flag:true,
-				$time: {
-					a: 1,
-				},
-				sum: function (a, b) {
-					return a + b;
-				},
-				rows: [{
-						name: 'yang',
-						addr: 'chengdu',
-						pre: './examples/data/img/logo.png',
-						src: './examples/data/img/1.jpg'
-					},
-					{
-						name: 'zhang',
-						addr: 'mianyang',
-						pre: './examples/data/img/logo.png',
-						src: './examples/data/img/1.jpg'
-					},
-					{
-						name: 'chen',
-						addr: 'luoyang',
-						pre: './examples/data/img/logo.png',
-						src: './examples/data/img/1.jpg'
-					},
-					{
-						name: 'tang',
-						addr: 'beijing',
-						pre: './examples/data/img/logo.png',
-						src: './examples/data/img/1.jpg'
-					},
-				]
-			},
-		},
-	});
-</script>
-
+		});
+	</script>
 </html>

@@ -1,70 +1,36 @@
-import { Application } from "./application";
 import { DirectiveManager } from "./directivemanager";
 import { NError } from "./error";
-import { MessageQueue } from "./messagequeue";
+import { NodomMessage_en } from "./locales/msg_en";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
 import { Renderer } from "./renderer";
-import { Route } from "./router";
+import { Route } from "./route";
 import { Scheduler } from "./scheduler";
-import { IAppCfg, IMdlClassObj, IRouteCfg } from "./types";
+import { IRouteCfg } from "./types";
 import { Util } from "./util";
 
+/**
+ * 新建store方法
+ */
 /**
  * nodom提示消息
  */
 export var NodomMessage;
-
+export let store:Object|undefined ;
 /**
  * 新建一个App
- * @param config 应用配置
+ * @param clazz     模块类
+ * @param el        el选择器
  */
-export async function app(config?: IAppCfg): Promise<Module> {
-    if (window['NodomConfig']) {
-        config = Util.merge({}, window['NodomConfig'], config);
-    }
-
-    let lang: string = config && config.language;
-    if (!lang) {
-        lang = navigator.language ? navigator.language.substr(0, 2) : 'zh';
-    }
-    NodomMessage = eval('(NodomMessage_' + lang + ')');
-
-    if (!config || !config.module) {
-        throw new NError('config', NodomMessage.TipWords['application']);
-    }
-
-    Application.setPath(config.path);
-
-    //模块数组初始化
-    if (config.modules) {
-        await ModuleFactory.addModules(config.modules);
-    }
-
-    //消息队列消息处理任务
-    Scheduler.addTask(MessageQueue.handleQueue, MessageQueue);
+export function nodom(clazz:any,el:string){
     //渲染器启动渲染
     Scheduler.addTask(Renderer.render, Renderer);
     //启动调度器
-    Scheduler.start(config.scheduleCircle);
-
-    //存在类名
-    let module: Module;
-    if (config.module.class) {
-        module = await ModuleFactory.getInstance(config.module.class, config.module.name, config.module.data);
-        module.setSelector(config.module.el);
-    } else {
-        module = new Module(config.module);
-    }
-
-    //设置主模块
-    ModuleFactory.setMain(module);
-    await module.active();
-
-    if (config.routes) {
-        this.createRoute(config.routes);
-    }
-    return module;
+    Scheduler.start();
+    NodomMessage = NodomMessage_en;
+    let mdl = ModuleFactory.get(clazz);
+    mdl.setContainer(document.querySelector(el));
+    mdl.active();
 }
 
 /**
@@ -94,14 +60,6 @@ export function createDirective(name: string, priority: number, init: Function, 
         init,
         handler
     );
-}
-
-/**
- * 创建模块
- * @param modules 模块配置数组
- */
-export function addModules(modules: Array<IMdlClassObj>) {
-    ModuleFactory.addModules(modules);
 }
 
 /**
@@ -217,4 +175,3 @@ export async function request(config): Promise<any> {
         }
     });
 }
-

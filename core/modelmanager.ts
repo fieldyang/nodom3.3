@@ -18,7 +18,6 @@ export class ModelManager {
      * 每个数据对象，可有多个监听器
      */
     private modelMap: WeakMap<Model, any> = new WeakMap();
-
     constructor(module: Module) {
         this.module = module;
     }
@@ -32,14 +31,14 @@ export class ModelManager {
         this.dataMap.set(data, model);
     }
 
-       /**
-     * 删除从 dataNModelMap
-     * @param data      数据对象
-     * @param model     模型
-     */
-        public delToDataMap(data: Object) {
-            this.dataMap.delete(data);
-        }
+    /**
+  * 删除从 dataNModelMap
+  * @param data      数据对象
+  * @param model     模型
+  */
+    public delToDataMap(data: Object) {
+        this.dataMap.delete(data);
+    }
 
     /**
      * 从dataNModelMap获取model
@@ -72,15 +71,15 @@ export class ModelManager {
             this.modelMap.get(model).model = srcNModel;
         }
     }
-      /**
-     * 删除源模型到到模型map
-     * @param model     模型代理
-     * @param srcNModel  源模型
-     */
-       public delModelToModelMap(model: any) {
-     
-            this.modelMap.delete(model)
-        
+    /**
+   * 删除源模型到到模型map
+   * @param model     模型代理
+   * @param srcNModel  源模型
+   */
+    public delModelToModelMap(model: any) {
+
+        this.modelMap.delete(model)
+
     }
     /**
      * 从模型Map获取源模型
@@ -162,15 +161,19 @@ export class ModelManager {
 
     /**
      * 更新导致渲染
+     * 如果不设置oldValue和newValue，则直接强制渲染
      * @param model     model
      * @param key       属性
      * @param oldValue  旧值
      * @param newValue  新值
+     * @param force     强制渲染
      */
-    public update(model: Model, key: string, oldValue: any, newValue: Element) {
-        Renderer.add(this.module);
+    public update(model: Model, key: string, oldValue?: any, newValue?: Element, force?:boolean) {
+        if(oldValue !== newValue || force){
+            Renderer.add(this.module);
+        }
         //处理观察器函数
-        let watcher = this.getWatcherFromModelMap(model, key);
+        let watcher = this.getWatcherFromModelMap(model, <string>key);
         if (watcher) {
             for (let foo of watcher) {
                 //方法名

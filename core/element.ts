@@ -1,6 +1,4 @@
-import { DefineElement } from "./defineelement";
 import { Directive } from "./directive";
-import { NError } from "./error";
 import { NEvent } from "./event";
 import { Expression } from "./expression";
 import { Model } from "./model";
@@ -27,11 +25,6 @@ export class Element {
      * element为textnode时有效
      */
     public textContent: string | HTMLElement;
-
-    /**
-     * 类型，包括: html fragment 或 html element 
-     */
-    public type: string;
 
     /**
      * 指令集
@@ -72,11 +65,6 @@ export class Element {
     public children: Array<Element> = [];
 
     /**
-     * 父element key
-     */
-    public parentKey: string;
-
-    /**
      * 父虚拟dom
      */
     public parent: Element;
@@ -92,30 +80,25 @@ export class Element {
     public dontRender: boolean = false;
 
     /**
-     * 不渲染自己
+     * 模块外部数据集，d- 开头的属性，用于从父、兄和子模块获取数据，该element为模块容器时有效，
      */
-    public dontRenderSelf: boolean = false;
-    /**
-     * 绑定插件
-     */
-    // public plugin: Plugin;
-    /**
-     * 自定义元素(插件，自定义标签)
-     */
-    // public isSvgNode: boolean;
+    public moduleDatas = {};
 
     /**
-     * 是否为svg节点
+     * 渲染前（获取model后）执行方法集合,可以是方法名（在module的methods中定义），也可以是函数
+     * 函数的this指向element的model，参数为(element,module)
      */
-    public defineEl: DefineElement;
+    private beforeRenderOps: any[] = [];
 
     /**
-     * 插槽名
+     * 渲染后（renderToHtml前）执行方法集合，可以是方法名（在module的methods中定义），也可以是函数
+     * 函数的this指向element的model，参数为(element,module)
      */
-    // public slotName: any;
+    private afterRenderOps: any[] = [];
+
     /**
-  * 临时参数 map
-  */
+     * 临时参数 map
+     */
     private tmpParamMap: Map<string, any> = new Map();
 
     /**
@@ -126,7 +109,6 @@ export class Element {
         //检查是否为svg
         if (tag && tag.toLowerCase() === 'svg') {
             this.setTmpParam('isSvgNode', true);
-            // this.isSvgNode = true;
         }
         //key
         this.key = Util.genId() + '';
@@ -139,10 +121,10 @@ export class Element {
      * @returns         渲染成功（dontRender=false） true,否则false
      */
     public render(module: Module, parent?: Element): Boolean {
-        if (this.dontRender) {
-            this.doDontRender();
-            return false;
-        }
+        // if (this.dontRender) {
+        //     this.doDontRender(parent);
+        //     return false;
+        // }
 
         // 设置父对象
         if (parent) {
@@ -151,22 +133,22 @@ export class Element {
                 this.model = parent.model;
             }
             this.parent = parent;
-            this.parentKey = parent.key;
         }
         //设置model为模块model
         if (!this.model) {
             this.model = module.model;
         }
-
-
-        //自定义元素的前置渲染
-        if (this.defineEl) {
-            this.defineEl.beforeRender(module, this);
+        //先执行model指令
+        if (this.hasDirective('model')) {
+            let d = this.getDirective('model');
+            d.exec(module, this, this.parent);
         }
+        //前置方法集合执行
+        this.doRenderOp(module, 'before');
 
         if (this.tagName !== undefined) { //element
             if (!this.handleDirectives(module)) {
-                this.doDontRender();
+                this.doDontRender(parent);
                 return false;
             }
             this.handleProps(module);
@@ -174,37 +156,25 @@ export class Element {
             this.handleTextContent(module);
         }
 
-        //子模块渲染
-        if (!this.hasDirective('module')) {
+        if (this.hasProp('moduleId')) {
+            let m = ModuleFactory.get(parseInt(this.getProp('moduleId')));
+
+
+        }
+        //子节点渲染，子模块不渲染
+        if (!this.hasDirective('module') || ModuleFactory.get(parseInt(this.getProp('moduleId'))).firstRender) {
             for (let i = 0; i < this.children.length; i++) {
                 let item = this.children[i];
-                console.log(item);
                 if (!item.render(module, this)) {
-                    item.doDontRender();
-                    this.children.splice(i--, 1);
+                    item.doDontRender(this);
+                    i--;
                 }
             }
         }
-        //自定义元素的后置渲染
-        if (this.defineEl) {
-            this.defineEl.afterRender(module, this);
-        }
+        //后置方法集执行
+        this.doRenderOp(module, 'after');
         return true;
     }
-
-    /**
-     * 恢复到渲染前
-     */
-    private recover() {
-        //删除parent
-        delete this.parent;
-        //删除model
-        delete this.model;
-        //删除dontRender
-        delete this.dontRender;
-    }
-
-
 
     /**
      * 渲染到html element
@@ -219,7 +189,6 @@ export class Element {
         let type = params.type;
         let parent = params.parent;
         //重置dontRender
-        // this.dontRender = false;
         //构建el
         if (type === 'fresh' || type === 'add' || type === 'text') {
             if (parent) {
@@ -243,7 +212,7 @@ export class Element {
                     //首次渲染需要生成子孙节点
                     genSub(el1, this);
                 } else {
-                    el1 = newText(<string>this.textContent, this);
+                    el1 = newText(<string>this.textContent);
                 }
                 el.appendChild(el1);
 
@@ -256,22 +225,9 @@ export class Element {
                 parent.children.forEach(v => [
                     indexArr.push(v.key)
                 ])
-                // let ind = parent.children.indexOf(this);
                 let ind = indexArr.indexOf(this.key);
                 if (ind !== -1) {
-                    //element或fragment
-                    if (this.type === 'html') {
-                        let div: HTMLElement = <HTMLElement>document.querySelector("[key='" + this.key + "']");
-                        if (div !== null) {
-                            div.innerHTML = '';
-                            div.appendChild(<HTMLElement>this.textContent);
-                        } else {
-                            let div: Node = newText(<string>this.textContent);
-                            Util.replaceNode(el.childNodes[ind], div);
-                        }
-                    } else {
-                        el.childNodes[ind].textContent = <string>this.textContent;
-                    }
+                    el.childNodes[ind].textContent = <string>this.textContent;
                 }
                 break;
             case 'upd': //修改属性
@@ -330,7 +286,8 @@ export class Element {
             }
             //设置属性
             Util.getOwnProps(vdom.props).forEach((k) => {
-                el.setAttribute(k, vdom.props[k]);
+                if (typeof vdom.props[k] != 'function')
+                    el.setAttribute(k, vdom.props[k]);
             });
 
             el.setAttribute('key', vdom.key);
@@ -342,19 +299,9 @@ export class Element {
         /**
          * 新建文本节点
          */
-        function newText(text: string | HTMLElement | DocumentFragment, dom?: Element): any {
-            if (!text) {
-                text = '';
-                dom = null;
-            }
-            if (dom && 'html' === dom.type) { //html fragment 或 element
-                let div = Util.newEl('div');
-                div.setAttribute('key', dom.key);
-                div.appendChild(<HTMLElement>text);
-                return div;
-            } else {
-                return document.createTextNode(<string>text);
-            }
+        function newText(text: string | HTMLElement | DocumentFragment): any {
+            return document.createTextNode(<string>text || '');
+
         }
 
         /**
@@ -370,7 +317,7 @@ export class Element {
                         el1 = newEl(item, vNode, pEl);
                         genSub(el1, item);
                     } else {
-                        el1 = newText(item.textContent, item);
+                        el1 = newText(item.textContent);
                     }
                     pEl.appendChild(el1);
                 });
@@ -384,10 +331,8 @@ export class Element {
      */
     public clone(changeKey?: boolean): Element {
         let dst: Element = new Element();
-
         //不直接拷贝的属性
-        // let notCopyProps:string[] = ['parent','directives','props','exprProps','events','children'];
-        let notCopyProps: string[] = ['parent', 'directives', 'children', 'defineEl'];
+        let notCopyProps: string[] = ['parent', 'directives', 'defineEl', 'children', 'model'];
         //简单属性
         Util.getOwnProps(this).forEach((p) => {
             if (notCopyProps.includes(p)) {
@@ -405,23 +350,10 @@ export class Element {
             dst.key = Util.genId() + '';
         }
 
-        //define element复制
-        if (this.defineEl) {
-            if (changeKey) {
-                dst.defineEl = this.defineEl.clone(dst);
-            } else {
-                dst.defineEl = this.defineEl;
-            }
-        }
-
         //指令复制
         for (let d of this.directives) {
-            if (changeKey) {
-                d = d.clone(dst);
-            }
-            dst.directives.push(d);
+            dst.directives.push(d.clone(dst));
         }
-
         //孩子节点
         for (let c of this.children) {
             dst.add(c.clone(changeKey));
@@ -435,6 +367,13 @@ export class Element {
      */
     public handleDirectives(module: Module) {
         for (let d of this.directives.values()) {
+            //model指令已经执行，不再执行
+            if (d.type.name === 'model') {
+                continue;
+            }
+            if (d.expression) {
+                d.value = d.expression.val(this.model);
+            }
             d.exec(module, this, this.parent);
             //指令可能改变render标志
             if (this.dontRender) {
@@ -452,9 +391,13 @@ export class Element {
     public handleExpression(exprArr: Array<Expression | string>, module: Module) {
         let model: Model = this.model;
         let value = '';
+        if (exprArr.length === 1 && typeof exprArr[0] !== 'string') {
+            let v1 = exprArr[0].val(model);
+            return v1 !== undefined ? v1 : '';
+        }
         exprArr.forEach((v) => {
             if (v instanceof Expression) { //处理表达式
-                let v1 = v.val(model, this);
+                let v1 = v.val(model);
                 value += v1 !== undefined ? v1 : '';
             } else {
                 value += v;
@@ -464,22 +407,25 @@ export class Element {
     }
 
     /**
-     * 处理属性（带表达式）
-     * @param module    模块
-     */
+      * 处理属性（带表达式）
+      * @param module    模块
+      */
     public handleProps(module: Module) {
         for (let k of Util.getOwnProps(this.exprProps)) {
             //属性值为数组，则为表达式
             if (Util.isArray(this.exprProps[k])) {
                 let pv = this.handleExpression(this.exprProps[k], module);
-                //class可叠加
-                if (k === 'class') {
-                    this.addClass(pv);
+                if (k === 'style') {
+                    this.addStyle(pv);
                 } else {
                     this.props[k] = pv;
                 }
             } else if (this.exprProps[k] instanceof Expression) { //单个表达式
-                this.props[k] = this.exprProps[k].val(this.model);
+                if (k === 'style') {
+                    this.addStyle(this.exprProps[k].val(this.model))
+                } else {
+                    this.props[k] = this.exprProps[k].val(this.model);
+                }
             }
         }
     }
@@ -488,7 +434,7 @@ export class Element {
      * 处理asset，在渲染到html时执行
      * @param el    dom对应的html element
      */
-    public handleAssets(el: HTMLElement) {
+    public handleAssets(el: HTMLElement | SVGElement) {
         if (!this.tagName || !el) {
             return;
         }
@@ -532,19 +478,20 @@ export class Element {
 
     /**
      * 移除指令
-     * @param directives 	待删除的指令类型数组
+     * @param directives 	待删除的指令类型数组或指令类型
      */
-    public removeDirectives(directives: string[]) {
-        for (let i = 0; i < this.directives.length; i++) {
-            if (directives.length === 0) {
-                break;
+    public removeDirectives(directives: string | string[]) {
+        if (typeof directives === 'string') {
+            let ind;
+            if ((ind = this.directives.findIndex(item => item.type.name === directives)) !== -1) {
+                this.directives.splice(ind, 1);
             }
-            for (let j = 0; j < directives.length; j++) {
-                if (directives[j].includes(this.directives[i].type.name)) {
-                    this.directives.splice(i--, 1);
-                    directives.splice(j--, 1);
-                    break;
-                }
+            return;
+        }
+        for (let d of directives) {
+            let ind;
+            if ((ind = this.directives.findIndex(item => item.type.name === d)) !== -1) {
+                this.directives.splice(ind, 1);
             }
         }
     }
@@ -584,7 +531,6 @@ export class Element {
      * @return true/false
      */
     public hasDirective(directiveType): boolean {
-
         return this.directives.findIndex(item => item.type.name === directiveType) !== -1;
     }
 
@@ -603,56 +549,14 @@ export class Element {
      */
     public add(dom: Element | Array<Element>) {
         if (Array.isArray(dom)) {
-            dom.forEach(v => v.parentKey = this.key);
+            dom.forEach(v => {
+                //将parent也附加上，增量渲染需要
+                v.parent = this;
+            });
             this.children.push(...dom);
         } else {
-            dom.parentKey = this.key;
             this.children.push(dom);
-        }
-
-    }
-
-    /**
-     * 从虚拟dom树和html dom树删除自己
-     * @param module 	模块
-     * @param delHtml 	是否删除html element
-     */
-    public remove(module: Module, delHtml?: boolean) {
-        // 从父树中移除
-        let parent: Element = this.getParent(module);
-        if (parent) {
-            parent.removeChild(this);
-        }
-        // 删除html dom节点
-        if (delHtml && module) {
-            let el = module.getNode(this.key);
-            if (el !== null) {
-                Util.remove(el);
-            }
-        }
-    }
-
-    /**
-     * 从html删除
-     */
-    public removeFromHtml(module: Module, textNode?: boolean) {
-        // if (textNode) {
-        //     let parent = module.getNode(this.parentKey);
-        //     if (parent !== null) {
-        //         let content = Array.prototype.findIndex.call(parent.childNodes, (v) => {
-        //             if (v.nodeType == 3) {
-        //                 return this.textContent == v.textContent;
-        //             } else {
-        //                 return false;
-        //             }
-        //         });
-        //         if(content!=-1)
-        //         parent.removeChild(parent.childNodes[content]);
-        //     }
-        // }
-        let el = module.getNode(this.key);
-        if (el !== null) {
-            Util.remove(el);
+            dom.parent = this;
         }
     }
 
@@ -669,19 +573,25 @@ export class Element {
     }
 
     /**
-     * 获取parent
-     * @param module 模块 
-     * @returns      父element
+     * 移除 某个节点
+     * @param key   节点key
      */
-    public getParent(module: Module): Element {
-        if (!module) {
-            throw new NError('invoke', 'Element.getParent', '0', 'Module');
+    public remove(key: string) {
+        let r = find(this, key);
+        if (r.length > 1) {
+            r[1].removeChild(r[0]);
         }
-        if (this.parent) {
-            return this.parent;
-        }
-        if (this.parentKey) {
-            return module.getElement(this.parentKey);
+        function find(dom: Element, key: string, parent?: Element) {
+            if (dom.key === key) {
+                return [dom, parent];
+            }
+
+            for (let c of dom.children) {
+                let r = find(c, key, dom);
+                if (r) {
+                    return r;
+                }
+            }
         }
     }
 
@@ -761,7 +671,55 @@ export class Element {
         }
         this.props['class'] = clazz;
     }
+    /**
+         * 查询style
+         * @param styStr style字符串
+         */
+    public hasStyle(styStr: string) {
+        let styleStr = this.props['style'];
+        if (!styleStr) {
+            return false;
+        } else {
+            return styleStr.trim().split(/;\s+/).includes(styStr);
+        }
+    }
 
+    /**
+     * 添加style
+     *  @param styStr style字符串
+     */
+    public addStyle(styStr: string) {
+        let styleStr = this.props['style'];
+        if (!styleStr) {
+            this.props['style'] = styStr;
+        } else {
+            let sa: any[] = styleStr.trim().split(/;\s+/);
+            if (!sa.includes(styStr)) {
+                sa.push(styStr);
+                styleStr = sa.join(';');
+                this.props['style'] = styleStr;
+            }
+        }
+    }
+
+    /**
+     * 删除style
+     * @param styStr style字符串
+     */
+    public removeStyle(styStr: string) {
+        let styleStr = this.props['style'];
+        if (!styleStr) {
+            return;
+        } else {
+            let sa: string[] = styleStr.trim().split(/;\s+/);
+            let index;
+            if ((index = sa.indexOf(styStr)) !== -1) {
+                sa.splice(index, 1);
+                styleStr = sa.join(';');
+            }
+        }
+        this.props['style'] = styleStr;
+    }
     /**
      * 是否拥有属性
      * @param propName  属性名
@@ -847,7 +805,7 @@ export class Element {
                 }
             };
             if (res) {
-                return key.hasOwnProperty('type') && key['type'] !== 'element' ? this.defineEl : this;
+                return this;
             }
         } else {
             if (this.key === key) return this;
@@ -880,7 +838,7 @@ export class Element {
                     change = true;
                 }
             } else { //节点类型不同
-                addDelKey(this, 'rep',);
+                addDelKey(this, 'rep');
             }
         } else { //element节点
             if (this.tagName !== dst.tagName) { //节点类型不同
@@ -944,7 +902,6 @@ export class Element {
                 //子节点对比策略
                 let [oldStartIdx, oldStartNode, oldEndIdx, oldEndNode] = [0, dst.children[0], dst.children.length - 1, dst.children[dst.children.length - 1]];
                 let [newStartIdx, newStartNode, newEndIdx, newEndNode] = [0, this.children[0], this.children.length - 1, this.children[this.children.length - 1]];
-                let [newMap, newKeyMap] = [new Map(), new Map()];
                 while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
                     if (sameKey(oldStartNode, newStartNode)) {
                         newStartNode.compare(oldStartNode, retArr, deleteMap, this);
@@ -955,55 +912,62 @@ export class Element {
                         newEndNode = this.children[--newEndIdx];
                         oldEndNode = dst.children[--oldEndIdx];
                     } else if (sameKey(newStartNode, oldEndNode)) {
+                        //新前久后
                         newStartNode.compare(oldEndNode, retArr, deleteMap, this);
+                        //接在待操作老节点前面
+                        addDelKey(oldEndNode, 'insert', [oldStartNode.key])
                         newStartNode = this.children[++newStartIdx];
                         oldEndNode = dst.children[--oldEndIdx];
                     } else if (sameKey(newEndNode, oldStartNode)) {
                         newEndNode.compare(oldStartNode, retArr, deleteMap, this);
+                        //接在老节点后面 
+                        addDelKey(oldStartNode, 'insert', ['|' + oldEndNode.key])
                         newEndNode = this.children[--newEndIdx];
                         oldStartNode = dst.children[++oldStartIdx];
                     } else {
-                        newMap.set(newStartIdx, newStartNode);
-                        newKeyMap.set(newStartNode.key, newStartIdx);
+                        addDelKey(newStartNode, 'add', [oldStartNode.key]);
                         newStartNode = this.children[++newStartIdx];
                     }
                 }
+                //有新增或删除节点
                 if (oldStartIdx <= oldEndIdx || newStartIdx <= newEndIdx) {
-                    if (newStartIdx <= newEndIdx) {//新增节点
-                        for (let i = newStartIdx; i <= newEndIdx; i++)  retArr.push(new ChangedDom(this.children[i], 'add', this, i));
-                    } else {//有老节点
+                    if (oldStartIdx > oldEndIdx) {
+                        //没有老节点
+                        for (let i = newStartIdx; i <= newEndIdx; i++) {
+                            retArr.push(new ChangedDom(this.children[i], 'add', this, i))
+                        }
+                    } else {
+                        //有老节点
                         for (let i = oldStartIdx; i <= oldEndIdx; i++) {
-                            let oldKey = dst.children[i].key;
-                            if (newKeyMap.has(oldKey)) {
-                                newMap.get(newKeyMap.get(oldKey)).compare(dst.children[i], retArr, deleteMap, this);
-                                newMap.delete(newKeyMap.get(oldKey));
-                                newKeyMap.delete(oldKey);
-                            }
-                            else {
-                                addDelKey(dst.children[i]);
-                            }
-                        };
+                            addDelKey(dst.children[i], 'del');
+                        }
                     }
                 }
-                if (newMap.size) {
-                    newMap.forEach((v, k) => {
-                        retArr.push(new ChangedDom(v, 'add', this, k));
-                    })
-                };
             }
         }
         function sameKey(newElement, oldElement) {
             return newElement.key === oldElement.key;
         }
         //添加刪除替換的key
-        function addDelKey(element, type?: string) {
-            let pKey: string = element.parentKey;
+        function addDelKey(element: Element, type?: string, insert?: Array<any>) {
+            let pKey: string = element.parent.key;
             if (!deleteMap.has(pKey)) {
                 deleteMap.set(pKey, new Array());
             }
-            deleteMap.get(pKey).push(type == 'rep' ? element.parent.children.indexOf(element) + '|' + this.key : element.parent.children.indexOf(element));
+            //添加节点或者更改节点顺序
+            if (insert != undefined) {
+                deleteMap.get(pKey).push(type === 'add' ? [element.key, insert[0], 'add'] : [element.key, insert[0]]);
+            } else {
+                let ans;
+                //老节点的删除不能依据index
+                if (type == 'del') {
+                    ans = [element.key];
+                } else {
+                    ans = type == 'rep' ? element.parent.children.indexOf(element) + '|' + element.key : element.parent.children.indexOf(element);
+                }
+                deleteMap.get(pKey).push(ans);
+            }
         }
-
     }
 
     /**
@@ -1028,25 +992,29 @@ export class Element {
     }
 
     /**
+     * 获取事件
+     * @param eventName     事件名
+     * @returns             事件对象或事件对象数组
+     */
+    public getEvent(eventName: string) {
+        return this.events.get(eventName);
+    }
+    /**
      * 执行不渲染关联操作
      * 关联操作，包括:
      *  1 节点(子节点)含有module指令，需要unactive
      */
-    public doDontRender() {
+    public doDontRender(parent?: Element) {
+        if (parent) {
+            parent.removeChild(this);
+        }
+        //对于模块容器，对应module需unactive
         if (this.hasDirective('module')) {
-            let d: Directive = this.getDirective('module');
-            if (d.extra && d.extra.moduleId) {
-                let mdl: Module = ModuleFactory.get(d.extra.moduleId);
-                if (mdl) {
-                    mdl.unactive();
-                }
+            let mdl = ModuleFactory.get(parseInt(this.getProp('moduleId')));
+            if (mdl) {
+                mdl.unactive();
             }
         }
-        //子节点递归
-        for (let c of this.children) {
-            c.doDontRender();
-        }
-        this.recover();
     }
 
     /**
@@ -1084,4 +1052,35 @@ export class Element {
         return this.tmpParamMap.has(key);
     }
 
+    /**
+     * 添加渲染附加操作
+     * @param method    方法名 
+     * @param type      类型 before,after
+     */
+    addRenderOp(method: any, type: string) {
+        if (type === 'before') {
+            this.beforeRenderOps.push(method);
+        } else {
+            this.afterRenderOps.push(method);
+        }
+    }
+
+    /**
+     * 执行渲染附加操作
+     * @param module    模块
+     * @param type      类型 before,after
+     */
+    doRenderOp(module: Module, type: string) {
+        // 否则执行注册在element上的前置渲染方法
+        let arr = type === 'before' ? this.beforeRenderOps : this.afterRenderOps;
+        for (let m of arr) {
+            //可能是字符串
+            if (typeof m === 'string') {
+                m = module.getMethod(m);
+            }
+            if (m) {
+                m.apply(this.model, [this, module]);
+            }
+        }
+    }
 }

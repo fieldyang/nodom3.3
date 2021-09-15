@@ -17,40 +17,48 @@
 		</style>
 	</head>
 
-	<body>
-		<div>
-			<button e-click="click">click</button>
-			<h3>普通模块,插槽</h3>
-			<div x-module="ModuleA|mod0" data="data/data1.json">
-				<div x-slot="title">周一</div>
+		.tip {
+			color: darkorange;
+		}
+	</style>
+</head>
+
+<body>
+	<div>
+		<div x-module='ModuleC|modc1' update={{this.add}}></div>
+		{{sum}}
+		<div name='{{sum}}'>1</div>
+		<button e-click="click">click</button>
+		<h3>普通模块,插槽</h3>
+		<!-- peak={{this.add}} -->
+		<div x-module="ModuleA|mod0" data="data/data1.json" peak={{sum}}>
+			<div x-slot="title">周一</div>
+			<div x-slot="btn1">
+				<button>特殊点击</button>
+			</div>
+
+		<h3>自定义模块类名</h3>
+		<Send moduleName='send' age='10'>
+		</Send>
+
+			<md-a moduleName="title1">
+				<div x-slot="title">周二</div>
 				<div x-slot="btn1">
-					<button>特殊点击</button>
+					<button>普通点击</button>
 				</div>
-				<div x-slot="picture">无</div>
-			</div>
+			</md-a>
+			<h4>自定义模块名</h4>
+			<title></title>
 
-			<h3>自定义模块类名</h3>
-		<send-message moduleName='send' age='10'>
-		</send-message>
-
-		<md-a moduleName='title1'>
-			<div x-slot='title'>
-				周二
-			</div>
-			<div x-slot='btn1'>
-				<button>普通点击</button>
+			<hr />
+			<h3>支持外部repeat的模块</h3>
+			<div x-repeat="users">
+				<p>{{name}} 的订单:</p>
+				<md-a moduleName='{{"mod" + ($index+1)}}' data="{{data}}"></md-a>
 			</div>
 		</md-a>
 		<h4>自定义模块名</h4>
-		<title></title>
-
-
-		<hr>
-		<h3>支持外部repeat的模块</h3>
-		<div x-repeat="users">
-			<p>{{name}} 的订单:</p>
-			<md-a moduleName='{{"mod" + ($index+1)}}' data="{{data}}"></md-a>
-		</div>
+		<title peak={{this.add}}></title>
 
 			<h3>模块消息传递</h3>
 			<p>消息只能发送给父模块、兄弟模块和子模块，定向发送消息时，必须为模块设置模块名</p>
@@ -61,7 +69,7 @@
 			</ul>
 
 			<p>模块1包含两个子模块</p>
-			<div x-module="ModuleB|modb1"></div>
+			<div x-module="ModuleB|modb1"></div> 
 		</div>
 	</body>
 	<script>
@@ -95,8 +103,30 @@
 							},
 						];
 					},
+			},
+			methods: {
+				click: function (dom, model, module, e, el) {
+					console.log(this, dom, model, module, e, el);
 				},
-			}
-		});
-	</script>
+				registerModule: function () {
+					return [{
+						/**
+						 * name自定义标签名，class,模块类名
+						 * **/
+						name: "title",
+						class: "ModuleA",
+					}];
+				},
+				onBeforeFirstRender:function(module){
+					//父子通信
+					module.add=(num)=>{
+							this['sum']+=num;
+					}
+				},
+			},
+		},
+		
+	});
+</script>
+
 </html>

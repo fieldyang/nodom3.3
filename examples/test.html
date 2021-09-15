@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="text/javascript" src="../dist/nodom.js"></script>
+    <style>
+        /* @keyframes bigger{
+            from{transform:scaleY(0%)}
+            to{transform:scaleY(100%)}
+        } */
+
+        /* 
+        @keyframes smaller{
+            from{height:100px}
+            to{height:0px}
+        } */
+
+        .ct{
+            /* padding:30px; */
+            /* border:5px solid; */
+            box-sizing: border-box;
+            background-color:red;
+            display:none;
+            /* height:0px; */
+            overflow:hidden;
+            transition:all 1s ease;
+        }
+
+    </style>
+</head>
+<body>
+    
+    <div>
+        <button e-click='open'>打开</button>
+        <button e-click='close'>关闭</button>
+        <div class='ct' e-transitionstart='astart' e-transitionend='aend'>
+            hello world!
+        </div>
+        <div>hahaha</div>
+    </div>
+</body>
+<script>
+    nodom.app({
+        module:{
+            el:'div',
+
+            methods:{
+                open(){
+                    let el = document.querySelector('.ct');
+                    el.style.display = 'block';
+                    let style = getComputedStyle(el,null);
+                    // console.log(style.height,el.offsetHeight);
+                    let height = parseFloat(style.height);
+                    // console.log(height);
+                    el.style.height = '0px';
+                    console.log(height);
+                    setTimeout(()=>{
+                        el.style.height = (height+60) + 'px';
+                    })
+                    // let sheet = document.styleSheets[0];
+                    // let id1 = sheet.insertRule(`
+                    //     @keyframes mybigger{
+                    //         from{height:0px}
+                    //         to{height:${height+60}px}
+                    //     }
+                    // `);
+                    // console.log(id1);
+                    // el.style.animation = 'mybigger 2s 1';
+                    
+                    // el.style.display = 'block';
+                    
+                    // setTimeout(()=>{
+                    //     el.style.animationDuration= '0s';
+                    //     el.style.height = style.height;
+
+                    //     setTimeout(()=>{
+                    //         el.style.animationDuration='1s';
+                    //         el.style.height = style.height;
+                    //     },10);
+                    // },10);
+                    // el.style.height = '100px';
+                    // el.style.display = 'block';
+                    // el.style.animation = 'bigger 2s 1';
+                    // el.style.height = '100px';
+                    
+                },
+                close(){
+                    let el = document.querySelector('.ct');
+                    el.style.animation = 'bigger 2s 1';
+                    el.style.height = '0px';
+                },
+                astart(dom,module,e,el){
+                    // let el1 = document.querySelector('.ct');
+                    console.log(el);
+                    if(!el){
+                        return;
+                    }
+                    // setTimeout(()=>{
+                        el.style.padding = '30px';
+                    // },10);
+                    
+                    // console.log('start');
+                    
+                    // el.style.display='block';
+                    // let style = getComputedStyle(el,null);
+                    // console.log(style);
+                },
+                aend(){
+                    console.log('end');
+                    let el = document.querySelector('.ct');
+                    console.log(el.offsetHeight);
+                    // el.style.height='100px';
+                    el.style.display='block';
+                }
+            }
+        }
+    })
+</script>
+</html>

@@ -1,18 +1,15 @@
-import { ClassDeclaration, ClassElement, ClassExpression } from "../node_modules/typescript/lib/typescript";
-import { DefineElement } from "./defineelement";
 import { Element } from "./element";
 import { Module } from "./module";
-import { Route } from "./router";
+import { Route } from "./route";
 
 /**
  * module class obj
  */
 export interface IMdlClassObj {
-
     /**
      * class名或class
      */
-    class: any;
+    class?: any;
 
     /**
      * 模块名
@@ -22,7 +19,12 @@ export interface IMdlClassObj {
     /**
      * class文件路径
      */
-    path: string;
+    path?: string;
+
+    /**
+     * 模型
+     */
+    model?: any;
     /**
      * 实例
      */
@@ -43,15 +45,20 @@ export interface IMdlClassObj {
     /**
      * 是否正在初始化
      */
-    initing: boolean;
+    initing?: boolean;
 
     /**
      * 等待模块初始化的id列表
      */
-    waitList: number[];
+    waitList?: number[];
     className?: string;
 }
 
+export interface ExpressionMd {
+    obj: any,
+    key: any,
+    moduleName: any,
+}
 export interface RegisterOps {
     /**
      * 模块名
@@ -62,53 +69,10 @@ export interface RegisterOps {
      */
     class: string
 }
+
 /**
  * 应用初始化配置类型
  */
-export interface IAppCfg {
-    /**
-     * 路径参数，请参阅NApplication path属性
-     */
-    path?: any;
-
-    /**
-     * 语言，默认 zh
-     */
-    language: string;
-
-    /**
-     * 调度器间隔时间(ms)，如果支持requestAnimationFrame，则不需要
-     */
-    scheduleCircle?: number;
-
-    /**
-     * 主模块配置
-     */
-    module: IModuleCfg;
-
-    /**
-     * 模块配置数组，数组元素包括
-     *      class:模块类名,
-     *      path:模块路径(相对于app module路径),
-     *      data:数据路径(字符串)或数据(object),
-     *      singleton:单例(全应用公用同一个实例，默认true),
-     *      lazy:懒加载(默认false)
-     */
-    modules: IMdlClassObj[];
-
-    /**
-     * 路由配置
-     * class:模块类名,
-     * moduleName:模块名
-     * data:数据url
-     * routes:子路由
-     * onEnter:路由进入事件
-     * onLeave:路由离开事件
-     */
-    routes: IRouteCfg[];
-}
-
-
 /**
  * 路由配置
  */
@@ -116,21 +80,17 @@ export interface IRouteCfg {
     /**
      * 路由路径，可以带通配符*，可以带参数 /:
      */
-    path: string;
+    path?: string;
+    
     /**
-     * 路由模块id或模块类名，id为数字，类名为string
+     * 路由对应模块对象或类或模块类名
      */
-    module?: number | string;
+    module?:any;
 
     /**
-     * 模块名
+     * 模块路径，当module为类名时需要，默认执行延迟加载
      */
-    moduleName?: string;
-
-    /**
-     * 数据url
-     */
-    dataUrl?: string;
+    modulePath?:string;
     /**
      * 子路由数组
      */
@@ -144,100 +104,11 @@ export interface IRouteCfg {
      * 离开路由方法
      */
     onLeave?: Function;
-    /**
-     * 是否使用父路由路径
-     */
-    useParentPath?: boolean;
-    /**
-     * 不添加到路由树
-     */
-    notAdd?: boolean;
+    
     /**
      * 父路由
      */
     parent?: Route;
-}
-
-/**
- * 模块配置对象
- */
-export interface IModuleCfg {
-    /**
-     * 模块名(模块内(父模块的子模块之间)唯一)，如果不设置，则系统会自动生成Module+id
-     */
-    name?: string;
-
-    /**
-     * 容器选择器
-     */
-    el?: string;
-    /**
-     * 是否单例，如果为true，则整个应用中共享一个模块实例，默认false
-     */
-    singleton?: boolean;
-
-    /**
-     * 模块类名
-     */
-    class?: string;
-
-    /**
-     * 模块路径(相对于app module路径)
-     */
-    path?: string;
-
-    /**
-     * 模版字符串，如果以“<”开头，则表示模版字符串，否则表示模版url
-     */
-    template?: string;
-    /**
-     * 数据，如果为json object，直接作为模型数据，如果为字符串，则表示数据url，需要请求得到数据
-     */
-    data?: Object | string;
-    /**
-     * 模块方法集合
-     * 不要用箭头"=>" 操作符定义
-     * ```
-     * 	{
-     * 		method1:function1(){},
-     * 		method2:function2(){},
-     * 		...
-     * 	}
-     * ```
-     */
-    methods?: Object;
-
-    /**
-     * 子模块配置
-     */
-    modules?: IModuleCfg[];
-
-    /**
-     * 先于模块初始化加载的文件集合
-     * 如果为string，则表示资源路径，type为js
-     * 如果为object，则格式为{type:'js'/'css',url:路径}
-     */
-    requires?: Array<string | Object>;
-}
-
-/**
- * 资源对象
- */
-export interface IResourceObj {
-    /**
-     * 资源内容 字符串或数据对象或element
-     */
-    content?: any;
-
-    /**
-     * 类型js、template(html,htm), nd(编译后的模版文件)，data(不保存资源)
-     */
-    type?: string;
-
-    /**
-     * 需要加载
-     */
-    needLoad?: boolean;
 }
 
 /**
@@ -328,10 +199,9 @@ export interface ASTObj extends Object {
     tagName: string;
 
     /**
-     * 属性数组，里面为属性对象如{propName:'class',value:'myclass'}
+     * 属性map，里面为属性对象如{name:**,...}
      */
-    attrs?: Array<{ propName: string, value: any }>;
-
+    attrs?: Map<string, any>;
     /**
      * 事件数组，里面为事件对象{eventName:'click',eventHandler:'change'}
      */
@@ -351,24 +221,9 @@ export interface ASTObj extends Object {
      * textContent 节点为text的时候才有的属性，与children属性互斥
      */
     textContent?: string;
+
+    /**
+     * 是否闭合
+     */
+    isClosed?: boolean;
 }
-
-
-export const selfClosingTag = [
-    "area",
-    "base",
-    "basefont",
-    "br",
-    "col",
-    "embed",
-    "frame",
-    "hr",
-    "img",
-    "input",
-    "keygen",
-    "link",
-    "meta",
-    "param",
-    "source",
-    "track",
-];

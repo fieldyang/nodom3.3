@@ -7,7 +7,7 @@ export default {
 	output: {
 		name: "nodom",
 		file: path.resolve("dist/nodom.js"), // 输出的文件路径
-		format: "iife", // 打包格式 umd iife esm 比较主流
+		format: "esm", // 打包格式 umd iife esm 比较主流
 		sourcemap: true, //生成映射文件
 	},
 	plugins: [

@@ -1,9 +1,9 @@
 import { DirectiveManager } from "./directivemanager";
 import { DirectiveType } from "./directivetype";
-import { Filter } from "./filter";
 import { Element } from "./element";
 import { Module } from "./module";
 import { Util } from "./util";
+import { Expression } from "./expression";
 
 /**
  * 指令类
@@ -24,11 +24,11 @@ export  class Directive {
      */
     public value:any;
     
-    
     /**
-     * 过滤器组
+     * 表达式
      */
-    public filters:Filter[];
+    public expression:Expression;
+    
     /**
      * 附加参数
      */
@@ -44,36 +44,22 @@ export  class Directive {
      * @param type  	类型名
      * @param value 	指令值
      * @param dom       指令对应的dom
-     * @param filters   过滤器字符串或过滤器对象,如果为过滤器串，则以｜分割
+     * @param module    模块  
      * @param notSort   不排序
      */
-    constructor(type:string, value:string,dom?:Element, parent?:Element, filters?:string|Filter[],notSort?:boolean) {
+    constructor(type:string, value:string|Expression,dom?:Element,module?:Module, parent?:Element,notSort?:boolean) {
         this.id = Util.genId();
         this.type = DirectiveManager.getType(type);
         if (Util.isString(value)) {
-            value = value.trim();
+            this.value = (<string>value).trim();
+        }else if(value instanceof Expression){
+            this.expression = value;
+        }else{
+            this.value = value;
         }
-        this.value = value;
         
-        if(filters){
-            this.filters = [];
-            if(typeof filters === 'string'){
-                let fa:string[] = filters.split('|');
-                for(let f of fa){
-                    this.filters.push(new Filter(f));
-                }
-            }else if(Util.isArray(filters)){
-                for(let f of filters){
-                    if(typeof f === 'string'){
-                        this.filters.push(new Filter(<string>f));
-                    }else if(f instanceof Filter){
-                        this.filters.push(f);
-                    }
-                }
-            }
-        }
         if (type !== undefined && dom) {
-            DirectiveManager.init(this,dom,parent);
+            DirectiveManager.init(this,dom,module,parent);
             dom.addDirective(this,!notSort);
         }
     }
@@ -95,18 +81,16 @@ export  class Directive {
      */
     public clone(dst:Element):Directive{
         let dir = new Directive(this.type.name,this.value);
-        if(this.filters){
-            dir.filters = [];
-            for(let f of this.filters){
-                dir.filters.push(f.clone());
-            }
-        }
         if(this.params){
             dir.params = Util.clone(this.params);
         }
         if(this.extra){
             dir.extra = Util.clone(this.extra);
         }
+        if(this.expression){
+            dir.expression = this.expression;
+        }
+
         DirectiveManager.init(dir,dst);
         return dir;
     }

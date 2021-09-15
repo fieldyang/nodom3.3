@@ -1,39 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<title>route</title>
+		<script src="config/route.js"></script>
+		<style>
+			.colorimp {
+				color: red;
+			}
+		</style>
+	</head>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>route</title>
-    <script type="text/javascript" src="../dist/nodom.js"></script>
-    <script src='config/route.js'></script>
-    <style>
-        .colorimp{
-            color:red;
-        }
-    </style>
-</head>
-
-<body>
-    <div>
-        hello
-    </div>
-</body>
-<script>
-    
-    nodom.app({
-        module:{
-            el: 'div',
-            class:'MdlRouteMain',
-            // methods:{
-            //     onBeforeFirstRender:function(){
-            //         console.log('ddd')
-            //         console.log($.RouterTree.get('/router/a/b/route1/aa/bb'));
-    
-            //     }
-            // }
-        }
-    });
-</script>
-
+	<body>
+		<div></div>
+	</body>
+	<script type='module'>
+		import {nodom,Module} from '../dist/nodom.js'
+    	import {MdlRouteMain} from './modules/route/mdlroutemain.js'
+		import {initRoute} from './modules/route/routeconfig.js'
+		nodom(MdlRouteMain,'div');
+		initRoute();
+	</script>
 </html>

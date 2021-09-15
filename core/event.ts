@@ -376,6 +376,9 @@ export class NEvent {
         arr.forEach((item) => {
             evt[item] = this[item];
         });
+        if(this.extraParamMap){
+            evt.extraParamMap = Util.clone(this.extraParamMap);
+        }
         return evt;
     }
 
@@ -404,7 +407,7 @@ export class NEvent {
      * @returns     参数值
      */
     public getExtraParam(key: string) {
-        return this.extraParamMap.get(key);
+        return this.extraParamMap?this.extraParamMap.get(key):undefined;
     }
 }
 

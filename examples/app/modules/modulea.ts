@@ -1,13 +1,14 @@
 /**
  * 模块A
- */
-class ModuleA extends nodom.Module{
+
+*/
+import{Module,Util,Element} from 'nodom';
+class ModuleA extends Module{
     constructor(cfg:object){
-        let config = nodom.Util.merge(cfg,{
+        let config =Util.merge(cfg,{
             template:`
                 <button e-click='sendMsg'>发送</button>
                 <button e-click='addData'>添加</button>
-               
 
                 <ul>
                     <li x-repeat='foods'>{{name}}</li>
