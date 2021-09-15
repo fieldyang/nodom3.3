@@ -1,4 +1,4 @@
-import {Module} from '../../../dist/nodom.js'
+import {Module} from '../../dist/nodom.js'
 
 export class ModuleA extends Module{
     template(props){
@@ -40,6 +40,7 @@ export class ModuleA extends Module{
             console.log(this);
         },
         changeX2(dom,module){
+            console.log(this);
             this.x2 = 'hahaha'
         }
     }

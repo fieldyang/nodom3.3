@@ -1,4 +1,6 @@
 import { Compiler } from "..";
+import { NCache } from "./cache";
+import { DirectiveFactory } from "./directivefactory";
 import { Element } from "./element";
 import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
@@ -22,23 +24,19 @@ export class Module {
     public name: string;
 
     /**
-     * 模型，函数或对象
+     * 数据，模块中定义
      */
-    public model: any;
+    public data: any;
+
+    /**
+     * 模型，代理过的data
+     */
+    public model:any;
 
     /**
      * 方法集合，函数或对象
      */
     public methods: any;
-
-    /**
-     * 模版
-     * 可以是模版串或模版函数
-     * 用于动态产生模版串，模版函数说明：
-     * 参数: props对象，在模版容器dom中进行配置
-     * 返回值: 模版串或[模版串,true] 如果为true，表示后续不再产生新的模版串，不再重新编译
-     */
-    public template:any;
 
     /**
      * 子模块，类名数组，函数或数组
@@ -61,14 +59,9 @@ export class Module {
     public css: any;
 
     /**
-     * 是否是首次渲染
+     * 父模块通过dom节点传递的属性
      */
-    public firstRender: boolean = true;
-
-    /**
-     * 根虚拟dom
-     */
-    public virtualDom: Element;
+     private props:any;
 
     /**
      * 渲染树
@@ -96,6 +89,11 @@ export class Module {
     public modelManager: ModelManager;
 
     /**
+     * 指令工厂
+     */
+    public directiveFactory:DirectiveFactory;
+
+    /**
      * 放置模块的容器
      */
     private container: HTMLElement;
@@ -116,6 +114,11 @@ export class Module {
     private postRenderOps:any[] = [];
 
     /**
+     * 缓存
+     */
+    private cache:NCache;
+
+    /**
      * 交换器  {交换器名(默认default):要替代的dom}
      */
     public swapMap:Map<string,Element>;
@@ -125,6 +128,8 @@ export class Module {
      */
     constructor() {
         this.id = Util.genId();
+        this.cache = new NCache();
+        this.methods = {};
         this.state = 0;
         //加入模块工厂
         ModuleFactory.add(this);
@@ -139,33 +144,37 @@ export class Module {
         // 设置状态为初始化
         this.state = 1;
         //初始化model
-        let data = (typeof this.model === 'function' ? this.model() : this.model);
-        this.model = new Model(data || {}, this);
+        //创建模型，克隆数据
+        this.model = new Model(Util.clone(this.data||{}) , this);
         
-        //初始化方法集
-        this.methods = (typeof this.methods === 'function' ? this.methods.apply(this.model) : this.methods) || {};
-        
-        //初始化子模块实例
-        let mods = (typeof this.modules === 'function' ? this.modules.apply(this.model) : this.modules);
-        if (Array.isArray(mods)) {
-            for (let cls of mods) {
+        //注册子模块
+        if(this.modules && Array.isArray(this.modules)){
+            for (let cls of this.modules) {
                 Reflect.construct(cls,[]);
             }
+            delete this.modules;
         }
-        delete this.modules;
-        // 如果为字符串，则处理模版，否则在获取模块实例时处理
-        if(typeof this.template === 'string'){
-            this.virtualDom = Compiler.compile(this.template,this);
-            delete this.template;
-        }
+        
         //处理css配置
         this.handleCss();
+    }
+
+    /**
+     * 模版串方法
+     * @param props     props对象，在模版容器dom中进行配置，从父模块传入
+     * @returns         模版串
+     */
+    private template(props?:any):string{
+        return null;
     }
     
     /**
      * 处理css
      */
     private handleCss() {
+        if(!this.css){
+            return;
+        }
         let cssArr = (typeof this.css === 'function' ? this.css.apply(this.model) : this.css);
         if (Array.isArray(cssArr) && cssArr.length > 0) {
             //如果不存在stylesheet或最后一个stylesheet是link src，则新建一个style标签
@@ -202,15 +211,18 @@ export class Module {
         if (this.state === 2) {
             return true;
         }
+
         //容器没就位或state不为active则不渲染，返回渲染失败
         if (this.state < 3 || !this.getContainer()) {
             return false;
         }
-        //克隆新的树
-        let root: Element = this.virtualDom.clone();
+        console.time('t1');
+        //编译
+        let root:Element = new Compiler(this).compile(this.template(this.props));
+
         //执行前置方法
         this.doRenderOps(0);
-        if (this.firstRender) {
+        if (!this.renderTree) {
             this.doFirstRender(root);
         } else { //增量渲染
             //执行每次渲染前事件
@@ -286,7 +298,7 @@ export class Module {
         this.state = 4;
         //执行后置方法
         this.doRenderOps(1);
-
+        console.timeEnd('t1');
         return true;
     }
 
@@ -313,35 +325,9 @@ export class Module {
         Util.empty(this.container);
         //渲染到html
         root.renderToHtml(this, <ChangedDom>{ type: 'fresh' });
-        //删除首次渲染标志
-        delete this.firstRender;
+        
         //执行首次渲染后事件
         this.doModuleEvent('onFirstRender');
-    }
-
-    /**
-     * 克隆模块
-     */
-    public clone(): Module {
-        let me = this;
-        let m: Module = Reflect.construct(this.constructor, []);
-        //克隆数据
-        if (this.model) {
-            let data = Util.clone(this.model);
-            m.model = new Model(data, m);
-        }
-        let excludes = ['id', 'name', 'model', 'virtualDom', 'container', 'containerKey', 'modelManager','swapMap'];
-        Object.getOwnPropertyNames(this).forEach((item) => {
-            if (excludes.includes(item)) {
-                return;
-            }
-            m[item] = me[item];
-        });
-        //克隆虚拟dom树
-        if(this.virtualDom){
-            m.virtualDom = this.virtualDom.clone(true);
-        }
-        return m;
     }
 
     /**
@@ -365,15 +351,6 @@ export class Module {
                 m.parentId = this.id;
             }
         }
-    }
-
-    /**
-     * 接受消息
-     * @param fromName 		来源模块名
-     * @param data 			消息内容
-     */
-    public receive(fromName, data) {
-        this.doModuleEvent('onReceive', [fromName, data]);
     }
 
     /**
@@ -401,8 +378,9 @@ export class Module {
         this.state = 2;
         //删除容器
         delete this.container;
-        //设置首次渲染标志
-        this.firstRender = true;
+        //删除渲染树
+        delete this.renderTree;
+        
         //处理子节点
         for(let id of this.children){
             let m = ModuleFactory.get(id);
@@ -512,9 +490,8 @@ export class Module {
      * @param key               dom key
      * @param fromVirtualDom    是否从源虚拟dom数获取，否则从渲染树获取
      */
-    public getElement(key: string | Object, fromVirtualDom?: boolean) {
-        let tree = fromVirtualDom ? this.virtualDom : this.renderTree;
-        return tree.query(key);
+    public getElement(key: string | Object) {
+        return this.renderTree.query(key);
     }
 
     /**
@@ -543,14 +520,6 @@ export class Module {
      */
     public setContainerKey(key:string){
         this.containerKey = key;
-    }
-
-    /**
-     * 设置首次渲染标志
-     * @param flag  首次渲染标志true/false
-     */
-    public setFirstRender(flag: boolean) {
-        this.firstRender = flag;
     }
 
     /**
@@ -600,6 +569,59 @@ export class Module {
                 }
             }
         }
+    }
+
+    /**
+     * 设置props
+     * @param props     属性值
+     * @param render    是否触发渲染，如果为true，则props改变后执行render
+     */
+    public setProps(props:any,render?:boolean){
+        //为提升性能，只进行浅度比较
+        //如果相同且属性值不含对象，则返回
+        let change:boolean = !Util.compare(this.props,props);
+        if(!change){
+            if(props){
+                for(let p in props){
+                    if(typeof p === 'object' && !Util.isFunction(p)){
+                        change = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if(change){
+            this.props = props;
+            if(render){
+                this.render();
+            }
+        }
+    }
+
+    /**
+     * 保存到cache
+     * @param key       键，支持"."
+     * @param value     值
+     */
+    public saveCache(key:string,value:any){
+        this.cache.set(key,value);
+    }
+
+    /**
+     * 从cache读取
+     * @param key   键，支持"."
+     * @returns     缓存的值或undefined
+     */
+    public readCache(key){
+        return this.cache.get(key);
+    }
+
+    /**
+     * 从cache移除
+     * @param key   键，支持"."
+     */
+    public removeCache(key){
+        this.cache.remove(key);
     }
 }
 

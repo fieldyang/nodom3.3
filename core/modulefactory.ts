@@ -1,6 +1,4 @@
 import { Module } from "./module";
-import { Element } from "./Element";
-import { Compiler } from "./compiler";
 
 /**
  * 过滤器工厂，存储模块过滤器
@@ -43,11 +41,11 @@ export class ModuleFactory {
      * @param name  类、类名或实例id
      * @param props 传递给子模块的外部属性(用于产生模版)
      */
-    public static get(name:any,props?:any): Module {
+    public static get(name:any): Module {
         if(typeof name === 'number'){
             return this.modules.get(name);
         }else{
-            return this.getInstance(name,props);
+            return this.getInstance(name);
         }
     }
 
@@ -62,10 +60,10 @@ export class ModuleFactory {
 
     /**
      * 获取模块实例（通过类名）
-     * @param className     模块类名
+     * @param className     模块类或类名
      * @param props         模块外部属性
      */
-    private static getInstance(clazz:any,props?:any): Module {
+    private static getInstance(clazz:any): Module {
         let className = (typeof clazz === 'string')?clazz:clazz.name;
         // 初始化模块
         if(!this.classes.has(className) && typeof clazz === 'function'){
@@ -76,33 +74,15 @@ export class ModuleFactory {
             return;
         }
         
-        // 模块实例
-        let instance;
         //未初始化
         if(src.state === 0){
             src.init();
-            instance = src;
+            return src;
         }else{
-            instance = src.clone();
-            console.log(instance.virtualDom);
+            let m: Module = Reflect.construct(src.constructor, []);
+            m.init();
+            return m;
         }
-        if(src.template){
-            let tp = src.template.apply(src.model,[props]);
-            let root:Element;
-            //当返回为数组时，如果第二个参数为true，则表示不再保留模版函数
-            if(Array.isArray(tp)){
-                root = Compiler.compile(tp[0],src);
-                if(tp.length>1 && tp[1]){
-                    src.virtualDom = root;
-                    delete src.template;
-                }
-            }else{ //只返回编译串
-                root = Compiler.compile(tp,src);
-            }
-            instance.virtualDom = root;
-        }
-        
-        return instance;
     }
     /**
      * 从工厂移除模块

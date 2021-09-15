@@ -1,4 +1,4 @@
-import {Module} from '../../../dist/nodom.js'
+import {Module} from '../../dist/nodom.js'
 import {ModuleA} from './modulea.js'
 export class ModuleMain extends Module{
     template(){

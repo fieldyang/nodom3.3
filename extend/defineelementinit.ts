@@ -108,7 +108,7 @@ class CASE extends DefineElement{
 }
 
 /**
- * 替换器
+ * 替代器
  */
 class SWAP extends DefineElement{
     constructor(node: ASTObj){
