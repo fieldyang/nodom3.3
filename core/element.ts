@@ -358,7 +358,6 @@ export class Element {
         for (let c of this.children) {
             dst.add(c.clone(changeKey));
         }
-
         return dst;
     }
 

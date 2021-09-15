@@ -15,7 +15,6 @@ export class Module {
      * 模块id(全局唯一)
      */
     public id: number;
-
     /**
      * 模块名(模块内(父模块的子模块之间)唯一)，如果不设置，则系统会自动生成Module+id
      */
@@ -369,7 +368,11 @@ export class Module {
     }
 
     /**
+<<<<<<< HEAD
+     * 模块终结
+=======
      * 模块销毁
+>>>>>>> 0f210403ad7c5e6f6cbf1972f95ed84affa169e8
      */
     public destroy() {
         if (Util.isArray(this.children)) {

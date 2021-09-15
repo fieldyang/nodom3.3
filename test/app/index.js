@@ -1,1 +1,0 @@
-import { ModuleFactory } from "../../dist/nodom.js";
