@@ -9,7 +9,7 @@ export class ModuleA extends Module{
                     <div>这是子模块1</div>
                     <div>这是外部数据x1:{{x1}}</div>
                     <swap name="aa">aaa</swap>
-                    <div>这是外部数据x2:{{x2}}</div>
+                 <div>这是外部数据x2:{{x2}}</div>
                     <button e-click='changeX2'>修改x2</button>
                 </div>
             `

@@ -31,26 +31,6 @@ export class ModuleMain extends Module {
     }
     // first={{"<div first data='add'></div>"}} second={{"<div>x.y is {{x.y}}</div>"}}
     model = {
-<<<<<<< HEAD
-        x: {
-            y: 123
-        },
-        y: 'hello'
-    }
-    methods = {
-        getData() {
-            return {
-                x1: 'x.y',
-                x2: ['y', true]
-            }
-        },
-        change() {
-            this.y = 'aaaa';
-            console.log(this);
-        },
-        log() {
-            console.log(11);
-=======
             show:true,
             x:{
                 y:123
@@ -79,7 +59,6 @@ export class ModuleMain extends Module {
             this.show = false;
             this.y = 'aaaa';
             // console.log(this);
->>>>>>> c4a37a8c10fc952460dcad1244eeaff8ff188ef7
         }
 
     }
