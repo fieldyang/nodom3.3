@@ -216,7 +216,7 @@ export class Module {
         if (this.state < 3 || !this.getContainer()) {
             return false;
         }
-        console.time('t1');
+        // console.time('t1');
         //编译
         let root:Element = new Compiler(this).compile(this.template(this.props));
 
@@ -276,7 +276,7 @@ export class Module {
                             let parm = index.split('|');
                             index = parm[0];
                             const vDom: Element = root.query(parm[1]);
-                            console.log(vDom);
+                            // console.log(vDom);
                             dp.insertBefore((() => {
                                 return Util.newEls(vDom, this, vDom.parent, this.getNode(vDom.parent.key));
                             })(), dp.childNodes[index++]);
@@ -298,7 +298,7 @@ export class Module {
         this.state = 4;
         //执行后置方法
         this.doRenderOps(1);
-        console.timeEnd('t1');
+        // console.timeEnd('t1');
         return true;
     }
 
