@@ -56,9 +56,8 @@ export function createRoute(config: IRouteCfg | Array<IRouteCfg>): Route {
  */
 export function createDirective(name: string, priority: number, init: Function, handler: Function) {
     return DirectiveManager.addType(name,
-        priority,
-        init,
-        handler
+        handler,
+        priority
     );
 }
 

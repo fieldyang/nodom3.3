@@ -133,7 +133,7 @@ export class Element {
         //先执行model指令
         if(this.hasDirective('model')){
             let d = this.getDirective('model');
-            d.exec(module, this, this.parent);
+            d.exec();
         }
         //前置方法集合执行
         this.doRenderOp(module, 'before');
@@ -289,7 +289,7 @@ export class Element {
             if(d.expression){
                 d.value = d.expression.val(this.model);
             }
-            d.exec(module, this, this.parent);
+            d.exec();
             //指令可能改变render标志
             if (this.dontRender) {
                 return false;

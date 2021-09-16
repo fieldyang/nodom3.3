@@ -11,7 +11,7 @@ export class MdlPMod2 extends Module {
         </div>
         `;
     }
-    model = {
+    data = {
         routes: [{
                 title: '首页2',
                 path: '/router/route2/rparam/home/1',

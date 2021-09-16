@@ -11,7 +11,7 @@ export class MdlMod4 extends Module {
             </div>
         </div>`
     }
-    model =  {
+    data =  {
         routes: [{
                 title: '商品详情',
                 path: '/router/route2/rparam/home/1/desc',

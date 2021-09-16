@@ -33,6 +33,11 @@ export  class Directive {
      * 模块
      */
     public module:Module;
+
+    /**
+     * 指令所属dom
+     */
+    public dom:Element;
     
     /**
      * 构造方法
@@ -44,6 +49,8 @@ export  class Directive {
      */
     constructor(type:string, value:string|Expression,dom:Element,module:Module, parent?:Element,notSort?:boolean) {
         this.id = Util.genId();
+        this.dom = dom;
+        this.module = module;
         this.type = DirectiveManager.getType(type);
         if (Util.isString(value)) {
             this.value = (<string>value).trim();
@@ -54,7 +61,6 @@ export  class Directive {
         }
         
         if (type !== undefined && dom) {
-            DirectiveManager.init(this,dom,module,parent);
             dom.addDirective(this,!notSort);
         }
         
@@ -63,34 +69,27 @@ export  class Directive {
 
     /**
      * 执行指令
-     * @param module    模块 
-     * @param dom       指令执行时dom
-     * @param parent    父虚拟dom
      */
-    public exec(module:Module,dom:Element,parent?:Element) {
-        return DirectiveManager.exec(this,dom,module,parent);
+    public exec() {
+        this.type.handle.apply(null,[this]);
     }
 
     /**
      * 设置参数
-     * @param module    模块
-     * @param dom       dom
      * @param name      参数名
      * @param value     参数值
      */
-    public setParam(module:Module,dom:Element,name:string,value:any){
-        module.saveCache(`${dom.key}.directives.${this.type.name}.${name}`,value);
+    public setParam(name:string,value:any){
+        this.module.saveCache(`${this.dom.key}.directives.${this.type.name}.${name}`,value);
     }
 
     /**
      * 获取参数值
-     * @param module    模块
-     * @param dom       dom
      * @param name      参数名
      * @returns         参数值
      */
-    public getParam(module:Module,dom:Element,name:string){
-        return module.readCache(`${dom.key}.directives.${this.type.name}.${name}`);
+    public getParam(name:string){
+        return this.module.readCache(`${this.dom.key}.directives.${this.type.name}.${name}`);
     }
 
     /**
@@ -103,18 +102,4 @@ export  class Directive {
      public removeParam(module:Module,dom:Element,name:string){
         module.removeCache(`${dom.key}.directives.${this.type.name}.${name}`);
     }
-
-    /**
-     * 克隆
-     * @param dst   目标dom
-     * @returns     新指令
-     */
-    // public clone(dst:Element,module:Module):Directive{
-    //     let dir = new Directive(this.type.name,this.value,dst,module);
-    //     if(this.expression){
-    //         dir.expression = this.expression;
-    //     }
-    //     DirectiveManager.init(dir,dst);
-    //     return dir;
-    // }
 }

@@ -14,7 +14,7 @@ export class MdlPMod1 extends Module {
         </div>	
         `;
     } 
-    model = {
+    data = {
         home: true,
         list: false,
         data: false
