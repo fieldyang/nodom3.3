@@ -17,6 +17,7 @@ export class MRepeat extends Module {
                     菜名：{{name}}，价格：{{price}}
                 </div>
             </div>
+            <!--
             <div class=tip>索引号的使用（编号从0开始）</div> 
             <div class=code>
                 菜单：
@@ -31,7 +32,7 @@ export class MRepeat extends Module {
                     菜名：{{name}}，价格：{{price}}
                 </div>
             </div>
-            <!--
+            
             <div class=tip>价格升序排序（编号从1开始）</div>
             <div class=code>
                 菜单：
@@ -44,13 +45,11 @@ export class MRepeat extends Module {
         </div>
         `
     }
-    model = {
-        show: 0,
-        date1: new Date().getTime(),
-        discount: {
-            data: 0.9
-        },
-        xxx: true,
+    data={
+        show:0,
+        date1:new Date().getTime(),
+        discount:{data:0.9},
+        xxx:true,
         foods: [{
             name: '夫妻肺片',
             price: 25

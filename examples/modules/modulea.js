@@ -1,15 +1,14 @@
-import {Module} from '../../../dist/nodom.js'
+import {Module} from '../../dist/nodom.js'
 
 export class ModuleA extends Module{
     template(props){
-        console.log(props)
         if(props.p1){
             return `
                 <div>
                     <div>这是子模块1</div>
                     <div>这是外部数据x1:{{x1}}</div>
                     <swap name="aa">aaa</swap>
-                 <div>这是外部数据x2:{{x2}}</div>
+                    <div>这是外部数据x2:{{x2}}</div>
                     <button e-click='changeX2'>修改x2</button>
                 </div>
             `
@@ -36,13 +35,12 @@ export class ModuleA extends Module{
         x2:0
     }
 
-    
     methods = {
         onBeforeFirstRender(){
-           
             console.log(this);
         },
         changeX2(dom,module){
+            console.log(this);
             this.x2 = 'hahaha'
         }
     }

@@ -33,41 +33,35 @@ export default (function () {
      */
     DirectiveManager.addType('module', 8,
         (directive: Directive, dom: Element) => {
-            let value: string = <string>directive.value;
-            let valueArr: string[] = value.split('|');
-            directive.value = valueArr[0];
-            //设置module name
-            if (valueArr.length > 1) {
-                dom.setProp('moduleName', valueArr[1]);
-            }
-            directive.extra = {};
+            
         },
 
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             let m: Module;
+            let props = {};
+            Object.getOwnPropertyNames(dom.props).forEach(p => {
+                props[p] = dom.props[p];
+            });
+            Object.getOwnPropertyNames(dom.exprProps).forEach(p => {
+                props[p] = dom.exprProps[p].val(dom.model);
+            });
             //存在moduleId，表示已经渲染过，不渲染
-            if (dom.hasProp('moduleId')) {
-                m = ModuleFactory.get(parseInt(dom.getProp('moduleId')));
+            let mid = directive.getParam(module,dom,'moduleId');
+            if (mid) {
+                m = ModuleFactory.get(mid);
             } else {
-                let props = {};
-                Object.getOwnPropertyNames(dom.props).forEach(p => {
-                    props[p] = dom.props[p];
-                });
-                Object.getOwnPropertyNames(dom.exprProps).forEach(p => {
-                    props[p] = dom.exprProps[p].val(dom.model);
-                });
-                m = ModuleFactory.get(directive.value,props);
+                
+                m = ModuleFactory.get(directive.value);
                 if (!m) {
                     return;
                 }
-                // 设置模块id,在virtualDom中
-                let dom1 = module.getElement(dom.key,true);
-                dom1.setProp('moduleId',m.id);
+                
                 dom.setProp('moduleId',m.id);
                 // delete dom.props;
                 // delete dom.exprProps;
-                //保留modelId和当前子模块
-                directive.extra = { moduleId: m.id};
+                //保留modelId
+                directive.setParam(module,dom,'moduleId',m.id);
+                
                 //添加到父模块
                 module.addChild(m.id);
                 //设置容器
@@ -75,33 +69,20 @@ export default (function () {
                 //添加到渲染器
                 m.active();
             }
+            if(m){ //设置props，如果改变了props，启动渲染
+                m.setProps(props,true);
+            }
         }
     );
-
 
     /**
      *  model指令
      */
     DirectiveManager.addType('model',
         1,
-        (directive: Directive, dom: Element) => {
-            let value: string = <string>directive.value;
-            //处理以.分割的字段，没有就是一个
-            if (Util.isString(value)) {
-                directive.value = value;
-            }
-        },
-
+        (directive: Directive, dom: Element) => {},
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            let model: Model = dom.model;
-            if (directive.value == '$$') {
-                model = module.model;
-            } else {
-                model = model.$get(directive.value);
-            }
-            if (!model) {
-                model = module.model.$get(directive.value);
-            }
+            let model: Model = dom.model.$get(directive.value);
             if (model) {
                 dom.model = model;
             }
@@ -114,9 +95,7 @@ export default (function () {
      */
     DirectiveManager.addType('repeat',
         2,
-        (directive: Directive, dom: Element) => {
-
-        },
+        (directive: Directive, dom: Element) => {},
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
             dom.dontRender = true;
             let rows = directive.value;
@@ -129,6 +108,7 @@ export default (function () {
             let key = dom.key;
             // 移除指令
             dom.removeDirectives(['repeat']);
+            
             for (let i = 0; i < rows.length; i++) {
                 let node = dom.clone();
                 //设置modelId
@@ -143,6 +123,7 @@ export default (function () {
                 rows[i].$index = i;
                 chds.push(node);
             }
+            console.log(chds);
             //找到并追加到dom后
             if (chds.length > 0) {
                 for (let i = 0, len = parent.children.length; i < len; i++) {
@@ -198,15 +179,15 @@ export default (function () {
             if (data) {
                 if (Array.isArray(data)) { //为数组，则遍历生成多个节点
                     // 先克隆一个用作基本节点，避免在循环中为基本节点增加子节点
-                    let node: Element = dom.clone(true);
+                    let node: Element = dom.clone();
                     for (let d of data) {
-                        let nod: Element = node.clone(true);
+                        let nod: Element = node.clone();
                         nod.model = d;
                         //作为当前节点子节点
                         dom.add(nod);
                     }
                 } else {
-                    let node: Element = dom.clone(true);
+                    let node: Element = dom.clone();
                     node.model = data;
                     //作为当前节点子节点
                     dom.add(node);
@@ -302,12 +283,16 @@ export default (function () {
                 return;
             }
             let mdlDir = dom.getDirective('module');
-            if (!mdlDir || !mdlDir.extra.moduleId) {
+            if (!mdlDir) {
+                return;
+            }
+            let mid = mdlDir.getParam(module,dom,'moduleId');
+            if(!mid){
                 return;
             }
             let obj = directive.value;
             //子模块
-            let subMdl = ModuleFactory.get(mdlDir.extra.moduleId);
+            let subMdl = ModuleFactory.get(mid);
             //子model
             let m: Model = subMdl.model;
             let model = dom.model;
@@ -438,9 +423,9 @@ export default (function () {
                     dom.assets.set('checked', false);
                 }
             } else if (tgname === 'select') { //下拉框
-                if (!directive.extra || !directive.extra.inited) {
+                if (!directive.getParam(module,dom,'inited')) {
                     setTimeout(() => {
-                        directive.extra = { inited: true };
+                        directive.setParam(module,dom,'inited',true);
                         dom.setProp('value', dataValue);
                         dom.setAsset('value', dataValue);
                         Renderer.add(module);
@@ -457,175 +442,13 @@ export default (function () {
         }
     );
 
-    /**
-     * 指令名 validity
-     * 描述：字段指令
-     */
-    DirectiveManager.addType('validity',
-        10,
-        (directive: Directive, dom: Element) => {
-            let ind, fn, method;
-            let value = directive.value;
-            //处理带自定义校验方法
-            if ((ind = value.indexOf('|')) !== -1) {
-                fn = value.substr(0, ind);
-                method = value.substr(ind + 1);
-            } else {
-                fn = value;
-            }
-            directive.extra = { initEvent: false };
-            directive.value = fn;
-
-            directive.params = {
-                enabled: false //不可用
-            }
-            //如果有方法，则需要存储
-            if (method) {
-                directive.params.method = method;
-            }
-            //如果没有子节点，添加一个，需要延迟执行
-            if (dom.children.length === 0) {
-                let vd1 = new Element();
-                vd1.textContent = '';
-                dom.add(vd1);
-            } else { //子节点
-                dom.children.forEach((item) => {
-                    if (item.children.length === 0) {
-                        let vd1 = new Element();
-                        vd1.textContent = '   ';
-                        item.add(vd1);
-                    }
-                });
-            }
-        },
-
-        (directive: Directive, dom: Element, module: Module, parent: Element) => {
-            setTimeout(() => {
-                const el: HTMLInputElement = <HTMLInputElement>module.getNode({ name: directive.value });
-                if (!directive.extra.initEvent) {
-                    directive.extra.initEvent = true;
-                    //添加focus和blur事件
-                    el.addEventListener('focus', function () {
-                        setTimeout(() => { directive.params.enabled = true; }, 0);
-                    });
-                    el.addEventListener('blur', function () {
-                        Renderer.add(module);
-                    });
-                }
-            }, 0);
-
-            //未获取focus，不需要校验
-            if (!directive.params.enabled) {
-                dom.dontRender = true;
-                return;
-            }
-
-            const el: HTMLInputElement = <HTMLInputElement>module.getNode({ name: directive.value });
-            if (!el) {
-                return;
-            }
-
-            let chds = [];
-            //找到带rel的节点
-            dom.children.forEach((item) => {
-                if (item.tagName !== undefined && item.hasProp('rel')) {
-                    chds.push(item);
-                }
-            });
-
-            let resultArr = [];
-
-            //自定义方法校验
-            if (directive.params.method) {
-                const foo = module.getMethod(directive.params.method);
-                if (Util.isFunction(foo)) {
-                    let r = foo.call(module.model, el.value);
-                    if (!r) {
-                        resultArr.push('custom');
-                    }
-                }
-            }
-
-            let vld = el.validity;
-
-            if (!vld.valid) {
-                // 查找校验异常属性
-                for (var o in vld) {
-                    if (vld[o] === true) {
-                        resultArr.push(o);
-                    }
-                }
-            }
-
-            if (resultArr.length > 0) {
-                //转换成ref对应值
-                let vn = handle(resultArr);
-                //单个校验
-                if (chds.length === 0) {
-                    setTip(dom, vn, el);
-                } else { //多个校验
-                    for (let i = 0; i < chds.length; i++) {
-                        let rel = chds[i].getProp('rel');
-                        if (rel === vn) {
-                            setTip(chds[i], vn, el);
-                        } else { //隐藏
-                            chds[i].dontRender = true;
-                        }
-                    }
-                }
-            } else {
-                dom.dontRender = true;
-            }
-
-            /**
-             * 设置提示
-             * @param vd    虚拟dom节点
-             * @param vn    验证结果名
-             * @param el    验证html element
-             */
-            function setTip(vd: Element, vn: string, el?: HTMLElement) {
-                //子节点不存在，添加一个
-                let text = (<string>vd.children[0].textContent).trim();
-                if (text === '') { //没有提示内容，根据类型提示
-                    text = Util.compileStr(NodomMessage.FormMsgs[vn], el.getAttribute(vn));
-                }
-                vd.children[0].textContent = text;
-            }
-
-            /**
-             * 验证名转换
-             */
-            function handle(arr: Array<string>) {
-                for (var i = 0; i < arr.length; i++) {
-                    switch (arr[i]) {
-                        case 'valueMissing':
-                            return 'required';
-                        case 'typeMismatch':
-                            return 'type';
-                        case 'tooLong':
-                            return 'maxLength';
-                        case 'tooShort':
-                            return 'minLength';
-                        case 'rangeUnderflow':
-                            return 'min';
-                        case 'rangeOverflow':
-                            return 'max';
-                        case 'patternMismatch':
-                            return 'pattern';
-                        default:
-                            return arr[i];
-                    }
-                }
-            }
-        }
-    );
-
+    
     /**
      * 增加route指令
      */
     DirectiveManager.addType('route',
         10,
-        (directive: Directive, dom: Element) => {
+        (directive: Directive, dom: Element,module:Module) => {
             //a标签需要设置href
             if (dom.tagName.toLowerCase() === 'a') {
                 dom.setProp('href', 'javascript:void(0)');
@@ -635,7 +458,7 @@ export default (function () {
                 //active 转expression
                 dom.setProp('active', new Expression(ac), true);
                 //保存activeName
-                directive.extra = { activeName: ac };
+                directive.setParam(module,dom,'activeName',ac);
             }
             // 不重复添加route event
             let evt = dom.getEvent('click');
@@ -672,9 +495,10 @@ export default (function () {
             dom.addEvent(evt);
         },
         (directive: Directive, dom: Element, module: Module, parent: Element) => {
+            let ac = directive.getParam(module,dom,'activeName');
             // 设置激活字段
-            if (directive.extra) {
-                Router.addActiveField(module, directive.value, dom.model, directive.extra.activeName);
+            if (ac) {
+                Router.addActiveField(module, directive.value, dom.model, ac);
             }
             dom.setProp('path', directive.value);
 
@@ -693,9 +517,7 @@ export default (function () {
      */
     DirectiveManager.addType('router',
         10,
-        (directive, dom) => {
-            
-        },
+        (directive, dom) => {},
         (directive, dom, module, parent) => {
             Router.routerKeyMap.set(module.id, dom.key);
         }
@@ -714,7 +536,7 @@ export default (function () {
             directive.value = directive.value || 'default';
         },
         (directive:Directive, dom:Element, module:Module, parent:Element) => {
-            console.log(dom);
+            // console.log(dom);
             let pd:Directive = parent.getDirective('module');
             if(pd){ //父模块替代dom，替换子模块中的plug
                 if(module.children.length===0){
@@ -734,23 +556,21 @@ export default (function () {
             }
 
             /**
-             * 添加到待替换的swap map
-             * @param mm 
-             * @param name 
-             * @param dom 
+             * 添加到待替换的 map
+             * @param name      替代器 name
+             * @param dom       替代dom
              */
             function add(module:Module,name:string,dom:Element){
                 if(!module.swapMap){
                     module.swapMap = new Map();
                 }
                 module.swapMap.set(name,dom);
-                console.log(name,dom.key);
             }
 
             /**
              * 替换dom树中swap
-             * @param name      
-             * @param dom 
+             * @param name     替代器名 
+             * @param dom       被替代的dom
              */
             function replace(module:Module,name:string,dom:Element){
                 if(!module.swapMap || !module.swapMap.has(name)){

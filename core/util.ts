@@ -155,6 +155,39 @@ export class Util {
     }
 
     /**
+     * 比较两个对象值是否相同(只比较object和array)
+     * @param src   源对象
+     * @param dst   目标对象 
+     * @returns     值相同则返回true，否则返回false 
+     */
+    public static compare(src:any,dst:any,deep?:boolean):boolean{
+        if(!src && !dst){
+            return true;
+        }
+        if (typeof src !== 'object' || typeof dst !== 'object') {
+            return false;
+        }
+        const keys = Object.getOwnPropertyNames(src);
+        if(keys.length !== Object.getOwnPropertyNames(dst).length){
+            return false;
+        }
+        for(let k of keys){
+            if(src[k] !== dst[k]){
+                return false;
+            }
+        }
+        //深度比较
+        if(deep){
+            for(let k of keys){
+                let r = this.compare(src[k],dst[k]);
+                if(!r){
+                    return false;
+                }
+            }   
+        }
+        return true;
+    }
+    /**
      * 获取对象自有属性
      */
     public static getOwnProps(obj): Array<string> {
@@ -648,7 +681,7 @@ export class Util {
             });
 
             el.setAttribute('key', vdom.key);
-            vdom.handleNEvents(module, el, parent, parentEl);
+            vdom.handleEvents(module, el, parent, parentEl);
             vdom.handleAssets(el);
             return el;
         }

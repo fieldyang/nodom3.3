@@ -8,19 +8,30 @@ import { ModuleFactory } from "./modulefactory";
 import { ASTObj } from "./types";
 
 export class Compiler {
+    /**
+     * 当前id
+     */
+    private currentId:number;
+    /**
+     * 模块
+     */
+    private module:Module;
 
+    constructor(module:Module){
+        this.currentId = 0;
+        this.module = module;
+    }
     /**
     * 编译
     * @param elementStr     待编译html串
-    * @param module         模块 
     * @returns              虚拟dom
     */
-    public static compile(elementStr: string,module:Module): Element {
+    public compile(elementStr: string): Element {
         // 这里是把模板串通过正则表达式匹配 生成AST
         let ast = this.compileTemplateToAst(elementStr);
-        let oe = new Element('div');
+        let oe = new Element('div',this.genKey());
         // 将AST编译成抽象语法树
-        this.compileAST(oe, ast,module);
+        this.compileAST(oe, ast);
         return oe;
     }
 
@@ -29,7 +40,7 @@ export class Compiler {
      * @param srcStr    源串
      * @returns         
      */
-    public static compileTemplateToAst(srcStr:string):ASTObj{
+    public compileTemplateToAst(srcStr:string):ASTObj{
         const me = this;
         // 清理comment
         let regExp = /\<\!\-\-[\s\S]*?\-\-\>/g;
@@ -133,7 +144,7 @@ export class Compiler {
      * @param tagStr    标签串
      * @returns 
      */
-    private static handleTagAttr(tagStr:string):ASTObj{
+    private handleTagAttr(tagStr:string):ASTObj{
         const me = this;
         //字符串和表达式替换
         let reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|({{[\S\s]*?\}{0,2}\s*}})/g;
@@ -228,9 +239,9 @@ export class Compiler {
      * @param ast 抽象语法树也就是JSON对象
      * @returns oe 虚拟dom的根容器
      */
-    public static compileAST(oe: Element, ast: ASTObj,module:Module): Element {
+    public compileAST(oe: Element, ast: ASTObj): Element {
         if (!ast) return;
-        ast.tagName?this.handleAstNode(oe, ast,module):this.handleAstText(oe, ast);
+        ast.tagName?this.handleAstNode(oe, ast,this.module):this.handleAstText(oe, ast);
         return oe;
     }
 
@@ -239,8 +250,8 @@ export class Compiler {
      * @param parent 父虚拟dom节点
      * @param ast 虚拟dom树
      */
-    private static handleAstText(parent: Element, astObj: ASTObj) {
-        let text = new Element();
+    private handleAstText(parent: Element, astObj: ASTObj) {
+        let text = new Element(null,this.genKey());
         parent.children.push(text);
         if(/\{\{[\s\S]+\}\}/.test(astObj.textContent)){
             text.expressions = <any[]>this.compileExpression(astObj.textContent);
@@ -253,14 +264,14 @@ export class Compiler {
      * @param oe 虚拟dom   
      * @param astObj 
      */
-    public static handleAstNode(parent: Element, astObj: ASTObj,module:Module) {
+    public handleAstNode(parent: Element, astObj: ASTObj,module:Module) {
         //前置处理
         this.preHandleNode(astObj);
-        let child = new Element(astObj.tagName);
+        let child = new Element(astObj.tagName,this.genKey());
         parent.add(child);
         this.handleAstAttrs(child, astObj.attrs,module, parent);
         for(let a of astObj.children){
-            this.compileAST(child, a,module);
+            this.compileAST(child, a);
         }
     }
     
@@ -270,7 +281,7 @@ export class Compiler {
      * @param attrs     需要编译成虚拟dom的attrs
      * @param parent    父虚拟dom节点
      */
-    public static handleAstAttrs(oe: Element, attrs: Map<string,any>,module:Module, parent: Element) {
+    public handleAstAttrs(oe: Element, attrs: Map<string,any>,module:Module, parent: Element) {
         //指令数组 先处理普通属性在处理指令
         let directives = [];
         if (!attrs) { return }
@@ -286,18 +297,6 @@ export class Compiler {
                 // 事件
                 let e = attr[0].substr(2);
                 oe.addEvent(new NEvent(e, attr[1]));
-            } else if (attr[0].startsWith("d-")) {
-                // 数据
-                let tempArr = attr[0].split(':');
-                let bindFlag: boolean = false;
-                if (tempArr.length === 2) {
-                    bindFlag = tempArr[1] == 'true' ? true : false;
-                }
-                let name = tempArr[0].substr(2);
-                let value = tempArr[0];
-                // 变量别名，变量名（原对象.变量名)，双向绑定标志
-                let data = [value, bindFlag];
-                oe.moduleDatas[name] = data;
             } else {
                 oe.setProp(attr[0], attr[1],attr[1] instanceof Expression);
             }
@@ -319,7 +318,7 @@ export class Compiler {
      * @param exprStr   含表达式的串
      * @return          处理后的字符串和表达式数组
      */
-    public static compileExpression(exprStr: string):string|any[]{
+    public compileExpression(exprStr: string):string|any[]{
         if(!exprStr){
             return;
         }
@@ -352,7 +351,7 @@ export class Compiler {
      * 包括：模块类元素、自定义元素
      * @param node  ast node
      */
-    private static preHandleNode(node:ASTObj){
+    private preHandleNode(node:ASTObj){
         // 模块类判断
         if (ModuleFactory.has(node.tagName)) {
             node.attrs.set('x-module',node.tagName);
@@ -361,5 +360,13 @@ export class Compiler {
             let clazz = DefineElementManager.get(node.tagName);
             Reflect.construct(clazz,[node]);
         }
+    }
+
+    /**
+     * 产生可以
+     * @returns     key
+     */
+    private genKey():string{
+        return this.module.id + '_' + this.currentId++;
     }
 }

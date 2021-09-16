@@ -18,6 +18,7 @@ export { Renderer } from "./core/renderer";
 export { Router } from "./core/router";
 export { Route } from "./core/route";
 export { Scheduler } from "./core/scheduler";
+export { NCache } from "./core/cache";
 export * from "./core/types";
 export * from "./core/nodom";
 
