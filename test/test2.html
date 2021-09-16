@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<body>
+		<div></div>
+	</body>
+
+	<script type="module">
+		import * as nodom from "../dist/nodom.js";
+		// import { Module, nodom } from "../dist/nodom.js";
+		// import {ModuleMain} from './modules/main.js'
+		class Module1 extends nodom.Module {
+			template() {
+				return `
+		              <div>
+                       
+		                 <div x-if={{discount<0.8 && xx>10}} class={{age>10?'cls1':'cls2'}}>
+                            discount<0.8:{{discount<0.8}}
+                            <input type='text'/>
+                            <p y>{{xx}}
+                            <span>{{price}}</span>
+                        </div>
+		              </div>
+				`;
+			}
+			model = {
+				xx: 11,
+				discount: 0.7,
+				foods: [
+					{
+						name: "夫妻肺片",
+						price: 25,
+					},
+					{
+						name: "京酱肉丝",
+						price: 22,
+					},
+					{
+						name: "糖醋里脊",
+						price: 20,
+					},
+					{
+						name: "红烧茄子",
+						price: 12,
+					},
+					{
+						name: "口水鸡",
+						price: 18,
+					},
+					{
+						name: "水煮肉片",
+						price: 24,
+					},
+				],
+				price: 200,
+				age: 20,
+				grade: 73,
+				show: true,
+			};
+		}
+		// console.log(app);
+		nodom.nodom(Module1, "div");
+	</script>
+</html>
