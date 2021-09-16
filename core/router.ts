@@ -484,7 +484,6 @@ export class Router {
             node.fullPath = fullPath;
             retArr.push(node);
         }
-
         return retArr;
     }
 }
