@@ -6,7 +6,6 @@ import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
 import { ModuleFactory } from "./modulefactory";
 import { Renderer } from "./renderer";
-import { ChangedDom} from "./types";
 import { Util } from "./util";
 
 /**
@@ -217,6 +216,11 @@ export class Module {
             return false;
         }
         console.time('t1');
+
+        // //保存上次的key node映射
+        // this.saveCache('$virtualDoms',this.readCache('$virtualDoms.new'));
+        // //置空新key map映射
+        // this.saveCache('$virtualDoms',{});
         //编译
         let root:Element = new Compiler(this).compile(this.template(this.props));
 
@@ -234,7 +238,6 @@ export class Module {
                 //渲染
                 root.render(this, null);
                 this.doModuleEvent('onBeforeRenderToHtml');
-                // let renderDoms:ChangedDom[] = [];
                 let changeDoms = [];
                 // 比较节点
                 root.compare(oldTree, changeDoms);
@@ -243,7 +246,7 @@ export class Module {
                 for(let item of changeDoms){
                     let[n1,n2,pEl] = [
                         item[1]?this.getNode(item[1].key):null,
-                        item[2]?this.getNode(item[2].key):null,
+                        item[2]&&typeof item[2]==='object'?this.getNode(item[2].key):null,
                         item[3]?this.getNode(item[3].key):null
                     ];
                     //待操作节点
@@ -252,8 +255,13 @@ export class Module {
                         case 1: //添加
                             item[1].renderToHtml(this,pEl,true);
                             n1 = this.getNode(item[1].key);
-                            if(!n2){
-                                pEl.appendChild(n1);    
+                            if(!n2){ //不存在添加节点或为索引号
+                                if(typeof item[2] === 'number' && pEl.childNodes.length-1>item[2]){
+                                    pEl.insertBefore(n1,pEl.childNodes[item[2]]);
+                                }else{
+                                    pEl.appendChild(n1);
+                                }
+                                
                             }else{
                                 pEl.insertBefore(n1,n2);
                             }
@@ -268,7 +276,11 @@ export class Module {
                             if(!n2){
                                 pEl.appendChild(n1);
                             }else{
-                                pEl.insertBefore(n1,n2);
+                                if(item[4] && n2.nextSibling){  //相对节点后
+                                    pEl.insertBefore(n1,n2.nextSibling);
+                                }else{
+                                    pEl.appendChild(n1);
+                                }
                             }
                             break;
                         default: //替换
@@ -276,68 +288,6 @@ export class Module {
                             pEl.replaceChild(n1,n2);
                     }
                 }
-                //     if(item[0] === 'del'){
-                //         item[2].parent.node.removeChild(item[1].node);
-                //     }else{
-
-                //     } if(item[0] === 'insert'){
-                //         item[2].parent.node.insertBefore(item[1].node);
-                //     }else if(item[0] === 'add'){
-                //         let index 
-                //         item[2].parent.node.
-                //     }
-                // }
-
-                // deleteMap.forEach((value, key) => {
-                //     let dp: HTMLElement = this.getNode(key);
-                //     let tmp = [];
-                //     for (let i = 0; i < value.length; i++) {
-                //         let index = value[i];
-                //         if (typeof index == 'object') {
-                //             let els;
-                //             //新建替换
-                //             if (index[2] != undefined) {
-                //                 els = dp.querySelectorAll("[key='" + index[1] + "']");
-                //                 dp.insertBefore((() => {
-                //                     const vDom: Element = root.query(index[0]);
-                //                     return Util.newEls(vDom, this, vDom.parent, this.getNode(vDom.parent.key));
-                //                 })(), els[els.length - 1]);
-                //             } else if (index.length === 2) {
-                //                 //更改dom节点顺序
-                //                 let ele = this.getNode(index[0]);
-                //                 if (ele) {
-                //                     els = dp.querySelectorAll("[key='" + index[1] + "']");
-                //                     dp.insertBefore(ele, els[els.length - 1]);
-                //                 }
-                //             } else {
-                //                 //删除dom节点
-                //                 els = dp.querySelectorAll("[key='" + index[0] + "']");
-                //                 dp.removeChild(els[els.length - 1]);
-                //             }
-                //         } else {
-                //             tmp.push(index);
-                //         }
-                //     }
-                //     //替换和删除需要反向操作
-                //     for (let i = tmp.length - 1; i >= 0; i--) {
-                //         let index = tmp[i];
-                //         if (typeof index == 'string') {
-                //             let parm = index.split('|');
-                //             index = parm[0];
-                //             const vDom: Element = root.query(parm[1]);
-                //             console.log(vDom);
-                //             dp.insertBefore((() => {
-                //                 return Util.newEls(vDom, this, vDom.parent, this.getNode(vDom.parent.key));
-                //             })(), dp.childNodes[index++]);
-                //         }
-                //         if (dp.childNodes.length > index) dp.removeChild(dp.childNodes[index]);
-                //     }
-                // });
-                // deleteMap.clear();
-                // // 渲染
-                // renderDoms.forEach((item) => {
-                //     item.node.renderToHtml(this, item);
-                // });
             }
             //执行每次渲染后事件
             this.doModuleEvent('onRender');
@@ -514,6 +464,7 @@ export class Module {
     /**
      * 获取模块下的html节点
      * @param key       el key
+     * @param oldTree   是否从旧树中获取
      * @returns         html element
      */
     public getNode(key: string): Node {

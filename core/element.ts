@@ -810,6 +810,9 @@ export class Element {
             if (!dst.children || dst.children.length === 0) {
                 this.children.forEach(item => addChange(1, item,null, dst));
             } else { //都有子节点
+                //存储比较后需要add的key
+                let addKeyArr = [];
+            
                 //子节点对比策略
                 let [oldStartIdx, oldStartNode, oldEndIdx, oldEndNode] = [0, dst.children[0], dst.children.length - 1, dst.children[dst.children.length - 1]];
                 let [newStartIdx, newStartNode, newEndIdx, newEndNode] = [0, this.children[0], this.children.length - 1, this.children[this.children.length - 1]];
@@ -831,11 +834,13 @@ export class Element {
                         oldEndNode = dst.children[--oldEndIdx];
                     } else if (sameKey(newEndNode, oldStartNode)) {
                         newEndNode.compare(oldStartNode, changeArr);
-                        //接在老节点后面
-                        addChange(4, oldStartNode, dst.children[oldEndIdx + 1],dst)
+                        //接在 oldEndIdx 之后，但是再下一个节点可能移动位置，所以记录oldEndIdx节点
+                        addChange(4, oldStartNode, dst.children[oldEndIdx],dst,1);
                         newEndNode = this.children[--newEndIdx];
                         oldStartNode = dst.children[++oldStartIdx];
                     } else {
+                        //加入到addArr
+                        addKeyArr.push(newStartNode.key);
                         addChange(1, newStartNode, oldStartNode,dst);
                         newStartNode = this.children[++newStartIdx];
                     }
@@ -845,16 +850,22 @@ export class Element {
                     if (oldStartIdx > oldEndIdx) {
                         //没有老节点
                         for (let i = newStartIdx; i <= newEndIdx; i++) {
-                            let ch = this.children[i];
-                            if (ch) {
-                                // 添加到老节点的前面
-                                oldEndNode && addChange(1,ch, dst.children[oldEndIdx+1],dst);
-                            }
+                            // 添加到dst.children[i]前面
+                            addChange(1,this.children[i], i ,dst);
                         }
                     } else {
-                        //有老节点
+                        //有老节点，需要删除
                         for (let i = oldStartIdx; i <= oldEndIdx; i++) {
-                            addChange(3,dst.children[i],null,dst);
+                            console.log(addKeyArr);
+                            //如果要删除的节点在addArr中，则表示move，否则表示删除
+                            if(addKeyArr.indexOf(dst.children[i].key) === -1){ 
+                                addChange(3,dst.children[i],null,dst);
+                            }else{
+                                let item = changeArr.find(item=>item[0]===1&&item[1].key === dst.children[i].key);
+                                if(item){ //修改成move
+                                    item[0] = 4;
+                                }
+                            }
                         }
                     }
                 }
@@ -873,15 +884,14 @@ export class Element {
         
         /**
          * 添加刪除替換
-        * @param type      类型 add 1, upd 2,del 3,move 4 ,rep 5
-        * @param dom       虚拟节点    
-         * @param insert    
-         */
-        function addChange(type:number,dom: Element, dom1?: Element,parent?:Element) {
-            if(type === 3){
-                console.log(dom,parent);
-            }
-            changeArr.push([type,dom,dom1,parent]);
+        * @param type       类型 add 1, upd 2,del 3,move 4 ,rep 5
+        * @param dom        虚拟节点    
+        * @param dom1       相对节点
+        * @param parent     父节点
+        * @param loc        位置(move时有效) 0:相对节点前，1:相对节点后 
+        */
+        function addChange(type:number,dom: Element, dom1?: Element|number,parent?:Element,loc?:number) {
+            changeArr.push([type,dom,dom1,parent,loc]);
         }
     }
 
