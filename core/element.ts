@@ -4,7 +4,6 @@ import { Expression } from "./expression";
 import { Model } from "./model";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
-import { ChangedDom } from "./types";
 import { Util } from "./util";
 
 /**
@@ -754,8 +753,6 @@ export class Element {
         if (!dst) {
             return;
         }
-        let re: ChangedDom = new ChangedDom();
-        let change: boolean = false;
         if (!this.tagName) { //文本节点
             if (!dst.tagName) {
                 if (this.textContent !== dst.textContent) {

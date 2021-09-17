@@ -5,7 +5,7 @@ import { NEvent } from "./event";
 import { Expression } from "./expression";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
-import { ASTObj } from "./types";
+import { IASTObj } from "./types";
 
 export class Compiler {
     /**
@@ -40,7 +40,7 @@ export class Compiler {
      * @param srcStr    源串
      * @returns         
      */
-    public compileTemplateToAst(srcStr:string):ASTObj{
+    public compileTemplateToAst(srcStr:string):IASTObj{
         const me = this;
         // 清理comment
         let regExp = /\<\!\-\-[\s\S]*?\-\-\>/g;
@@ -75,7 +75,7 @@ export class Compiler {
         // 标签对象数组
         let tagObjs = [];
         // 根节点
-        let root:ASTObj;
+        let root:IASTObj;
         tagStack.forEach((tag,ii)=>{
             //开始标签名
             let stg;
@@ -150,7 +150,7 @@ export class Compiler {
      * @param tagStr    标签串
      * @returns 
      */
-    private handleTagAttr(tagStr:string):ASTObj{
+    private handleTagAttr(tagStr:string):IASTObj{
         const me = this;
         //字符串和表达式替换
         let reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|({{[\S\s]*?\}{0,2}\s*}})/g;
@@ -245,7 +245,7 @@ export class Compiler {
      * @param ast 抽象语法树也就是JSON对象
      * @returns oe 虚拟dom的根容器
      */
-    public compileAST(oe: Element, ast: ASTObj): Element {
+    public compileAST(oe: Element, ast: IASTObj): Element {
         if (!ast) return;
         ast.tagName?this.handleAstNode(oe, ast,this.module):this.handleAstText(oe, ast);
         return oe;
@@ -256,7 +256,7 @@ export class Compiler {
      * @param parent 父虚拟dom节点
      * @param ast 虚拟dom树
      */
-    private handleAstText(parent: Element, astObj: ASTObj) {
+    private handleAstText(parent: Element, astObj: IASTObj) {
         let text = new Element(null,this.genKey());
         parent.children.push(text);
         if(/\{\{[\s\S]+\}\}/.test(astObj.textContent)){
@@ -270,7 +270,7 @@ export class Compiler {
      * @param oe 虚拟dom   
      * @param astObj 
      */
-    public handleAstNode(parent: Element, astObj: ASTObj,module:Module) {
+    public handleAstNode(parent: Element, astObj: IASTObj,module:Module) {
         //前置处理
         this.preHandleNode(astObj);
         let child = new Element(astObj.tagName,this.genKey());
@@ -309,7 +309,7 @@ export class Compiler {
         }
         //处理属性
         for (let attr of directives) {
-            new Directive(attr.name, attr.value, oe,module, parent, true);
+            new Directive(attr.name, attr.value, oe,module, true);
         }
         if (directives.length > 1) {
             //指令排序
@@ -357,7 +357,7 @@ export class Compiler {
      * 包括：模块类元素、自定义元素
      * @param node  ast node
      */
-    private preHandleNode(node:ASTObj){
+    private preHandleNode(node:IASTObj){
         // 模块类判断
         if (ModuleFactory.hasClass(node.tagName)) {
             node.attrs.set('x-module',node.tagName);

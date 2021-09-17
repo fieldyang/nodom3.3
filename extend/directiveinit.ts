@@ -1,5 +1,4 @@
 import { Directive } from "../core/directive";
-import { DirectiveManager } from "../core/directivemanager";
 import { Element } from "../core/element";
 import { NEvent } from "../core/event";
 import { Expression } from "../core/expression";
@@ -328,13 +327,6 @@ export default (function () {
             const tgname = dom.tagName.toLowerCase();
             const model = dom.model;
             
-            let inited = this.getParam('inited');
-            //初始化
-            if(!inited){
-                init();
-                this.setParam('inited',true);
-            }
-
             if (!model) {
                 return;
             }
@@ -344,61 +336,53 @@ export default (function () {
             if (dataValue !== undefined && dataValue !== null) {
                 dataValue += '';
             }
-            //无法获取虚拟dom的value，只能从对应的element获取
-            let el: any = module.getNode(dom.key);
-            let value = el ? el.value : undefined;
-
+            
             if (type === 'radio') {
-                if (dataValue + '' === value) {
+                let value = dom.getProp('value');
+                if (dataValue == value) {
                     dom.assets.set('checked', true);
                     dom.setProp('checked', 'checked');
                 } else {
-                    dom.assets.set('checked', false);
                     dom.delProp('checked');
+                    dom.assets.set('checked', false);
                 }
             } else if (type === 'checkbox') {
                 //设置状态和value
                 let yv = dom.getProp('yes-value');
                 //当前值为yes-value
-                if (dataValue + '' === yv) {
+                if (dataValue == yv) {
                     dom.setProp('value', yv);
-                    dom.assets.set('checked', true);
+                    dom.assets.set('checked', 'checked');
                 } else { //当前值为no-value
                     dom.setProp('value', dom.getProp('no-value'));
-                    dom.assets.set('checked', false);
+                    // dom.assets.set('checked', false);
+                    dom.assets.delete('checked');
                 }
             } else if (tgname === 'select') { //下拉框
-                if (!this.getParam('inited')) {
-                    setTimeout(()=>{
-                        this.setParam('inited',true);
-                        dom.setProp('value', dataValue);
-                        dom.setAsset('value', dataValue);
-                        Renderer.add(module);
-                    }, 0);
-                } else {
-                    if (dataValue !== value) {
-                        dom.setProp('value', dataValue);
-                        dom.setAsset('value', dataValue);
-                    }
-                }
+                // let el: any = module.getNode(dom.key);
+                // let value = el?.value;
+                dom.setAsset('value', dataValue);
+                // if (!this.getParam('inited')) {
+                //     setTimeout(()=>{
+                //         this.setParam('inited',true);
+                //         dom.setProp('value', dataValue);
+                //         dom.setAsset('value', dataValue);
+                //         // Renderer.add(module);
+                //     }, 0);
+                // } else {
+                //     if (dataValue !== value) {
+                //         dom.setProp('value', dataValue);
+                //         dom.setAsset('value', dataValue);
+                //     }
+                // }
             } else {
-                dom.assets.set('value', dataValue === undefined || dataValue === null ? '' : dataValue);
+                // dom.assets.set('value', dataValue === undefined || dataValue === null ? '' : dataValue);
             }
 
-
-            function init(){
-                dom.setProp('name', this.value);
-                //默认text
-                let type = dom.getProp('type') || 'text';
-                let eventName = dom.tagName === 'input' && ['text', 'checkbox', 'radio'].includes(type) ? 'input' : 'change';
-                //增加value表达式
-                if (!dom.hasProp('value') && ['text', 'number', 'date', 'datetime', 'datetime-local', 'month', 'week', 'time', 'email', 'password', 'search', 'tel', 'url', 'color', 'radio'].includes(type)
-                    || dom.tagName === 'TEXTAREA') {
-                    dom.setProp('value', new Expression(this.value), true);
-                }
-
-                dom.addEvent(new NEvent(eventName,
-                    function (dom, module, e, el) {
+            
+            if(!this.getParam('changeEventInited')){
+                dom.addEvent(new NEvent('change',
+                    function(dom, module, e, el){
                         if (!el) {
                             return;
                         }
@@ -429,12 +413,13 @@ export default (function () {
                             temp[arr[arr.length - 1]] = v;
                         }
                         //修改value值，该节点不重新渲染
-                        if (type !== 'radio') {
-                            dom.setProp('value', v);
-                            el.value = v;
-                        }
+                        // if (type !== 'radio') {
+                        //     dom.setProp('value', v);
+                        //     el.value = v;
+                        // }
                     }
                 ));
+                this.setParam('changeEventInited',true);
             }
         },
         10
