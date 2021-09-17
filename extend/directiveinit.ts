@@ -41,8 +41,11 @@ export default (function () {
             let mid = this.getParam('moduleId');
             if (mid) {
                 m = ModuleFactory.get(mid);
+                if(!dom.hasProp('once')){
+                    //设置props，如果改变了props，启动渲染
+                    m.setProps(props,true);    
+                }
             } else {
-                
                 m = ModuleFactory.get(this.value);
                 if (!m) {
                     return;
@@ -59,8 +62,7 @@ export default (function () {
                 m.setContainerKey(dom.key);
                 //添加到渲染器
                 m.active();
-            }
-            if(m){ //设置props，如果改变了props，启动渲染
+                //设置props，如果改变了props，启动渲染
                 m.setProps(props,true);
             }
         },

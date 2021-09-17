@@ -16,7 +16,7 @@ export class ModuleMain extends Module{
                 </ModuleA>
                 <hr>
                 <h2>替换plug</h2>
-                <ModuleA x-data={{getData()}} xxx='222'>
+                <ModuleA x-data={{{n:'name',x1:'x.y',x2:['y',true]}}} xxx='222' once>
                     <swap name='s1'>
                         <h3 style='color:red'> hello change plug 2</h3>    
                     </swap>
