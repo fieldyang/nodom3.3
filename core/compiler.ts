@@ -359,7 +359,7 @@ export class Compiler {
      */
     private preHandleNode(node:ASTObj){
         // 模块类判断
-        if (ModuleFactory.has(node.tagName)) {
+        if (ModuleFactory.hasClass(node.tagName)) {
             node.attrs.set('x-module',node.tagName);
             node.tagName = 'div';
         }else if(DefineElementManager.has(node.tagName)){ //自定义元素

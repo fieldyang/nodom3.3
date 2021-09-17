@@ -54,11 +54,8 @@ export function createRoute(config: IRouteCfg | Array<IRouteCfg>): Route {
  * @param init      初始化方法
  * @param handler   渲染时方法
  */
-export function createDirective(name: string, priority: number, init: Function, handler: Function) {
-    return DirectiveManager.addType(name,
-        handler,
-        priority
-    );
+export function createDirective(name: string, handler: Function,priority?: number) {
+    return DirectiveManager.addType(name,handler,priority);
 }
 
 /**

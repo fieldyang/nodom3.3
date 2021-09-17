@@ -114,6 +114,11 @@ export class Module {
 
     /**
      * 缓存
+     * 缓存说明：
+     * dom相关：  $doms.${dom.key}
+     * 旧dom相关：$oldDoms.${dom.key}
+     * 指令相关：$doms.${dom.key}.$directives.${directive.type}
+     * key htmldom映射: $virtualDoms
      */
     private cache:NCache;
 
@@ -149,7 +154,7 @@ export class Module {
         //注册子模块
         if(this.modules && Array.isArray(this.modules)){
             for (let cls of this.modules) {
-                Reflect.construct(cls,[]);
+                ModuleFactory.addClass(cls);
             }
             delete this.modules;
         }
@@ -215,12 +220,10 @@ export class Module {
         if (this.state < 3 || !this.getContainer()) {
             return false;
         }
-        console.time('t1');
-
-        // //保存上次的key node映射
-        // this.saveCache('$virtualDoms',this.readCache('$virtualDoms.new'));
-        // //置空新key map映射
-        // this.saveCache('$virtualDoms',{});
+        // 保存上次的dom缓存
+        this.saveCache('$oldDoms',this.readCache('$doms'));
+        //重置工作dom缓存
+        this.saveCache('$doms',{});
         //编译
         let root:Element = new Compiler(this).compile(this.template(this.props));
 
@@ -241,7 +244,6 @@ export class Module {
                 let changeDoms = [];
                 // 比较节点
                 root.compare(oldTree, changeDoms);
-                
                 //刪除和替換
                 for(let item of changeDoms){
                     let[n1,n2,pEl] = [
@@ -249,10 +251,10 @@ export class Module {
                         item[2]&&typeof item[2]==='object'?this.getNode(item[2].key):null,
                         item[3]?this.getNode(item[3].key):null
                     ];
-                    //待操作节点
-                    
                     switch(item[0]){
                         case 1: //添加
+                            //把新dom缓存添加到旧dom缓存
+                            this.saveCache(`$oldDoms.${item[1].key}`,this.readCache(`$doms.${item[1].key}`));
                             item[1].renderToHtml(this,pEl,true);
                             n1 = this.getNode(item[1].key);
                             if(!n2){ //不存在添加节点或为索引号
@@ -270,20 +272,25 @@ export class Module {
                             item[1].renderToHtml(this,pEl);
                             break;
                         case 3: //删除
+                            //清除缓存
+                            this.clearDomCache(item[1],true);
                             pEl.removeChild(n1);
                             break;
                         case 4: //移动
-                            if(!n2){
-                                pEl.appendChild(n1);
-                            }else{
-                                if(item[4] && n2.nextSibling){  //相对节点后
+                            if(item[4] ){  //相对节点后
+                                if(n2&&n2.nextSibling){
                                     pEl.insertBefore(n1,n2.nextSibling);
                                 }else{
                                     pEl.appendChild(n1);
                                 }
+                            }else{
+                                pEl.insertBefore(n1,n2);
                             }
                             break;
                         default: //替换
+                            //替换之前的dom缓存
+                            this.saveCache(`$oldDoms.${item[1].key}`,this.readCache(`$doms.${item[1].key}`));
+                            item[1].renderToHtml(this,pEl,true);
                             n1 = this.getNode(item[1].key);
                             pEl.replaceChild(n1,n2);
                     }
@@ -292,12 +299,14 @@ export class Module {
             //执行每次渲染后事件
             this.doModuleEvent('onRender');
         }
-
+        //把old dom 缓存置为doms
+        this.saveCache('$doms',this.readCache('$oldDoms'));
+        //移除旧dom cache
+        this.removeCache('$oldDoms');
         //设置已渲染状态
         this.state = 4;
         //执行后置方法
         this.doRenderOps(1);
-        console.timeEnd('t1');
         return true;
     }
 
@@ -579,7 +588,7 @@ export class Module {
         if(change){
             this.props = props;
             if(render){
-                this.render();
+                this.active();
             }
         }
     }
@@ -610,5 +619,17 @@ export class Module {
         this.cache.remove(key);
     }
 
+    /**
+     * 清除dom cache
+     * @param dom   待删除的dom 
+     * @param old   是否从旧虚拟dom映射表删除，默认false
+     */
+    public clearDomCache(dom:Element,old?:boolean){
+        if(!old){
+            dom.clearCache(this);
+        }else{
+            this.removeCache(`$oldDoms.${dom.key}`);
+        }
+    }
 }
 

@@ -52,7 +52,7 @@ export class Element {
      * 事件集合,{eventName1:nodomNEvent1,...}
      * 一个事件名，可以绑定多个事件方法对象
      */
-    public events: Map<string, NEvent | NEvent[]> = new Map();
+    public events: Map<string, NEvent[]> = new Map();
 
     /**
      * 表达式+字符串数组，用于textnode
@@ -172,16 +172,24 @@ export class Element {
      */
     public renderToHtml(module: Module, parentEl:HTMLElement,isRenderChild?:boolean) {
         let el = module.getNode(this.key);
-        if(el){   //有节点，直接在远htmldom上修改
-            this.handleAssets(<HTMLElement>el);
-            this.handleEvents(module,parentEl);   
+        if(el){   //html dom节点已存在
+            if(this.tagName){
+                //设置属性
+                Util.getOwnProps(this.props).forEach((k) => {
+                    if (typeof this.props[k] !== 'function'){
+                        (<HTMLElement>el).setAttribute(k, this.props[k]);
+                    }
+                });
+                this.handleAssets((<HTMLElement>el));
+            }else{  //文本节点
+                (<any>el).textContent = this.textContent;
+            }
         }else{
             if(this.tagName){
                 el = newEl(this,parentEl);
             }else{
                 el = newText(this);
             }
-
             if(isRenderChild){
                 genSub(el, this);
             }
@@ -204,8 +212,9 @@ export class Element {
             }
             //设置属性
             Util.getOwnProps(vdom.props).forEach((k) => {
-                if (typeof vdom.props[k] != 'function')
+                if (typeof vdom.props[k] != 'function'){
                     el.setAttribute(k, vdom.props[k]);
+                }
             });
             //如果存储node，则不需要key
             el.setAttribute('key', vdom.key);
@@ -267,7 +276,7 @@ export class Element {
 
         //指令复制
         for (let d of this.directives) {
-            dst.directives.push(d);
+            d.clone(dst);
         }
         //孩子节点
         for (let c of this.children) {
@@ -381,13 +390,11 @@ export class Element {
         if (this.events.size === 0) {
             return;
         }
-        for (let evt of this.events.values()) {
-            if (Util.isArray(evt)) {
-                for (let evo of <NEvent[]>evt) {
-                    evo.bind(module, this,parentEl);
+        for (let evt of this.events) {
+            if(evt[1]){
+                for (let ev of evt[1]) {
+                    ev.bind(module, this,parentEl);
                 }
-            } else {
-                (<NEvent>evt).bind(module, this,parentEl);
             }
         }
     }
@@ -761,11 +768,6 @@ export class Element {
             if (this.tagName !== dst.tagName) { //节点类型不同
                 addChange(5,this, dst);
             } else { //节点类型相同，可能属性不同
-                // //检查属性，如果不同则放到changeProps
-                // re.changeProps = [];
-                // re.changeAssets = [];
-                // //待删除属性
-                // re.removeProps = [];
                 let change = false;
 
                 //属性比较
@@ -792,8 +794,9 @@ export class Element {
                         }
                     }
                 }
+
                 if(change){
-                    addChange(2,this,dst);
+                    addChange(2,this,null,dst);
                 }
             }
         }
@@ -811,8 +814,7 @@ export class Element {
                 this.children.forEach(item => addChange(1, item,null, dst));
             } else { //都有子节点
                 //存储比较后需要add的key
-                let addKeyArr = [];
-            
+                let addObj={};
                 //子节点对比策略
                 let [oldStartIdx, oldStartNode, oldEndIdx, oldEndNode] = [0, dst.children[0], dst.children.length - 1, dst.children[dst.children.length - 1]];
                 let [newStartIdx, newStartNode, newEndIdx, newEndNode] = [0, this.children[0], this.children.length - 1, this.children[this.children.length - 1]];
@@ -828,20 +830,40 @@ export class Element {
                     } else if (sameKey(newStartNode, oldEndNode)) {
                         //新前旧后
                         newStartNode.compare(oldEndNode, changeArr);
-                        //接在待操作老节点前面
+                       //跳过插入点会提前移动的节点
+                        while(addObj.hasOwnProperty(oldStartNode.key)){
+                            changeArr[addObj[oldStartNode.key]][0] = 4;
+                            delete addObj[oldStartNode.key];
+                            oldStartNode = dst.children[++oldStartIdx];
+                        }
+                         //接在待操作老节点前面
                         addChange(4,oldEndNode,  oldStartNode,dst)
                         newStartNode = this.children[++newStartIdx];
                         oldEndNode = dst.children[--oldEndIdx];
                     } else if (sameKey(newEndNode, oldStartNode)) {
                         newEndNode.compare(oldStartNode, changeArr);
+                         //跳过插入点会提前移动的节点
+                        while(addObj.hasOwnProperty(oldEndNode.key)){
+                            changeArr[addObj[oldEndNode.key]][0] = 4;
+                            delete addObj[oldEndNode.key];
+                            oldEndNode = dst.children[--oldEndIdx];
+                        }
                         //接在 oldEndIdx 之后，但是再下一个节点可能移动位置，所以记录oldEndIdx节点
-                        addChange(4, oldStartNode, dst.children[oldEndIdx],dst,1);
+                        addChange(4, oldStartNode, oldEndNode,dst,1);
                         newEndNode = this.children[--newEndIdx];
                         oldStartNode = dst.children[++oldStartIdx];
                     } else {
-                        //加入到addArr
-                        addKeyArr.push(newStartNode.key);
-                        addChange(1, newStartNode, oldStartNode,dst);
+                        //跳过插入点会提前移动的节点
+                        if(addObj.hasOwnProperty(oldStartNode.key)){
+                            while(addObj.hasOwnProperty(oldStartNode.key)){
+                                   changeArr[addObj[oldStartNode.key]][0] = 4;
+                                   delete addObj[oldStartNode.key];
+                                oldStartNode = dst.children[++oldStartIdx];
+                            }
+                            continue;//继续diff，暂不add
+                        }
+                       //加入到addObj
+                        addObj[newStartNode.key]= addChange(1, newStartNode, oldStartNode,dst)-1;
                         newStartNode = this.children[++newStartIdx];
                     }
                 }
@@ -856,15 +878,12 @@ export class Element {
                     } else {
                         //有老节点，需要删除
                         for (let i = oldStartIdx; i <= oldEndIdx; i++) {
-                            console.log(addKeyArr);
+                            let ch=dst.children[i];
                             //如果要删除的节点在addArr中，则表示move，否则表示删除
-                            if(addKeyArr.indexOf(dst.children[i].key) === -1){ 
-                                addChange(3,dst.children[i],null,dst);
+                            if(!addObj.hasOwnProperty(ch.key)){ 
+                                addChange(3,ch,null,dst);
                             }else{
-                                let item = changeArr.find(item=>item[0]===1&&item[1].key === dst.children[i].key);
-                                if(item){ //修改成move
-                                    item[0] = 4;
-                                }
+                                changeArr[addObj[ch.key]][0] = 4;
                             }
                         }
                     }
@@ -888,10 +907,10 @@ export class Element {
         * @param dom        虚拟节点    
         * @param dom1       相对节点
         * @param parent     父节点
-        * @param loc        位置(move时有效) 0:相对节点前，1:相对节点后 
+        * @param extra      move时 0:相对节点前，1:相对节点后
         */
         function addChange(type:number,dom: Element, dom1?: Element|number,parent?:Element,loc?:number) {
-            changeArr.push([type,dom,dom1,parent,loc]);
+            return changeArr.push([type,dom,dom1,parent,loc]);
         }
     }
 
@@ -903,16 +922,13 @@ export class Element {
         //如果已经存在，则改为event数组，即同名event可以多个执行方法
         if (this.events.has(event.name)) {
             let ev = this.events.get(event.name);
-            let evs: NEvent[];
-            if (Util.isArray(ev)) {
-                evs = <NEvent[]>ev;
-            } else {
-                evs = [<NEvent>ev];
+            //相同事件不添加
+            if(ev.find(item=>item.equal(event))){
+                return;
             }
-            evs.push(event);
-            this.events.set(event.name, evs);
+            ev.push(event);
         } else {
-            this.events.set(event.name, event);
+            this.events.set(event.name, [event]);
         }
     }
 
@@ -1007,5 +1023,43 @@ export class Element {
                 m.apply(this.model, [this, module]);
             }
         }
+    }
+
+
+    /**
+     * 保存cache，dom相关cache放在模块cache的 $doms 下
+     * @param module    模块
+     * @param name      属性名
+     * @param value     属性值
+     */
+    saveCache(module:Module,name:string,value:any){
+        module.saveCache(`$doms.${this.key}.${name}`,value);
+    }
+
+    /**
+     * 读cache内容
+     * @param module    模块 
+     * @param name      属性名
+     * @returns         属性值
+     */
+    readCache(module:Module,name:string):any{
+        return module.readCache(`$doms.${this.key}.${name}`);
+    }
+
+    /**
+     * 移除cache值
+     * @param module    模块 
+     * @param name      属性名
+     */
+    removeCache(module:Module,name:string){
+        module.removeCache(`$doms.${this.key}.${name}`);
+    }
+
+    /**
+     * 清除dom cache
+     * @param module    模块
+     */
+    clearCache(module:Module){
+        module.removeCache(`$doms.${this.key}`);
     }
 }

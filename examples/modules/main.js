@@ -5,7 +5,7 @@ export class ModuleMain extends Module{
         return `
             <div>
                 <button e-click='change'>change</button>
-                <div>hello world!</div>
+                <div>y is {{y}}</div>
                 <div>x.y is {{x.y}}</div>
                 <h2>默认plug</h2>
                 <ModuleA x-data={{getData()}} xxx='111'>
@@ -14,7 +14,7 @@ export class ModuleMain extends Module{
                     </swap>
                     <swap name='s2'>替换的第二个swap  {{name}}</swap>
                 </ModuleA>
-                <p>hello</p>
+                <hr>
                 <h2>替换plug</h2>
                 <ModuleA x-data={{getData()}} xxx='222'>
                     <swap name='s1'>
@@ -29,7 +29,7 @@ export class ModuleMain extends Module{
             x:{
                 y:123
             },
-            y:'hello',
+            y:'hello world!',
             name:'yanglei',
             rows:[
                 {name:'yang'},

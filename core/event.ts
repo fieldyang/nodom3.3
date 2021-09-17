@@ -300,20 +300,13 @@ export class NEvent {
         if (!parent.events.has(this.name)) {
             let ev = new NEvent(this.name);
             ev.bindTo();
-            parent.events.set(this.name, ev);
+            parent.events.set(this.name, [ev]);
         }
 
         //为父对象事件添加子事件
         let evt = parent.events.get(this.name);
-        let ev: NEvent;
-        if (Util.isArray(evt) && (<NEvent[]>evt).length > 0) {
-            ev = evt[0];
-        } else {
-            ev = <NEvent>evt;
-        }
-        if (ev) {
-            ev.addChild(this);
-        }
+        evt[0]?.addChild(this);
+        
     }
 
     /**
@@ -386,8 +379,22 @@ export class NEvent {
         return this.module.readCache(`${this.dom.key}.events.${this.id}.${key}`);
     }
 
+    /**
+     * 获取事件对象target
+     * @returns     target
+     */
     public getEl():HTMLElement{
         return <HTMLElement>this.module.getNode(this.dom.key);
+    }
+
+    /**
+     * 判断事件对象是否相等
+     * @param dst   目标事件
+     * @returns     相同返回true，否则返回false
+     */
+    public equal(dst:NEvent):boolean{
+        // 事件名相同、dom相同且处理方法相同，则表示同一个事件
+        return this.name === this.name && this.handler===this.handler && this.dom === dst.dom;
     }
 }
 
@@ -448,6 +455,7 @@ export class ExternalNEvent {
             }
         }
     }
+
 
 }
 

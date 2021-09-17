@@ -169,9 +169,6 @@ export class ModelManager {
      * @param force     强制渲染
      */
     public update(model: Model, key: string, oldValue?: any, newValue?: Element, force?:boolean) {
-        if(oldValue !== newValue || force){
-            Renderer.add(this.module);
-        }
         //处理观察器函数
         let watcher = this.getWatcherFromModelMap(model, <string>key);
         if (watcher) {
@@ -188,6 +185,10 @@ export class ModelManager {
                     foo.call(model, oldValue, newValue);
                 }
             }
+        }
+
+        if(oldValue !== newValue || force){
+            Renderer.add(this.module);
         }
     }
 
