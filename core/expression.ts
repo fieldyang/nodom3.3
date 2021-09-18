@@ -137,7 +137,6 @@ export class Expression {
         try {
             v = this.execFunc.apply(module.model,[model,module.methods||{}]);
         } catch (e) {
-            console.log(module,this.execFunc)
             console.error(e);
         }
         return v;

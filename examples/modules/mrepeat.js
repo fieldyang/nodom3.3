@@ -9,21 +9,22 @@ export class MRepeat extends Module{
             <button e-click='desc'>价格降序</button>
             <div class={{
                 xxx?'cls1':'cls2'}}>hahahaha</div>
-            <div class="tip">基本使用</div>
+            <!--<div class="tip">基本使用</div>
             <div class="code">
                 菜单：
                 <div x-repeat="{{foods}}">
                     菜名：{{name}}，价格：{{price}}
                 </div>
             </div>
-            <!--
+            -->
             <div class=tip>索引号的使用（编号从0开始）</div> 
             <div class=code>
                 菜单：
-                <div x-repeat={{foods}}>
+                <for cond={{foods}}>
                     编号：{{$index}}，菜名：{{name}}，价格：{{price}}
-                </div>
+                </for>
             </div>
+            <!--
             <div class=tip>自定义过滤数组</div>
             <div class="code">
                 菜单：

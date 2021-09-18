@@ -322,7 +322,7 @@ export default (function () {
      */
     createDirective('field',
         function(){
-            const [dom,module,parent] = [this.dom,this.module,this.dom.parent];
+            const [me,dom] = [this,this.dom];
             const type: string = dom.getProp('type');
             const tgname = dom.tagName.toLowerCase();
             const model = dom.model;
@@ -332,10 +332,6 @@ export default (function () {
             }
 
             let dataValue = model.$get(this.value);
-            //变为字符串
-            if (dataValue !== undefined && dataValue !== null) {
-                dataValue += '';
-            }
             
             if (type === 'radio') {
                 let value = dom.getProp('value');
@@ -343,8 +339,8 @@ export default (function () {
                     dom.assets.set('checked', true);
                     dom.setProp('checked', 'checked');
                 } else {
-                    dom.delProp('checked');
                     dom.assets.set('checked', false);
+                    dom.delProp('checked');
                 }
             } else if (type === 'checkbox') {
                 //设置状态和value
@@ -355,39 +351,26 @@ export default (function () {
                     dom.assets.set('checked', 'checked');
                 } else { //当前值为no-value
                     dom.setProp('value', dom.getProp('no-value'));
-                    // dom.assets.set('checked', false);
-                    dom.assets.delete('checked');
+                    dom.assets.set('checked',false);
                 }
             } else if (tgname === 'select') { //下拉框
-                // let el: any = module.getNode(dom.key);
-                // let value = el?.value;
                 dom.setAsset('value', dataValue);
-                // if (!this.getParam('inited')) {
-                //     setTimeout(()=>{
-                //         this.setParam('inited',true);
-                //         dom.setProp('value', dataValue);
-                //         dom.setAsset('value', dataValue);
-                //         // Renderer.add(module);
-                //     }, 0);
-                // } else {
-                //     if (dataValue !== value) {
-                //         dom.setProp('value', dataValue);
-                //         dom.setAsset('value', dataValue);
-                //     }
-                // }
+                dom.setProp('value', dataValue);
             } else {
-                // dom.assets.set('value', dataValue === undefined || dataValue === null ? '' : dataValue);
+                let v = (dataValue!==undefined && dataValue!==null)?dataValue:'';
+                dom.assets.set('value', v);
+                dom.setProp('value',v);
             }
 
-            
-            if(!this.getParam('changeEventInited')){
+            //初始化
+            if(!this.getParam('inited')){
                 dom.addEvent(new NEvent('change',
                     function(dom, module, e, el){
                         if (!el) {
                             return;
                         }
                         let type = dom.getProp('type');
-                        let field = dom.getDirective('field').value;
+                        let field = me.value;
                         let v = el.value;
                         //根据选中状态设置checkbox的value
                         if (type === 'checkbox') {
@@ -413,13 +396,13 @@ export default (function () {
                             temp[arr[arr.length - 1]] = v;
                         }
                         //修改value值，该节点不重新渲染
-                        // if (type !== 'radio') {
-                        //     dom.setProp('value', v);
-                        //     el.value = v;
-                        // }
+                        if (type !== 'radio') {
+                            dom.setProp('value', v);
+                            el.value = v;
+                        }
                     }
                 ));
-                this.setParam('changeEventInited',true);
+                this.setParam('inited',true);
             }
         },
         10
@@ -512,7 +495,6 @@ export default (function () {
                 }
                 //设置不渲染
                 dom.dontRender = true;
-                // module.virtualDom.remove(dom.key);
             }else{ // 原模版plug指令
                 // 如果父dom带module指令，则表示为替换，不加入plug map
                 replace(module,this.value,dom);

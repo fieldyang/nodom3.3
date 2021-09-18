@@ -226,7 +226,6 @@ export class Module {
         this.saveCache('$doms',{});
         //编译
         let root:Element = new Compiler(this).compile(this.template(this.props));
-
         //执行前置方法
         this.doRenderOps(0);
         if (!this.renderTree) {
@@ -303,6 +302,7 @@ export class Module {
         this.saveCache('$doms',this.readCache('$oldDoms'));
         //移除旧dom cache
         this.removeCache('$oldDoms');
+        
         //设置已渲染状态
         this.state = 4;
         //执行后置方法

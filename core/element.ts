@@ -79,32 +79,11 @@ export class Element {
     public dontRender: boolean = false;
 
     /**
-     * 渲染前（获取model后）执行方法集合,可以是方法名（在module的methods中定义），也可以是函数
-     * 函数的this指向element的model，参数为(element,module)
-     */
-    private beforeRenderOps: any[] = [];
-
-    /**
-     * 渲染后（renderToHtml前）执行方法集合，可以是方法名（在module的methods中定义），也可以是函数
-     * 函数的this指向element的model，参数为(element,module)
-     */
-    private afterRenderOps: any[] = [];
-
-    /**
-     * 临时参数 map
-     */
-    private tmpParamMap: Map<string, any> = new Map();
-
-    /**
      * @param tag   标签名
      * @param key   key
      */
     constructor(tag?: string,key?:string) {
         this.tagName = tag; //标签
-        //检查是否为svg
-        if (tag && tag.toLowerCase() === 'svg') {
-            this.setTmpParam('isSvgNode', true);
-        }
         if(key){
             this.key = key;
         }
@@ -125,6 +104,7 @@ export class Element {
             }
             this.parent = parent;
         }
+        
         //设置model为模块model
         if (!this.model) {
             this.model = module.model;
@@ -134,9 +114,7 @@ export class Element {
             let d = this.getDirective('model');
             d.exec();
         }
-        //前置方法集合执行
-        this.doRenderOp(module, 'before');
-
+        
         if (this.tagName) { //element
             if (!this.handleDirectives(module)) {
                 this.doDontRender(parent);
@@ -148,17 +126,13 @@ export class Element {
         }
 
         //子节点渲染，子模块不渲染
-        // if (!this.hasDirective('module') || ModuleFactory.get(parseInt(this.getProp('moduleId'))).firstRender) {
-            for (let i = 0; i < this.children.length; i++) {
-                let item = this.children[i];
-                if(!item.render(module, this)) {
-                    item.doDontRender(this);
-                    i--;
-                }
+        for (let i = 0; i < this.children.length; i++) {
+            let item = this.children[i];
+            if(!item.render(module, this)) {
+                item.doDontRender(this);
+                i--;
             }
-        // }
-        //后置方法集执行
-        this.doRenderOp(module, 'after');
+        }
         return true;
     }
 
@@ -203,12 +177,7 @@ export class Element {
          */
         function newEl(vdom: Element,pEl:Node): any {
             //创建element
-            let el;
-            if (vdom.getTmpParam('isSvgNode')) {  //如果为svg node，则创建svg element
-                el = Util.newSvgEl(vdom.tagName);
-            } else {
-                el = Util.newEl(vdom.tagName);
-            }
+            let el= Util.newEl(vdom.tagName);
             //设置属性
             Util.getOwnProps(vdom.props).forEach((k) => {
                 if (typeof vdom.props[k] != 'function'){
@@ -654,22 +623,17 @@ export class Element {
      * 获取属性值
      * @param propName  属性名
      */
-    public getProp(propName: string, isExpr?: boolean) {
-        if (isExpr) {
-            return this.exprProps[propName];
-        } else {
-            return this.props[propName];
-        }
+    public getProp(propName: string) {
+        return this.props[propName] || this.exprProps[propName]
     }
 
     /**
      * 设置属性值
      * @param propName  属性名
      * @param v         属性值
-     * @param isExpr    是否是表达式属性 默认false  
      */
-    public setProp(propName: string, v: any, isExpr?: boolean) {
-        if (isExpr) {
+    public setProp(propName: string, v: any) {
+        if(v instanceof Expression){
             this.exprProps[propName] = v;
         } else {
             this.props[propName] = v;
@@ -954,74 +918,6 @@ export class Element {
             }
         }
     }
-
-    /**
-     * 设置临时参数
-     * @param key       参数名
-     * @param value     参数值
-     */
-    setTmpParam(key: string, value: any) {
-        this.tmpParamMap.set(key, value);
-    }
-
-    /**
-     * 获取临时参数
-     * @param key       参数名
-     * @returns         参数值
-     */
-    getTmpParam(key: string): any {
-        return this.tmpParamMap.get(key);
-    }
-
-    /**
-     * 删除临时参数
-     * @param key       参数名
-     */
-    removeTmpParam(key: string) {
-        this.tmpParamMap.delete(key);
-    }
-
-
-    /**
-     * 是否有临时参数
-     * @param key       参数名
-     */
-    hasTmpParam(key: string) {
-        return this.tmpParamMap.has(key);
-    }
-
-    /**
-     * 添加渲染附加操作
-     * @param method    方法名 
-     * @param type      类型 before,after
-     */
-    addRenderOp(method: any, type: string) {
-        if (type === 'before') {
-            this.beforeRenderOps.push(method);
-        } else {
-            this.afterRenderOps.push(method);
-        }
-    }
-
-    /**
-     * 执行渲染附加操作
-     * @param module    模块
-     * @param type      类型 before,after
-     */
-    doRenderOp(module: Module, type: string) {
-        // 否则执行注册在element上的前置渲染方法
-        let arr = type === 'before' ? this.beforeRenderOps : this.afterRenderOps;
-        for (let m of arr) {
-            //可能是字符串
-            if (typeof m === 'string') {
-                m = module.getMethod(m);
-            }
-            if (m) {
-                m.apply(this.model, [this, module]);
-            }
-        }
-    }
-
 
     /**
      * 保存cache，dom相关cache放在模块cache的 $doms 下
