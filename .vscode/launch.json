@@ -8,8 +8,8 @@
 			"name": "Launch Edge",
 			"request": "launch",
 			"type": "pwa-msedge",
-			"url": "http://localhost:5500/${relativeFile}",
-			"webRoot": "${workspaceFolder}"
+			"url": "http://localhost:5500/${relativeFile}"
+			// "webRoot": "${workspaceFolder}"
 		}
 		// {
 		// 	"type": "firefox",

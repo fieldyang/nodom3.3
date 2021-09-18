@@ -6,7 +6,7 @@ import { NEvent } from "./event";
 import { Expression } from "./expression";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
-import { ASTObj } from "./types";
+// import { ASTObj } from "./types";
 
 export class Compiler {
 
@@ -30,14 +30,9 @@ export class Compiler {
     * @returns             虚拟dom
     */
     public compile(elementStr: string): Element {
-
         // 这里是把模板串通过正则表达式匹配 生成AST
         let ast = this.compileTemplateToAst(elementStr);
-        let oe = new Element('div', this.genKey());
-        // 将AST编译成抽象语法树
-        this.compileAST(oe, ast);
-
-        return oe;
+        return ast;
     }
 
     /**
@@ -46,34 +41,35 @@ export class Compiler {
      * @param ast 抽象语法树也就是JSON对象
      * @returns oe 虚拟dom的根容器
      */
-    public compileAST(oe: Element, ast: ASTObj): Element {
-        if (!ast) return;
-        ast.tagName ? this.handleAstNode(oe, ast, this.module) : this.handleAstText(oe, ast);
-        return oe;
-    }
+    // public compileAST(oe: Element, ast: ASTObj): Element {
+    //     if (!ast) return;
+    //     ast.tagName ? this.handleAstNode(oe, ast, this.module) : this.handleAstText(oe, ast);
+    //     return oe;
+    // }
     /**
      * 编译text类型的ast到虚拟dom
      * @param parent 父虚拟dom节点
      * @param ast 虚拟dom树
      */
-    private handleAstText(parent: Element, astObj: ASTObj) {
-        let text = new Element(null, this.genKey());
-        parent.children.push(text);
-        if (/\{\{.+\}\}/.test(astObj.textContent)) {
-            text.expressions = <any[]>this.compileExpression(astObj.textContent);
-        } else {
-            text.textContent = astObj.textContent;
-        }
-    }
+    // private handleAstText(parent: Element, astObj: ASTObj) {
+    //     let text = new Element(null, this.genKey());
+    //     parent.children.push(text);
+    //     if (/\{\{.+\}\}/.test(astObj.textContent)) {
+    //         text.expressions = <any[]>this.compileExpression(astObj.textContent);
+    //     } else {
+    //         text.textContent = astObj.textContent;
+    //     }
+    // }
     /**
      * 前置处理
      * 包括：模块类元素、自定义元素
      * @param node  ast node
      */
-    private preHandleNode(node: ASTObj) {
+    private preHandleNode(node: Element) {
         // 模块类判断
-        if (ModuleFactory.has(node.tagName)) {
-            node.attrs.set('x-module', node.tagName);
+        if (ModuleFactory.hasClass(node.tagName)) {
+            new Directive('module', node.tagName, node, this.module);
+            // node.attrs.set('x-module', tagName);
             node.tagName = 'div';
         } else if (DefineElementManager.has(node.tagName)) { //自定义元素
             let clazz = DefineElementManager.get(node.tagName);
@@ -85,22 +81,22 @@ export class Compiler {
      * @param oe 虚拟dom   
      * @param astObj 
      */
-    public handleAstNode(parent: Element, astObj: ASTObj, module: Module) {
-        this.preHandleNode(astObj);
-        let child = new Element(astObj.tagName, this.genKey());
-        parent.add(child);
-        this.handleAstAttrs(child, astObj.attrs, module, parent);
-        for (let a of astObj.children) {
-            this.compileAST(child, a);
-        }
-    }
+    // public handleAstNode(parent: Element, astObj: ASTObj, module: Module) {
+    //     this.preHandleNode(astObj);
+    //     let child = new Element(astObj.tagName, this.genKey());
+    //     parent.add(child);
+    //     this.handleAstAttrs(child, astObj.attrs, module, parent);
+    //     for (let a of astObj.children) {
+    //         this.compileAST(child, a);
+    //     }
+    // }
     /**
      * 编译ast 到虚拟dom
      * @param oe        虚拟dom
      * @param attrs     需要编译成虚拟dom的attrs
      * @param parent    父虚拟dom节点
      */
-    public handleAstAttrs(oe: Element, attrs: Map<string, any>, module: Module, parent: Element) {
+    public handleAstAttrs(oe: Element, attrs: Map<string, any>, module: Module) {
         //指令数组 先处理普通属性在处理指令
         let directives = [];
         if (!attrs) { return }
@@ -115,12 +111,12 @@ export class Compiler {
                 let e = key.substr(2);
                 oe.addEvent(new NEvent(e, value.trim()));
             } else {
-                oe.setProp(key, value, value instanceof Expression);
+                oe.setProp(key, value);
             }
         }
         //处理属性
         for (let attr of directives) {
-            new Directive(attr.key.substr(2), attr.value, oe, module, parent, true);
+            new Directive(attr.key.substr(2), attr.value, oe, module, true);
         }
         if (directives.length > 1) {
             //指令排序
@@ -172,7 +168,7 @@ export class Compiler {
      * @param elementStr 模板字符串
      * @returns AST对象数组
      */
-    private compileTemplateToAst(elementStr: string): ASTObj {
+    private compileTemplateToAst(elementStr: string): Element {
         let templateStr = elementStr.trim();
         // 准备栈空间
         let stack1 = []; //{ tagName: undefined, children: [], attrs: new Map() ,isClosed:false }
@@ -185,14 +181,22 @@ export class Compiler {
         // 不需要注释节点
         let rest = templateStr.replace(commentRegExp, '');
         // 匹配到字符串末尾
-        let root: ASTObj;
+        let root: Element;
         let tag;
         let preFlag = false;
         while ((tag = tagReg.exec(rest)) != null) {
             if (index <= tag.index) {
                 let word = rest.substring(index, tag.index);
                 if (!/^\s*$/.test(word) || preFlag) {
-                    stack1[stack1.length - 1].children.push({ textContent: word });
+                    // stack1[stack1.length - 1].children.push({ textContent: word });
+                    let text = new Element(null, this.genKey())
+                    const compiledStr = this.compileExpression(word);
+                    if (typeof compiledStr == 'string') {
+                        text.textContent = compiledStr;
+                    } else {
+                        text.expressions = compiledStr;
+                    }
+                    stack1[stack1.length - 1].children.push(text);
                 }
                 if (tag[1] && tag[1] == '/') {
                     root = this.compilerEndTagToAST(tag, stack1);
@@ -225,23 +229,24 @@ export class Compiler {
      */
     private compilerStartTagToAST(startTag, stack1) {
         let [, , tagName, attrString, selfCloseStr] = startTag;
+        let newEl = new Element(tagName, this.genKey());
+        this.handleAstAttrs(newEl, this.parseAttrString(attrString), this.module);
+        this.preHandleNode(newEl);
+        //指令排序
+        if (newEl.directives && newEl.directives.length > 1) {
+            newEl.directives.sort((a, b) => {
+                return a.type.prio - b.type.prio;
+            });
+        }
         if (selfCloseStr == '/') {
             // 这个标签是自闭合标签
             if (stack1.length > 0) {
-                stack1[stack1.length - 1].children.push({
-                    tagName,
-                    children: [],
-                    attrs: this.parseAttrString(attrString)
-                })
+                stack1[stack1.length - 1].children.push(newEl)
             }
 
         } else {
             // AST入栈
-            stack1.push({
-                tagName,
-                children: [],
-                attrs: this.parseAttrString(attrString)
-            });
+            stack1.push(newEl);
         }
     }
 
@@ -253,7 +258,7 @@ export class Compiler {
      * @param stack2 辅助栈2
      * @returns index
      */
-    private compilerEndTagToAST(endTag, stack1): ASTObj {
+    private compilerEndTagToAST(endTag, stack1): Element {
         // 识别结束标记
         let [, , tagName] = endTag;
         // tagName = tagName.trim();

@@ -6,7 +6,6 @@ import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
 import { ModuleFactory } from "./modulefactory";
 import { Renderer } from "./renderer";
-import { ChangedDom} from "./types";
 import { Util } from "./util";
 
 /**
@@ -17,6 +16,7 @@ export class Module {
      * 模块id(全局唯一)
      */
     public id: number;
+
     /**
      * 模块名(模块内(父模块的子模块之间)唯一)，如果不设置，则系统会自动生成Module+id
      */
@@ -114,6 +114,11 @@ export class Module {
 
     /**
      * 缓存
+     * 缓存说明：
+     * dom相关：  $doms.${dom.key}
+     * 旧dom相关：$oldDoms.${dom.key}
+     * 指令相关：$doms.${dom.key}.$directives.${directive.type}
+     * key htmldom映射: $virtualDoms
      */
     private cache:NCache;
 
@@ -149,7 +154,7 @@ export class Module {
         //注册子模块
         if(this.modules && Array.isArray(this.modules)){
             for (let cls of this.modules) {
-                Reflect.construct(cls,[]);
+                ModuleFactory.addClass(cls);
             }
             delete this.modules;
         }
@@ -215,10 +220,12 @@ export class Module {
         if (this.state < 3 || !this.getContainer()) {
             return false;
         }
-        // console.time('t1');
+        // 保存上次的dom缓存
+        this.saveCache('$oldDoms',this.readCache('$doms'));
+        //重置工作dom缓存
+        this.saveCache('$doms',{});
         //编译
         let root:Element = new Compiler(this).compile(this.template(this.props));
-
         //执行前置方法
         this.doRenderOps(0);
         if (!this.renderTree) {
@@ -233,71 +240,73 @@ export class Module {
                 //渲染
                 root.render(this, null);
                 this.doModuleEvent('onBeforeRenderToHtml');
-                let deleteMap = new Map();
-                let renderDoms:ChangedDom[] = [];
+                let changeDoms = [];
                 // 比较节点
-                root.compare(oldTree, renderDoms, deleteMap);
+                root.compare(oldTree, changeDoms);
                 //刪除和替換
-                deleteMap.forEach((value, key) => {
-                    let dp: HTMLElement = this.getNode(key);
-                    let tmp = [];
-                    for (let i = 0; i < value.length; i++) {
-                        let index = value[i];
-                        if (typeof index == 'object') {
-                            let els;
-                            //新建替换
-                            if (index[2] != undefined) {
-                                els = dp.querySelectorAll("[key='" + index[1] + "']");
-                                dp.insertBefore((() => {
-                                    const vDom: Element = root.query(index[0]);
-                                    return Util.newEls(vDom, this, vDom.parent, this.getNode(vDom.parent.key));
-                                })(), els[els.length - 1]);
-                            } else if (index.length === 2) {
-                                //更改dom节点顺序
-                                let ele = this.getNode(index[0]);
-                                if (ele) {
-                                    els = dp.querySelectorAll("[key='" + index[1] + "']");
-                                    dp.insertBefore(ele, els[els.length - 1]);
+                for(let item of changeDoms){
+                    let[n1,n2,pEl] = [
+                        item[1]?this.getNode(item[1].key):null,
+                        item[2]&&typeof item[2]==='object'?this.getNode(item[2].key):null,
+                        item[3]?this.getNode(item[3].key):null
+                    ];
+                    switch(item[0]){
+                        case 1: //添加
+                            //把新dom缓存添加到旧dom缓存
+                            this.saveCache(`$oldDoms.${item[1].key}`,this.readCache(`$doms.${item[1].key}`));
+                            item[1].renderToHtml(this,pEl,true);
+                            n1 = this.getNode(item[1].key);
+                            if(!n2){ //不存在添加节点或为索引号
+                                if(typeof item[2] === 'number' && pEl.childNodes.length-1>item[2]){
+                                    pEl.insertBefore(n1,pEl.childNodes[item[2]]);
+                                }else{
+                                    pEl.appendChild(n1);
                                 }
-                            } else {
-                                //删除dom节点
-                                els = dp.querySelectorAll("[key='" + index[0] + "']");
-                                dp.removeChild(els[els.length - 1]);
+                                
+                            }else{
+                                pEl.insertBefore(n1,n2);
                             }
-                        } else {
-                            tmp.push(index);
-                        }
+                            break;
+                        case 2: //修改
+                            item[1].renderToHtml(this,pEl);
+                            break;
+                        case 3: //删除
+                            //清除缓存
+                            this.clearDomCache(item[1],true);
+                            pEl.removeChild(n1);
+                            break;
+                        case 4: //移动
+                            if(item[4] ){  //相对节点后
+                                if(n2&&n2.nextSibling){
+                                    pEl.insertBefore(n1,n2.nextSibling);
+                                }else{
+                                    pEl.appendChild(n1);
+                                }
+                            }else{
+                                pEl.insertBefore(n1,n2);
+                            }
+                            break;
+                        default: //替换
+                            //替换之前的dom缓存
+                            this.saveCache(`$oldDoms.${item[1].key}`,this.readCache(`$doms.${item[1].key}`));
+                            item[1].renderToHtml(this,pEl,true);
+                            n1 = this.getNode(item[1].key);
+                            pEl.replaceChild(n1,n2);
                     }
-                    //替换和删除需要反向操作
-                    for (let i = tmp.length - 1; i >= 0; i--) {
-                        let index = tmp[i];
-                        if (typeof index == 'string') {
-                            let parm = index.split('|');
-                            index = parm[0];
-                            const vDom: Element = root.query(parm[1]);
-                            // console.log(vDom);
-                            dp.insertBefore((() => {
-                                return Util.newEls(vDom, this, vDom.parent, this.getNode(vDom.parent.key));
-                            })(), dp.childNodes[index++]);
-                        }
-                        if (dp.childNodes.length > index) dp.removeChild(dp.childNodes[index]);
-                    }
-                });
-                deleteMap.clear();
-                // 渲染
-                renderDoms.forEach((item) => {
-                    item.node.renderToHtml(this, item);
-                });
+                }
             }
             //执行每次渲染后事件
             this.doModuleEvent('onRender');
         }
-
+        //把old dom 缓存置为doms
+        this.saveCache('$doms',this.readCache('$oldDoms'));
+        //移除旧dom cache
+        this.removeCache('$oldDoms');
+        
         //设置已渲染状态
         this.state = 4;
         //执行后置方法
         this.doRenderOps(1);
-        // console.timeEnd('t1');
         return true;
     }
 
@@ -312,19 +321,14 @@ export class Module {
         if (this.model) {
             root.model = this.model;
         }
+
         root.render(this, null);
         this.doModuleEvent('onBeforeFirstRenderToHTML');
-        
-        //无容器，不执行
-        if (!this.getContainer()) {
-            return;
-        }
-        
         //清空子元素
         Util.empty(this.container);
         //渲染到html
-        root.renderToHtml(this, <ChangedDom>{ type: 'fresh' });
-        
+        root.renderToHtml(this, this.container,true);
+        this.container.appendChild(this.getNode(root.key));
         //执行首次渲染后事件
         this.doModuleEvent('onFirstRender');
     }
@@ -459,29 +463,21 @@ export class Module {
     }
 
     /**
+     * 保存key对应的html node
+     * @param key       dom key
+     * @param node      node
+     */
+    public setNode(key:string,node:Node){
+        this.saveCache(`$virtualDoms.${key}`,node);
+    }
+    /**
      * 获取模块下的html节点
-     * @param key       el key值或对象{attrName:attrValue}
-     * @param notNull   如果不存在，则返回container
+     * @param key       el key
+     * @param oldTree   是否从旧树中获取
      * @returns         html element
      */
-    public getNode(key: string | Object, notNull?: boolean): HTMLElement {
-        let keyName: string;
-        let value: any;
-        if (typeof key === 'string') {  //默认为key值查找
-            keyName = 'key';
-            value = key;
-        } else {  //对象
-            keyName = Object.getOwnPropertyNames(key)[0];
-            value = key[keyName];
-        }
-        let qs: string = "[" + keyName + "='" + value + "']";
-        let ct = this.getContainer();
-
-        if(ct){
-            return ct.querySelector(qs);
-        }else if(notNull){
-            return ct || null;
-        }
+    public getNode(key: string): Node {
+        return this.readCache(`$virtualDoms.${key}`);
     }
 
     /**
@@ -499,7 +495,7 @@ export class Module {
     public getContainer(): HTMLElement {
         if(!this.container){
             if(this.containerKey){
-                this.container = this.getParent().getNode(this.containerKey);
+                this.container = <HTMLElement>this.getParent().getNode(this.containerKey);
             }
         }
         return this.container;
@@ -592,7 +588,7 @@ export class Module {
         if(change){
             this.props = props;
             if(render){
-                this.render();
+                this.active();
             }
         }
     }
@@ -621,6 +617,19 @@ export class Module {
      */
     public removeCache(key){
         this.cache.remove(key);
+    }
+
+    /**
+     * 清除dom cache
+     * @param dom   待删除的dom 
+     * @param old   是否从旧虚拟dom映射表删除，默认false
+     */
+    public clearDomCache(dom:Element,old?:boolean){
+        if(!old){
+            dom.clearCache(this);
+        }else{
+            this.removeCache(`$oldDoms.${dom.key}`);
+        }
     }
 }
 
