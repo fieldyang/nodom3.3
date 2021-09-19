@@ -1,6 +1,6 @@
 {
-    "name": "nodom3",
-    "version": "3.0.0",
+    "name": "nodom3.1",
+    "version": "0.0.1",
     "description": "",
     "private": true,
     "main": "index.ts",

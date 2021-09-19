@@ -5,7 +5,8 @@ import { Expression } from "../core/expression";
 import { Model } from "../core/model";
 import { Module } from "../core/module";
 import { ModuleFactory } from "../core/modulefactory";
-import { createDirective } from "../core/nodom";
+import { createDirective, createRoute } from "../core/nodom";
+import { Renderer } from "../core/renderer";
 import { Router } from "../core/router";
 import { Util } from "../core/util";
 
@@ -25,8 +26,8 @@ export default (function () {
      */
     createDirective(
         'module',
-        function () {
-            const [dom, module, parent] = [this.dom, this.module, this.dom.parent];
+        function(){
+            const [dom,module,parent] = [this.dom,this.module,this.dom.parent];
             let m: Module;
             let props = {};
             Object.getOwnPropertyNames(dom.props).forEach(p => {
@@ -39,21 +40,21 @@ export default (function () {
             let mid = this.getParam('moduleId');
             if (mid) {
                 m = ModuleFactory.get(mid);
-                if (!dom.hasProp('once')) {
+                if(!dom.hasProp('once')){
                     //设置props，如果改变了props，启动渲染
-                    m.setProps(props, true);
+                    m.setProps(props,true);    
                 }
             } else {
                 m = ModuleFactory.get(this.value);
                 if (!m) {
                     return;
                 }
-
+                
                 // 后面不再执行表达式属性
                 delete dom.exprProps;
 
                 //保留modelId
-                this.setParam('moduleId', m.id);
+                this.setParam('moduleId',m.id);
                 //添加到父模块
                 module.addChild(m.id);
                 //设置容器
@@ -61,7 +62,7 @@ export default (function () {
                 //添加到渲染器
                 m.active();
                 //设置props，如果改变了props，启动渲染
-                m.setProps(props, true);
+                m.setProps(props,true);
             }
         },
         8
@@ -72,7 +73,7 @@ export default (function () {
      */
     createDirective(
         'model',
-        function () {
+        function(){
             const dom = this.dom;
             let model: Model = dom.model.$get(this.value);
             if (model) {
@@ -88,8 +89,8 @@ export default (function () {
      */
     createDirective(
         'repeat',
-        function () {
-            const [dom, module, parent] = [this.dom, this.module, this.dom.parent];
+        function(){
+            const [dom,module,parent] = [this.dom,this.module,this.dom.parent];
             dom.dontRender = true;
             let rows = this.value;
             // 无数据，不渲染
@@ -157,8 +158,8 @@ export default (function () {
      */
     createDirective(
         'recur',
-        function () {
-            const [dom, module, parent] = [this.dom, this.module, this.dom.parent];
+        function(){
+            const [dom,module,parent] = [this.dom,this.module,this.dom.parent];
             let model = dom.model;
             if (!model) {
                 return;
@@ -194,9 +195,9 @@ export default (function () {
      * 描述：条件指令
      */
     createDirective('if',
-        function () {
-            const [dom, module, parent] = [this.dom, this.module, this.dom.parent];
-            module.saveCache(`${parent.key}.directives.tmp.if`, this.value);
+        function(){
+            const [dom,module,parent] = [this.dom,this.module,this.dom.parent];
+            module.saveCache(`${parent.key}.directives.tmp.if`,this.value);
             dom.dontRender = !this.value;
         },
         5
@@ -208,10 +209,10 @@ export default (function () {
      */
     createDirective(
         'else',
-        function () {
+        function(){
             //如果前面的if/elseif值为true或undefined，则隐藏，否则显示
-            const [dom, module, parent] = [this.dom, this.module, this.dom.parent];
-            dom.dontRender = (module.readCache(`${parent.key}.directives.tmp.if`) === true);
+            const [dom,module,parent] = [this.dom,this.module,this.dom.parent];
+            dom.dontRender = (module.readCache(`${parent.key}.directives.tmp.if`)===true);
         },
         5
     );
@@ -219,14 +220,14 @@ export default (function () {
     /**
      * elseif 指令
      */
-    createDirective('elseif',
-        function () {
-            const [dom, module, parent] = [this.dom, this.module, this.dom.parent];
+    createDirective('elseif', 
+        function(){
+            const [dom,module,parent] = [this.dom,this.module,this.dom.parent];
             let v = module.readCache(`${parent.key}.directives.tmp.if`);
-            if (v === undefined || v === true || !this.value) {
+            if(v === undefined || v === true || !this.value){
                 dom.dontRender = true;
-            } else {
-                module.saveCache(`${parent.key}.directives.tmp.if`, true);
+            }else{
+                module.saveCache(`${parent.key}.directives.tmp.if`,true);
                 dom.dontRender = false;
             }
         },
@@ -236,10 +237,10 @@ export default (function () {
     /**
      * elseif 指令
      */
-    createDirective(
-        'endif',
-        function () {
-            const [module, parent] = [this.module, this.dom.parent];
+     createDirective(
+         'endif', 
+        function(){
+            const [module,parent] = [this.module,this.dom.parent];
             module.removeCache(`${parent.key}.directives.tmp.if`);
         },
         5
@@ -251,7 +252,7 @@ export default (function () {
      */
     createDirective(
         'show',
-        function () {
+        function(){
             this.dom.dontRender = !this.value;
         },
         5
@@ -262,7 +263,7 @@ export default (function () {
      * 描述：从当前模块获取数据并用于子模块，dom带module指令时有效
      */
     createDirective('data',
-        function () {
+        function(){
             const dom = this.dom;
             if (typeof this.value !== 'object') {
                 return;
@@ -272,7 +273,7 @@ export default (function () {
                 return;
             }
             let mid = mdlDir.getParam('moduleId');
-            if (!mid) {
+            if(!mid){
                 return;
             }
             let obj = this.value;
@@ -320,18 +321,18 @@ export default (function () {
      * 描述：字段指令
      */
     createDirective('field',
-        function () {
-            const [me, dom] = [this, this.dom];
+        function(){
+            const [me,dom] = [this,this.dom];
             const type: string = dom.getProp('type');
             const tgname = dom.tagName.toLowerCase();
             const model = dom.model;
-
+            
             if (!model) {
                 return;
             }
 
             let dataValue = model.$get(this.value);
-
+            
             if (type === 'radio') {
                 let value = dom.getProp('value');
                 if (dataValue == value) {
@@ -350,21 +351,21 @@ export default (function () {
                     dom.assets.set('checked', 'checked');
                 } else { //当前值为no-value
                     dom.setProp('value', dom.getProp('no-value'));
-                    dom.assets.set('checked', false);
+                    dom.assets.set('checked',false);
                 }
             } else if (tgname === 'select') { //下拉框
                 dom.setAsset('value', dataValue);
                 dom.setProp('value', dataValue);
             } else {
-                let v = (dataValue !== undefined && dataValue !== null) ? dataValue : '';
+                let v = (dataValue!==undefined && dataValue!==null)?dataValue:'';
                 dom.assets.set('value', v);
-                dom.setProp('value', v);
+                dom.setProp('value',v);
             }
 
             //初始化
-            if (!this.getParam('inited')) {
+            if(!this.getParam('inited')){
                 dom.addEvent(new NEvent('change',
-                    function (dom, module, e, el) {
+                    function(dom, module, e, el){
                         if (!el) {
                             return;
                         }
@@ -401,7 +402,7 @@ export default (function () {
                         }
                     }
                 ));
-                this.setParam('inited', true);
+                this.setParam('inited',true);
             }
         },
         10
@@ -411,22 +412,22 @@ export default (function () {
      * route指令
      */
     createDirective('route',
-        function () {
-            const [dom, module] = [this.dom, this.module];
+        function(){
+            const [dom,module] = [this.dom,this.module];
             //a标签需要设置href
             if (dom.tagName.toLowerCase() === 'a') {
-                dom.setProp('href', 'javascript:void(0)');
+                dom.setProp('href','javascript:void(0)');
             }
 
             if (dom.hasProp('active')) {
                 let ac = dom.getProp('active');
                 //active 转expression
-                dom.setProp('active', new Expression(ac), true);
+                dom.setProp('active',new Expression(ac),true);
                 //保存activeName
-                this.setParam('activeName', ac);
+                this.setParam('activeName',ac);
             }
             dom.setProp('path', this.value);
-
+            
             let ac = this.getParam('activeName');
             // 设置激活字段
             if (ac) {
@@ -434,7 +435,7 @@ export default (function () {
             }
 
             //延迟激活（指令执行后才执行属性处理，延迟才能获取active prop的值）
-            setTimeout(() => {
+            setTimeout(()=>{
                 // 路由路径以当前路径开始
                 if (dom.getProp('active') === true && this.value.startsWith(Router.currentPath)) {
                     Router.go(this.value);
@@ -442,9 +443,9 @@ export default (function () {
             }, 0);
 
             //尚未加载事件
-            if (!this.getParam('routeEvent')) {
+            if(!this.getParam('routeEvent')){
                 //添加click事件
-                let evt: NEvent = new NEvent('click',
+                let evt:NEvent = new NEvent('click',
                     (dom, module, e) => {
                         let path = dom.getProp('path');
                         if (!path) {
@@ -459,7 +460,7 @@ export default (function () {
                 );
                 dom.addEvent(evt);
                 //设置route事件标志
-                this.setParam('routeEvent', true);
+                this.setParam('routeEvent',true);
             }
         }
     );
@@ -468,8 +469,8 @@ export default (function () {
      * 增加router指令
      */
     createDirective('router',
-        function () {
-            const [dom, module] = [this.dom, this.module];
+        function(){
+            const [dom,module] = [this.dom,this.module];
             Router.routerKeyMap.set(module.id, dom.key);
         }
     );
@@ -479,24 +480,24 @@ export default (function () {
      * 用于模块中，可实现同名替换
      */
     createDirective('swap',
-        function () {
+        function(){
             this.value = this.value || 'default';
-            const [dom, parent, module] = [this.dom, this.dom.parent, this.module];
-            let pd: Directive = parent.getDirective('module');
-            if (pd) { //父模块替代dom，替换子模块中的plug
-                if (module.children.length === 0) {
+            const [dom,parent,module] = [this.dom,this.dom.parent,this.module];
+            let pd:Directive = parent.getDirective('module');
+            if(pd){ //父模块替代dom，替换子模块中的plug
+                if(module.children.length===0){
                     return;
                 }
                 let m = ModuleFactory.get(module.children[module.children.length - 1]);
                 if (m) {
                     // 加入等待替换map
-                    add(m, this.value, dom);
+                    add(m,this.value,dom);
                 }
                 //设置不渲染
                 dom.dontRender = true;
-            } else { // 原模版plug指令
+            }else{ // 原模版plug指令
                 // 如果父dom带module指令，则表示为替换，不加入plug map
-                replace(module, this.value, dom);
+                replace(module,this.value,dom);
             }
 
             /**

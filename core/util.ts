@@ -53,6 +53,7 @@ export class Util {
                 return src;
             }
             let dst;
+
             //带有clone方法，则直接返回clone值
             if (src.clone && Util.isFunction(src.clone)) {
                 return src.clone(extra);
@@ -101,6 +102,7 @@ export class Util {
          * @param extra     附加参数
          */
         function getCloneObj(value, expKey, extra) {
+
             if (typeof value === 'object' && !Util.isFunction(value)) {
                 let co = null;
                 if (!map.has(value)) {  //clone新对象

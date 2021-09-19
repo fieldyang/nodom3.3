@@ -9,7 +9,7 @@
 	<body></body>
 
 	<script>
-		let reg =/([a-zA-Z][a-zA-Z0-9-_]*)=?('.*?'|".*?"|{{.*?}})?/;
+		let reg = /([a-zA-Z][a-zA-Z0-9-_]*)=?('.*?'|".*?"|{{.*?}})?/;
 		let str = `div a=' v"as"v' b='{{asdasd}}'`;
 		console.log(reg.exec(str));
 	</script>
