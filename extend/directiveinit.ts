@@ -216,7 +216,8 @@ export default (function () {
      */
     createDirective('elseif', 
         function(module:Module,dom:Element){
-            let v = module.objectManager.getElementParam(dom.parent.key,'$if')
+            let v = module.objectManager.getElementParam(dom.parent.key,'$if');
+            console.log('elseif',v);
             if(v === true){
                 dom.dontRender = true;
             }else{
@@ -237,6 +238,7 @@ export default (function () {
      createDirective(
          'endif', 
         function(module:Module,dom:Element){
+            console.log('endif');
             module.objectManager.removeElementParam(dom.parent.key,'$if');
         },
         5
@@ -413,7 +415,7 @@ export default (function () {
             if (dom.tagName.toLowerCase() === 'a') {
                 dom.setProp('href','javascript:void(0)');
             }
-
+            
             if (dom.hasProp('active')) {
                 let ac = dom.getProp('active');
                 //active 转expression

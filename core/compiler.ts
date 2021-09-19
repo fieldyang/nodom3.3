@@ -13,29 +13,12 @@ export class Compiler {
     private elementId:number;
 
     /**
-     * 表达式id
-     */
-    private expressionId:number;
-
-    /**
-     * 指令id
-     */
-    private directiveId:number;
-
-    /**
-     * 事件id
-     */
-    private eventId:number;
-
-    /**
      * 模块
      */
     private module:Module;
 
     constructor(module:Module){
         this.elementId = 0;
-        this.expressionId = 0;
-        this.directiveId = 0;
         this.module = module;
     }
     /**
@@ -255,9 +238,9 @@ export class Compiler {
             //指令
             if (pName.startsWith("x-")) {
                 //不排序
-                ele.addDirective(new Directive(me.module,pName.substr(2), value,me.expressionId++));
+                ele.addDirective(new Directive(me.module,pName.substr(2), value));
             } else if (pName.startsWith("e-")) { //事件
-                ele.addEvent(new NEvent(me.module,pName.substr(2), value,null,me.eventId++));
+                ele.addEvent(new NEvent(me.module,pName.substr(2), value,null));
             } else { //普通属性
                 ele.setProp(pName, value);
             }
@@ -302,7 +285,7 @@ export class Compiler {
                 retA.push(s);
             }
             //实例化表达式对象
-            let exp = new Expression(this.module,re[0].substring(2, re[0].length - 2),this.expressionId++);
+            let exp = new Expression(this.module,re[0].substring(2, re[0].length - 2));
             //加入数组
             retA.push(exp.id);
             oIndex = ind + re[0].length;
@@ -322,11 +305,11 @@ export class Compiler {
     private postHandleNode(node:Element){
         // 模块类判断
         if (ModuleFactory.hasClass(node.tagName)) {
-            node.addDirective(new Directive(this.module,'module',node.tagName,this.directiveId++));
+            node.addDirective(new Directive(this.module,'module',node.tagName));
             node.tagName = 'div';
         }else if(DefineElementManager.has(node.tagName)){ //自定义元素
             let clazz = DefineElementManager.get(node.tagName);
-            Reflect.construct(clazz,[node,this.module,this.directiveId++]);
+            Reflect.construct(clazz,[node,this.module]);
         }
     }
 

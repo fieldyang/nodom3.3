@@ -65,7 +65,7 @@ export  class ObjectManager {
      * @returns         指令对象
      */
     public getDirective(id:number):Directive{
-        return this.cache.get(`$directives.${id}.$instance`);
+        return this.cache.get('$directives.' + id + '.$instance');
     }
 
     /**
@@ -74,7 +74,7 @@ export  class ObjectManager {
      * @param directive     指令对象
      */
     public saveDirective(directive:Directive){
-        this.cache.set(`$directives.${directive.id}.$instance`,directive);
+        this.cache.set('$directives.' + directive.id + '.$instance',directive);
     }
 
     /**
@@ -82,7 +82,7 @@ export  class ObjectManager {
      * @param id    指令id
      */
     public removeDirective(id:number){
-        this.cache.remove(`$directives.${id}`);
+        this.cache.remove('$directives.' + id);
     }
 
     /**
@@ -92,7 +92,7 @@ export  class ObjectManager {
      * @param value     参数值
      */
     public setDirectiveParam(id:number,name:string,value:any){
-        this.cache.set(`$directives.${id}.$params.${name}`,value);
+        this.cache.set('$directives.' + id + '.$params.' + name,value);
     }
 
     /**
@@ -102,7 +102,7 @@ export  class ObjectManager {
      * @returns         参数值
      */
     public getDirectiveParam(id:number,name:string){
-        return this.cache.get(`$directives.${id}.$params.${name}`);
+        return this.cache.get('$directives.' + id + '.$params.' + name);
     }
 
     /**
@@ -111,7 +111,7 @@ export  class ObjectManager {
      * @param name      参数名
      */
     public removeDirectiveParam(id:number,name:string){
-        this.cache.remove(`$directives.${id}.$params.${name}`);
+        this.cache.remove('$directives.' + id + '.$params.' + name);
     }
 
     /**
@@ -119,7 +119,7 @@ export  class ObjectManager {
      * @param id        指令id
      */
     public clearDirectiveParam(id:number){
-        this.cache.remove(`$directives.${id}.$params`);
+        this.cache.remove('$directives.' + id + '.$params');
     }
 
     /**
@@ -128,7 +128,7 @@ export  class ObjectManager {
      * @returns         表达式对象
      */
      public getExpression(id:number):Expression{
-        return this.cache.get(`$expressions.${id}`);
+        return this.cache.get('$expressions.' + id);
     }
 
     /**
@@ -136,7 +136,7 @@ export  class ObjectManager {
      * @param expression    表达式对象
      */
     public saveExpression(expression:Expression){
-        this.cache.set(`$expressions.${expression.id}`,expression);
+        this.cache.set('$expressions.' + expression.id,expression);
     }
 
     /**
@@ -144,7 +144,7 @@ export  class ObjectManager {
      * @param id    表达式id
      */
     public removeExpression(id:number){
-        this.cache.remove(`$expressions.${id}`);
+        this.cache.remove('$expressions.' + id);
     }
 
     /**
@@ -153,7 +153,7 @@ export  class ObjectManager {
      * @returns         事件对象
      */
     public getEvent(id:number):NEvent{
-        return this.cache.get(`$events.${id}.$instance`);
+        return this.cache.get('$events.' + id + '.$instance');
     }
 
     /**
@@ -161,7 +161,7 @@ export  class ObjectManager {
      * @param event     事件对象
      */
     public saveEvent(event:NEvent){
-        this.cache.set(`$events.${event.id}.$instance`,event);
+        this.cache.set('$events.' + event.id + '.$instance',event);
     }
 
     /**
@@ -169,7 +169,7 @@ export  class ObjectManager {
      * @param id    事件id
      */
     public removeEvent(id:number){
-        this.cache.remove(`$events.${id}`);
+        this.cache.remove('$events.' + id);
     }
 
     /**
@@ -178,8 +178,8 @@ export  class ObjectManager {
      * @param name      参数名  
      * @param value     参数值
      */
-     public setEventParam(id:number,name:string,value:any){
-        this.cache.set(`$events.${id}.$param.${name}`,value);
+    public setEventParam(id:number,name:string,value:any){
+        this.cache.set('$events.' + id + '.$param.' + name,value);
     }
 
     /**
@@ -189,7 +189,7 @@ export  class ObjectManager {
      * @returns         参数值
      */
     public getEventParam(id:number,name:string){
-        return this.cache.get(`$events.${id}.$params.${name}`);
+        return this.cache.get('$events.' + id + '.$params.' + name);
     }
 
     /**
@@ -198,7 +198,7 @@ export  class ObjectManager {
      * @param name      参数名
      */
     public removeEventParam(id:number,name:string){
-        this.cache.remove(`$events.${id}.$params.${name}`);
+        this.cache.remove('$events.' + id + '.$params.' + name);
     }
 
     /**
@@ -206,7 +206,7 @@ export  class ObjectManager {
      * @param id        事件id
      */
     public clearEventParam(id:number){
-        this.cache.remove(`$events.${id}.$params`);
+        this.cache.remove('$events.' + id + '.$params');
     }
 
     /**
@@ -214,7 +214,7 @@ export  class ObjectManager {
      * @param dom       dom对象
      */
     public saveElement(dom:Element){
-        this.cache.set(`$doms.${dom.key}`,dom);
+        this.cache.set('$doms.' + dom.key,dom);
     }
     /**
      * 获取渲染树虚拟dom
@@ -222,7 +222,7 @@ export  class ObjectManager {
      * @returns         dom对象
      */
     public getElement(key:string):Element{
-        return this.cache.get(`$doms.${key}`);
+        return this.cache.get('$doms.' + key);
     }
 
     /**
@@ -230,25 +230,9 @@ export  class ObjectManager {
      * @param key       虚拟dom key
      */
      public removeElement(key:string){
-        this.cache.remove(`$doms.${key}`);
+        this.cache.remove('$doms.' + key);
     }
 
-    /**
-     * 获取新树虚拟dom
-     * @param key       dom key
-     * @returns         指令对象
-     */
-    // public getNewElement(key:string):Element{
-    //     return this.cache.get(`$doms.${key}`);
-    // }
-
-    /**
-     * 保存新树虚拟dom
-     * @param dom       虚拟dom
-     */
-    // public saveNewElement(dom:Element){
-    //     this.cache.set(`$doms.${dom.key}`,dom);
-    // }
 
     /**
      * 获取key对应的html节点
@@ -256,7 +240,7 @@ export  class ObjectManager {
      * @returns         html element
      */
     public getNode(key: string): Node {
-        return this.cache.get(`$doms.${key}.$el`);
+        return this.cache.get('$doms.' + key + '.$el');
     }
 
     /**
@@ -265,7 +249,7 @@ export  class ObjectManager {
      * @param node      node
      */
     public saveNode(key:string,node:Node){
-        this.cache.set(`$doms.${key}.$el`,node);
+        this.cache.set('$doms.' + key + '.$el',node);
     }
 
     /**
@@ -273,7 +257,7 @@ export  class ObjectManager {
      * @param key   dom key
      */
     public removeSavedNode(key:string){
-        this.cache.remove(`$doms.${key}`);
+        this.cache.remove('$doms.' + key);
     }
 
     /**
@@ -283,8 +267,7 @@ export  class ObjectManager {
      * @param value     参数值
      */
     public setElementParam(key:string,name:string,value:any){
-        this.cache.set(`$doms.${key}.$params.${name}` ,value);
-        console.log(this.cache.get(`$doms.${key}.$params`));
+        this.cache.set('$doms.' + key + '.$params.' + name ,value);
     }
 
     /**
@@ -294,7 +277,7 @@ export  class ObjectManager {
      * @returns         参数值
      */
     public getElementParam(key:string,name:string):any{
-        this.cache.get(`$doms.${key}.$params.${name}`);
+        return this.cache.get('$doms.' + key + '.$params.' + name);
     }
 
     /**
@@ -303,7 +286,7 @@ export  class ObjectManager {
      * @param name      参数名
      */
     public removeElementParam(key:string,name:string){
-        this.cache.remove(`$doms.${key}.$params.${name}`);
+        this.cache.remove('$doms.' + key + '.$params.' + name);
     }
 
     /**
@@ -311,7 +294,7 @@ export  class ObjectManager {
      * @param key   dom key
      */
     public clearElementParams(key:string){
-        this.cache.remove(`$doms.${key}.$params`);
+        this.cache.remove('$doms.' + key + '.$params');
     }
 
     /**

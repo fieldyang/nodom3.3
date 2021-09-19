@@ -1,6 +1,7 @@
 import { Directive } from "./directive";
 import { DirectiveManager } from "./directivemanager";
 import { NEvent } from "./event";
+import { EventManager } from "./eventmanager";
 import { Expression } from "./expression";
 import { Model } from "./model";
 import { Module } from "./module";
@@ -46,7 +47,7 @@ export class Element {
      * 含表达式的属性集合
      * {prop1:value1,...}
      */
-    public exprProps: Map<string,Expression> = new Map();
+    public exprProps: Map<string,number> = new Map();
 
     /**
      * 事件集合,{eventName1:nodomNEvent1,...}
@@ -260,11 +261,12 @@ export class Element {
      * @param module    模块
      */
     public handleDirectives(module: Module) {
-        for (let d of this.directives.values()) {
+        for (let d of this.directives) {
             //model指令已经执行，不再执行
             if(d.type === 'model'){
                 continue;
             }
+
             let dir:Directive = module.objectManager.getDirective(d.id);
             if(dir.expression){
                 dir.value = module.objectManager.getExpression(dir.expression).val(module,this.model);
@@ -302,12 +304,12 @@ export class Element {
       * @param module    模块
       */
     public handleProps(module: Module) {
-        for (let k of Util.getOwnProps(this.exprProps)) {
-            let v = module.objectManager.getExpression(this.exprProps[k]).val(module,this.model);
-            if (k === 'style') {
+        for (let k of this.exprProps) {
+            let v = module.objectManager.getExpression(k[1]).val(module,this.model);
+            if (k[0] === 'style') {
                 this.addStyle(v);
             } else {
-                this.props.set(k,v);
+                this.props.set(k[0],v);
             }
         }
     }
@@ -347,14 +349,15 @@ export class Element {
         if (this.events.size === 0) {
             return;
         }
-        for (let evt of this.events) {
-            if(evt[1]){
-                for (let eid of evt[1]) {
-                    let ev = module.objectManager.getEvent(eid);
-                    ev&&ev.bind(module, this,parentEl);
-                }
-            }
-        }
+        EventManager.bind(module,this);
+        // for (let evt of this.events) {
+        //     if(evt[1]){
+        //         for (let eid of evt[1]) {
+        //             let ev = module.objectManager.getEvent(eid);
+        //             ev&&ev.bind(module, this,parentEl);
+        //         }
+        //     }
+        // }
     }
 
     /**
@@ -585,7 +588,7 @@ export class Element {
      */
     public setProp(propName: string, v: any) {
         if(v instanceof Expression){
-            this.exprProps.set(propName,v);
+            this.exprProps.set(propName,v.id);
             this.isStatic = false;
         } else {
             this.props.set(propName,v);
@@ -645,7 +648,7 @@ export class Element {
         }
         if (!this.tagName) { //文本节点
             if (!dst.tagName) {
-                if ((!this.isStatic || !dst.isStatic) && this.textContent !== dst.textContent) {
+                if (this.textContent !== dst.textContent) {
                     addChange(2,this,null,dst.parent);
                 }
             } else { //节点类型不同
@@ -817,6 +820,7 @@ export class Element {
     public getEvent(eventName:string){
         return this.events.get(eventName);
     }
+
     /**
      * 执行不渲染关联操作
      * 关联操作，包括:
@@ -834,4 +838,31 @@ export class Element {
             }
         }
     }
+
+    /**
+     * 获取html dom
+     * @param module    模块 
+     * @returns         对应的html dom
+     */
+    public getEl(module:Module):Node{
+        return module.objectManager.getNode(this.key);
+    }
+
+    /**
+     * 查找子孙节点
+     * @param key 	element key
+     * @returns		虚拟dom/undefined
+     */
+    public query(key: string) {
+        if (this.key === key) {
+            return this;
+        }
+        for (let i = 0; i < this.children.length; i++) {
+            let dom = this.children[i].query(key);
+            if (dom) {
+                return dom;
+            }
+        }
+    }
+
 }

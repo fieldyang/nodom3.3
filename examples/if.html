@@ -20,8 +20,7 @@
 							<div class='introduce'>如果discount<0.8，显示价格</div>
 							<if cond={{discount < 0.8}}>价格：{{price}}</if>
 							<endif/>
-						</div> 
-						
+						</div>
 						<div class='tip'>完整的if/else指令</div>
 						<div class='code'>
 							<div class='introduce'>如果age<18，显示未成年，否则显示成年</div>
@@ -42,7 +41,7 @@
 							<elseif tag='span' cond={{grade>70&&grade<80}}> 中等 </elseif>
 							<elseif tag='span' cond={{grade>80&&grade<90}}> 良好 </elseif>
 							<else tag='span'> 优秀 </else>
-							<endif></endif>
+							<endif/>
 						</div>
 					</div>
 				`

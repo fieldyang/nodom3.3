@@ -214,12 +214,13 @@ export class Module {
         if (this.state < 3 || !this.getContainer()) {
             return false;
         }
-        
+        console.time('t1');
         //编译
         if(!this.originTree){
             this.compile();
         }
         let root:Element = this.originTree.clone();
+        
         //执行前置方法
         this.doRenderOps(0);
         if (!this.renderTree) {
@@ -291,13 +292,9 @@ export class Module {
             //执行每次渲染后事件
             this.doModuleEvent('onRender');
         }
-        //把old dom 缓存置为doms
-        // this.objectManager.setNewDoms(this.objectManager.getOldDoms());
-        //移除旧dom cache
-        // this.objectManager.remove('$olddoms');
-        //清空新doms
-        // this.objectManager.setNewDoms({});
+        
         //设置已渲染状态
+        console.timeEnd('t1');
         this.state = 4;
         //执行后置方法
         this.doRenderOps(1);

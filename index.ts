@@ -5,6 +5,7 @@ export { DirectiveType } from "./core/directivetype";
 export { Element } from "./core/element";
 export { NError } from "./core/error";
 export { ExternalNEvent, NEvent } from "./core/event";
+export { EventManager } from "./core/eventmanager";
 
 export { Expression } from "./core/expression";
 export { NFactory } from "./core/factory";

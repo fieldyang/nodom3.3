@@ -35,11 +35,9 @@ export  class Directive {
      * @param module    模块  
      * @param type  	类型名
      * @param value 	指令值
-     * @param id        指令id
-     * @param notSort   不排序
      */
-    constructor(module:Module,type:string,value:string|Expression,id?:number) {
-        this.id = id || Util.genId();
+    constructor(module:Module,type:string,value:string|Expression) {
+        this.id = Util.genId();
         this.type = DirectiveManager.getType(type);
         if (Util.isString(value)) {
             this.value = (<string>value).trim();

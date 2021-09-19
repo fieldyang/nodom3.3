@@ -205,7 +205,6 @@ export class Router {
         if(typeof module === 'function'){ 
             module = ModuleFactory.get(module);
         }
-        console.log(module);
         route.module = module;
         return module;
     }

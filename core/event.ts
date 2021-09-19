@@ -28,19 +28,19 @@ export class NEvent {
     /**
      * 事件处理函数名(需要在模块methods中定义)
      */
-    private handler: string | Function;
+    public handler: string | Function;
     /**
      * 代理到父对象
      */
-    private delg: boolean;
+    public delg: boolean;
     /**
      * 禁止冒泡
      */
-    private nopopo: boolean;
+    public nopopo: boolean;
     /**
      * 只执行一次
      */
-    private once: boolean;
+    public once: boolean;
 
     /**
      * 使用 capture
@@ -58,6 +58,11 @@ export class NEvent {
     public dom: Element;
 
     /**
+     * 事件绑定的target
+     */
+    public el:HTMLElement;
+
+    /**
      * 事件监听器
      */
     private handleListener: any;
@@ -72,12 +77,12 @@ export class NEvent {
      * @param eventStr      事件串或事件处理函数,以“:”分割,中间不能有空格,结构为: 方法名[:delg(代理到父对象):nopopo(禁止冒泡):once(只执行一次):capture(useCapture)]
      *                      如果为函数，则替代第三个参数
      * @param handler       事件执行函数，如果方法不在module methods中定义，则可以直接申明，eventStr第一个参数失效，即eventStr可以是":delg:nopopo..."
-     * @param id            事件id
      */
-    constructor(module:Module,eventName: string, eventStr?: string | Function, handler?: Function, id?:number) {
-        this.id = id || Util.genId();
+    constructor(module:Module,eventName: string, eventStr?: string | Function, handler?: Function) {
+        this.id = Util.genId();
         this.name = eventName;
         this.module = module;
+        
         module.objectManager.saveEvent(this);
         //如果事件串不为空，则不需要处理
         if (eventStr) {
@@ -157,20 +162,18 @@ export class NEvent {
      * @param e     事件
      * @param el    html element
      */
-    public fire(e: Event, el?: HTMLElement) {
+    public fire(e: Event) {
         const module: Module = this.module;
-        if (!module.getContainer()) {
-            return;
-        }
-        let dom: Element = this.dom;
+        const dom: Element = this.dom;
         const model = dom.model;
+        const el:HTMLElement = <HTMLElement>this.getEl();
         //如果capture为true，则先执行自有事件，再执行代理事件，否则反之
         if (this.capture) {
-            handleSelf(this, e, model, module, dom, el);
+            handleSelf(this, e, module, dom, el);
             handleDelg(this, e, dom);
         } else {
             if (handleDelg(this, e, dom)) {
-                handleSelf(this, e, model, module, dom, el);
+                handleSelf(this, e, module, dom, el);
             }
         }
         //判断是否清除事件
@@ -178,16 +181,10 @@ export class NEvent {
             this.events.has(this.name) &&
             this.events.get(this.name).length === 0 &&
             this.handler === undefined) {
-            if (!el) {
-                el = this.getEl();
-            }
-
             if (ExternalNEvent.touches[this.name]) {
                 ExternalNEvent.unregist(this, el);
             } else {
-                if (el !== null) {
-                    el.removeEventListener(this.name, this.handleListener);
-                }
+                el.removeEventListener(this.name, this.handleListener);
             }
         }
 
@@ -243,7 +240,7 @@ export class NEvent {
          * @param module    模块
          * @param dom       虚拟dom
          */
-        function handleSelf(eObj: NEvent, e: Event, model: Model, module: Module, dom: Element, el?: HTMLElement) {
+        function handleSelf(eObj: NEvent, e: Event, module: Module, dom: Element, el: HTMLElement) {
             if (typeof eObj.handler === 'string') {
                 eObj.handler = module.getMethod(<string>eObj.handler);
             }
@@ -267,29 +264,38 @@ export class NEvent {
      * @param module    模块
      * @param dom       虚拟dom
      */
-    public bind(module:Module,dom: Element,parentEl?:Node) {
+    public bind(module:Module,dom: Element) {
         this.module = module;
         this.dom = dom;
+        // 对应html dom
+        let el:HTMLElement = this.getEl();
+        //避免重复绑定
+        if(!el || this.el === el){
+            return;
+        }
+
+        let parentEl:HTMLElement = <HTMLElement>module.objectManager.getNode(dom.parent.key);
+
+        this.el = el;
         //清掉参数
         this.clearParam();
         if (this.delg && parentEl) { //代理到父对象
-            this.delegateTo(parentEl);
+            this.delegateTo(el,parentEl);
         } else {
-            this.bindTo();
+            this.bindTo(el);
         }
     }
 
     /**
      * 绑定到el
      */
-    private bindTo() {
-        let el:HTMLElement = this.getEl();
+    private bindTo(el:HTMLElement) {
         //触屏事件
         if (ExternalNEvent.touches[this.name]) {
             ExternalNEvent.regist(this, el);
         } else {
             this.handleListener = (e) => {
-                this.fire(e, el);
+                this.fire(e);
             };
             el.addEventListener(this.name, this.handleListener, this.capture);
         }
@@ -297,21 +303,22 @@ export class NEvent {
     /**
      * 事件代理到父对象
      */
-    private delegateTo(parentEl?:Node) {
+    private delegateTo(el:HTMLElement,parentEl?:HTMLElement) {
         const parent = this.dom.parent;
-        parentEl = parentEl || this.module.objectManager.getNode(this.dom.parent.key) || document.body;
+        parentEl = parentEl || <HTMLElement>this.module.objectManager.getNode(this.dom.parent.key) || document.body;
         // 父事件
         let pEvent:NEvent;
         //父节点如果没有这个事件，则新建，否则直接指向父节点相应事件
         if (!parent.events.has(this.name)) {
             pEvent = new NEvent(this.module,this.name);
-            pEvent.bindTo();
+            pEvent.bindTo(parentEl);
         }else{
             pEvent = this.module.objectManager.getEvent(parent.events.get(this.name)[0]);
         }
         pEvent.addChild(this);
     }
 
+    
     /**
      * 添加子事件
      * @param ev    事件
