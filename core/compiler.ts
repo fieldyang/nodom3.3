@@ -240,7 +240,7 @@ export class Compiler {
                 //不排序
                 ele.addDirective(new Directive(me.module,pName.substr(2), value));
             } else if (pName.startsWith("e-")) { //事件
-                ele.addEvent(new NEvent(me.module,pName.substr(2), value,null));
+                ele.addEvent(new NEvent(me.module,pName.substr(2), value));
             } else { //普通属性
                 ele.setProp(pName, value);
             }

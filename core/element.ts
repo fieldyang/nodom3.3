@@ -808,7 +808,12 @@ export class Element {
         if(!this.events.has(event.name)){
             this.events.set(event.name, [event.id]);
         }else{
-            this.events.get(event.name).push(event.id);
+            let arr = this.events.get(event.name);
+            //已添加的事件，不再添加
+            if(arr.indexOf(event.id) === -1){
+                arr.push(event.id);
+            }
+            console.log(arr);
         }
     }
 

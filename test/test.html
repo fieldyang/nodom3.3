@@ -21,14 +21,15 @@
     <title>Document</title>
 </head>
 <body>
-    <span></span>
+    <div ><span >hello world</span></div>
 </body>
 <script>
-    
-    let s = '<span>text</span>   <span>hallo</span>';
-    let txt = document.createTextNode('');
-    txt.textContent = s;
-    document.querySelector('span').appendChild(txt);
+    document.querySelector('div').addEventListener('click',(e)=>{
+        console.log(e,e.target,'div',e.path);
+    },false);
+    document.querySelector('span').addEventListener('click',(e)=>{
+        console.log(e,e.target,'span',e.path);
+    },true);
     
 
     

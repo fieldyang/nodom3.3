@@ -179,7 +179,7 @@ export  class ObjectManager {
      * @param value     参数值
      */
     public setEventParam(id:number,name:string,value:any){
-        this.cache.set('$events.' + id + '.$param.' + name,value);
+        this.cache.set('$events.' + id + '.$params.' + name,value);
     }
 
     /**

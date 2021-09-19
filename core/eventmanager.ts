@@ -19,68 +19,59 @@ export class EventManager{
             
             //遍历处理代理事件
             evt[1].forEach((eid,ii)=>{
-                const event:NEvent = module.objectManager.getEvent(eid);
-                event.dom = dom;
+                const ev:NEvent = module.objectManager.getEvent(eid);
                 //代理事件
-                if(event.delg){
+                if(ev.delg){
                     //加入父对象
-                    dom.parent.addEvent(event);
-
-                    let cacheKey = '$delg.' + evt[0] + '.' + event.id;
-                    //缓存代理key
-                    let arr = module.objectManager.getElementParam(dom.parent.key,cacheKey);
-                    if(!arr){
-                        arr = [dom.key];
-                        module.objectManager.setElementParam(dom.parent.key,cacheKey);
-                    }else{
-                        arr.push(dom.key);
+                    dom.parent.addEvent(ev);
+                    // 保存代理dom信息
+                    let delgs = ev.getParam('$delgs');
+                    if(!delgs){
+                        delgs = {};
+                        ev.setParam('$delgs',delgs);
                     }
-                    console.log(arr)
+                    delgs[dom.key] = dom;
                     //从本地移除
                     evt[1].splice(ii,1);
                 }
             });
 
+            //避免闭包
             let handler = (e)=>{
                 
                 evt[1].forEach((eid,ii)=>{
-                    const event:NEvent = module.objectManager.getEvent(eid);
-                    
-                    if(typeof event.handler === 'string'){
-                        event.handler = module.getMethod(event.handler);
+                    const ev:NEvent = module.objectManager.getEvent(eid);
+                    if(typeof ev.handler === 'string'){
+                        ev.handler = module.getMethod(ev.handler);
                     }
-                    if(!event.handler){
+                    if(!ev.handler){
                         return;
                     }
-                    let el = dom.getEl(module);
-                    
+
                     //禁止冒泡
-                    if (event.nopopo) {
+                    if (ev.nopopo) {
                         e.stopPropagation();
                     }
-                    
-
-                    let fire = true;
                     //代理事件，需要作用在子节点上
-                    if(event.delg){ // 代理
-                        let arr = event.getParam('$delg');
-                        console.log(event);
-                        let key = e.target.getAttribute('key');
-                        if(arr.indexOf(key) !== -1){
-                            let dom1 = dom.query(key);
-                            if(dom1){
-                                event.handler.apply(dom.model,[dom, module, e]);        
+                    if(ev.delg){ // 代理
+                        let delgs = ev.getParam('$delgs');
+                        console.log(ev.id,delgs);
+                        //向上找节点
+                        for(let p of e.path){
+                            let key = p.getAttribute('key');
+                            if(key && delgs.hasOwnProperty(key)){
+                                let dom1 = delgs[key];
+                                if(dom1){
+                                    ev.handler.apply(dom.model,[dom, module, e]);        
+                                }
+                                break;
                             }
                         }
-                        
-                        let el1 = <HTMLElement>event.dom.getEl(module);
-                        fire = e.target === el1;
-                        console.log(e.target,el1,fire);
                     }else{
-                        event.handler.apply(dom.model,[dom, module, e]);
+                        ev.handler.apply(dom.model,[dom, module, e]);
                         //事件只执行一次，从事件数组删除
-                        if (event.once) {
-                            EventManager.unbind(module,dom,event);
+                        if (ev.once) {
+                            EventManager.unbind(module,dom,ev);
                         }
                     }
                 });
@@ -89,6 +80,9 @@ export class EventManager{
             module.objectManager.setElementParam(dom.key,'$eventhandler.' + evt[0] + '.handler',handler);
             module.objectManager.setElementParam(dom.key,'$eventhandler.' + evt[0] + '.capture',capture);
             el.addEventListener(evt[0],handler,capture);
+
+
+            
         }
     }
 
@@ -96,23 +90,23 @@ export class EventManager{
      * 解绑一个事件
      * @param module    模块     
      * @param dom       dom节点
-     * @param event     事件对象
+     * @param ev     事件对象
      * @returns 
      */
-    public static unbind(module:Module,dom:Element,event:NEvent){
-        let evts = dom.events.get(event.name);
+    public static unbind(module:Module,dom:Element,ev:NEvent){
+        let evts = dom.events.get(ev.name);
         if(!evts){
             return;
         }
         let index;
-        if((index = evts.findIndex(item=>item === event.id) === -1)) return;
+        if((index = evts.findIndex(item=>item === ev.id) === -1)) return;
         //从事件数组移除
         evts.splice(index,1);
         //判断并解绑
         if(evts.length === 0){
-            let cfg = module.objectManager.getElementParam(dom.key,'$eventhandler.' + event.name);
+            let cfg = module.objectManager.getElementParam(dom.key,'$eventhandler.' + ev.name);
             if(cfg.handler){
-                (<HTMLElement>dom.getEl(module)).removeEventListener(event.name,cfg.handler,cfg.capture);
+                (<HTMLElement>dom.getEl(module)).removeEventListener(ev.name,cfg.handler,cfg.capture);
             }
         }
     }

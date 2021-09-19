@@ -25,7 +25,7 @@
 			template(){
 				return `
 				<ul x-show='show' e-click='clickP:capture:once'>
-					<li x-repeat={{edus}} e-click='clickItem:delg'>{{eduName}}</li>
+					<li x-repeat={{edus}} e-click='clickItem:delg'><span>{{eduName}}</span></li>
 				</ul>
 				`
 			}
