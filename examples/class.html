@@ -23,7 +23,7 @@
 
 	<body>
 		<div class="code">
-			<div class="tip">样式：price>100，字体变红色；discount<0.8，字体加粗</div>
+			<div class="tip">样式：price>100，字体变为红色；discount<0.8，字体加粗</div>
 			<ul>
 				<li x-repeat="commodities" x-class="{red:'price>100&&(!rows||rows.length===0)',bold:'discount<0.8'}">
 					{{name}}的价格是{{price}}，折扣是{{discount}}
