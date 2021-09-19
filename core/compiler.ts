@@ -5,7 +5,6 @@ import { NEvent } from "./event";
 import { Expression } from "./expression";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
-import { ASTObj } from "./types";
 
 export class Compiler {
     /**
@@ -28,11 +27,7 @@ export class Compiler {
     */
     public compile(elementStr: string): Element {
         // 这里是把模板串通过正则表达式匹配 生成AST
-        let ast = this.compileTemplateToAst(elementStr);
-        let oe = new Element('div',this.genKey());
-        // 将AST编译成抽象语法树
-        this.compileAST(oe, ast);
-        return oe;
+        return this.compileTemplate(elementStr);
     }
 
     /**
@@ -40,11 +35,13 @@ export class Compiler {
      * @param srcStr    源串
      * @returns         
      */
-    public compileTemplateToAst(srcStr:string):ASTObj{
+    private compileTemplate(srcStr:string):Element{
         const me = this;
         // 清理comment
         let regExp = /\<\!\-\-[\s\S]*?\-\-\>/g;
         srcStr = srcStr.replace(regExp,'');
+        //不可见字符正则式
+        const regSpace = /^[\s\n\r\t\v]+$/;
         // 1 识别标签
         regExp = /(?<!\{\{[^<}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^>{{]*?\}\})/g;
         let st = 0;
@@ -56,11 +53,15 @@ export class Compiler {
         while((r = regExp.exec(srcStr)) !== null){
             tagStack.push(r[0]);
             //处理标签之间的文本
+            let tmp='';
             if(st < r.index-1){
-                textStack.push(srcStr.substring(st,r.index));
-            }else{
-                textStack.push('');
+                tmp = srcStr.substring(st,r.index);
+                //全为不可见字符，则保存空字符串
+                if(regSpace.test(tmp)){ 
+                    tmp = '';
+                }
             }
+            textStack.push(tmp);
             st = regExp.lastIndex;
         }
 
@@ -69,7 +70,7 @@ export class Compiler {
         // 标签对象数组
         let tagObjs = [];
         // 根节点
-        let root:ASTObj;
+        let root:Element;
         tagStack.forEach((tag,ii)=>{
             //开始标签名
             let stg;
@@ -80,20 +81,16 @@ export class Compiler {
                 for(let i=ii;tagNames.length>0;i--){
                     // 结束标签前面的非空文本节点作为孩子
                     if(i>=0 && textStack[i] !== ''){
-                        chds.push({textContent:textStack[i]});
+                        chds.push(this.handleText(textStack[i]));
                         // 文本已使用，置为空
                         textStack[i] = '';
                     }
                     if((stg = tagNames.pop())===etg){
                         break;
                     }
-                    // 标签节点作为孩子
+                    //当前节点及其子节点同时作为孩子节点
                     let tobj = tagObjs.pop();
-                    //把孩子节点改为兄弟节点
-                    for(;tobj.children.length>0;){
-                        let o = tobj.children.pop();
-                        chds.unshift(o);
-                    }
+                    chds = tobj.children.concat(chds);
                     chds.unshift(tobj);
                 }
                 //找到节点
@@ -110,29 +107,30 @@ export class Compiler {
             }else { //标签头
                 //去掉标签前后< >
                 let tmpS = tag.endsWith('\/>')?tag.substring(1,tag.length-2):tag.substring(1,tag.length-1);
-                let obj = this.handleTagAttr(tmpS.trim());
+                //处理标签头，返回dom节点和原始标签名
+                const[dom,tagName] = this.handleTag(tmpS.trim());
+
                 //前一个文本节点存在，则作为前一个节点的孩子
                 if(ii>0 && textStack[ii] !== ''){
-                    tagObjs[tagObjs.length-1].children.push({
-                        textContent:textStack[ii]
-                    });
+                    tagObjs[tagObjs.length-1].children.push(this.handleText(textStack[ii]));
                     textStack[ii] = '';
                 }
                 if(!tag.endsWith('\/>')){ // 非自闭合
                     //标签头入栈
-                    tagNames.push(obj.tagName);
-                    tagObjs.push(obj);
+                    tagNames.push(tagName);
+                    tagObjs.push(dom);
                 }else{ //自闭合，直接作为前一个的孩子节点
                     if(tagObjs.length>0){
-                        tagObjs[tagObjs.length-1].children.push(obj);
+                        tagObjs[tagObjs.length-1].children.push(dom);
                     }
                 }
                 //设置根节点
                 if(!root){
-                    root = obj;
+                    root = dom;
                 }
             }
         });
+        
         if(tagNames.length>0){
             throw '模版定义错误';
         }
@@ -142,15 +140,16 @@ export class Compiler {
     /**
      * 处理标签属性
      * @param tagStr    标签串
-     * @returns 
+     * @returns         [虚拟dom节点,原始标签名]
      */
-    private handleTagAttr(tagStr:string):ASTObj{
+    private handleTag(tagStr:string):any{
         const me = this;
+        let ele:Element;
         //字符串和表达式替换
         let reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|({{[\S\s]*?\}{0,2}\s*}})/g;
-        let tagName:string;
-        let attrs = new Map;
         let pName:string;
+        //标签原始名
+        let tagName:string;
         let startValue:boolean;
         let finded:boolean = false; //是否匹配了有效的reg
         let st = 0;
@@ -173,12 +172,16 @@ export class Compiler {
         if(!finded){
             handle(tagStr);
         }
-
-        return{
-            tagName:tagName,
-            attrs:attrs,
-            children:[]
+        //后置处理
+        this.postHandleNode(ele);
+        //指令排序
+        if(ele.directives && ele.directives.length>1){
+            ele.directives.sort((a, b) => {
+                return a.type.prio - b.type.prio;
+            });
         }
+        
+        return [ele,tagName];
 
         /**
          * 处理串（非字符串和表达式）
@@ -190,6 +193,7 @@ export class Compiler {
             while((r=reg.exec(s))!== null){
                 if(!tagName){
                     tagName = r[0];
+                    ele = new Element(tagName,me.genKey());
                 }else if(!pName){
                     pName = r[0];
                 }else if(startValue){
@@ -228,91 +232,34 @@ export class Compiler {
                     value = me.compileExpression(value)[0];
                 }
             }
-            attrs.set(pName,value);
+            
+            //指令
+            if (pName.startsWith("x-")) {
+                //不排序
+                new Directive(pName.substr(2), value, ele,me.module, true);
+            } else if (pName.startsWith("e-")) { //事件
+                ele.addEvent(new NEvent(pName.substr(2), value,null,me.currentId++));
+            } else { //普通属性
+                ele.setProp(pName, value);
+            }
             pName=undefined;
             startValue=false;
         }
     }
-    /**
-     * 把AST编译成虚拟dom
-     * @param oe 虚拟dom的根容器
-     * @param ast 抽象语法树也就是JSON对象
-     * @returns oe 虚拟dom的根容器
-     */
-    public compileAST(oe: Element, ast: ASTObj): Element {
-        if (!ast) return;
-        ast.tagName?this.handleAstNode(oe, ast,this.module):this.handleAstText(oe, ast);
-        return oe;
-    }
 
     /**
-     * 编译text类型的ast到虚拟dom
-     * @param parent 父虚拟dom节点
-     * @param ast 虚拟dom树
+     * 编译txt为文本节点
+     * @param txt 文本串
      */
-    private handleAstText(parent: Element, astObj: ASTObj) {
-        let text = new Element(null,this.genKey());
-        parent.children.push(text);
-        if(/\{\{[\s\S]+\}\}/.test(astObj.textContent)){
-            text.expressions = <any[]>this.compileExpression(astObj.textContent);
+    private handleText(txt:string) {
+        let ele = new Element(null,this.genKey());
+        if(/\{\{[\s\S]+\}\}/.test(txt)){  //检查是否含有表达式
+            ele.expressions = <any[]>this.compileExpression(txt);
         }else{
-            text.textContent = astObj.textContent;
+            ele.textContent = txt;
         }
+        return ele;
     }
-    /**
-     * 
-     * @param oe 虚拟dom   
-     * @param astObj 
-     */
-    public handleAstNode(parent: Element, astObj: ASTObj,module:Module) {
-        //前置处理
-        this.preHandleNode(astObj);
-        let child = new Element(astObj.tagName,this.genKey());
-        parent.add(child);
-        this.handleAstAttrs(child, astObj.attrs,module, parent);
-        for(let a of astObj.children){
-            this.compileAST(child, a);
-        }
-    }
-    
-    /**
-     * 编译ast 到虚拟dom
-     * @param oe        虚拟dom
-     * @param attrs     需要编译成虚拟dom的attrs
-     * @param parent    父虚拟dom节点
-     */
-    public handleAstAttrs(oe: Element, attrs: Map<string,any>,module:Module, parent: Element) {
-        //指令数组 先处理普通属性在处理指令
-        let directives = [];
-        if (!attrs) { return }
-        for(const attr of attrs){
-            if (attr[0].startsWith("x-")) {
-                //指令
-                let o = {
-                    name:attr[0].substr(2),
-                    value:attr[1]
-                }
-                directives.push(o);
-            } else if (attr[0].startsWith("e-")) {
-                // 事件
-                let e = attr[0].substr(2);
-                oe.addEvent(new NEvent(e, attr[1]));
-            } else {
-                oe.setProp(attr[0], attr[1],attr[1] instanceof Expression);
-            }
-        }
-        //处理属性
-        for (let attr of directives) {
-            new Directive(attr.name, attr.value, oe,module, parent, true);
-        }
-        if (directives.length > 1) {
-            //指令排序
-            oe.directives.sort((a, b) => {
-                return a.type.prio - b.type.prio;
-            });
-        }
-    }
-
     /**
      * 处理表达式串
      * @param exprStr   含表达式的串
@@ -347,18 +294,18 @@ export class Compiler {
     }
 
     /**
-     * 前置处理
+     * 后置处理
      * 包括：模块类元素、自定义元素
-     * @param node  ast node
+     * @param node  虚拟dom节点
      */
-    private preHandleNode(node:ASTObj){
+    private postHandleNode(node:Element){
         // 模块类判断
-        if (ModuleFactory.has(node.tagName)) {
-            node.attrs.set('x-module',node.tagName);
+        if (ModuleFactory.hasClass(node.tagName)) {
+            new Directive('module',node.tagName,node,this.module);
             node.tagName = 'div';
         }else if(DefineElementManager.has(node.tagName)){ //自定义元素
             let clazz = DefineElementManager.get(node.tagName);
-            Reflect.construct(clazz,[node]);
+            Reflect.construct(clazz,[node,this.module]);
         }
     }
 
@@ -367,6 +314,7 @@ export class Compiler {
      * @returns     key
      */
     private genKey():string{
-        return this.module.id + '_' + this.currentId++;
+        // return this.module.id + '_' + this.currentId++;
+        return this.currentId++ + '';
     }
 }
