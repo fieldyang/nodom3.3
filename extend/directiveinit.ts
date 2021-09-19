@@ -204,9 +204,9 @@ export default (function () {
     createDirective(
         'else',
         function(module:Module,dom:Element){
-            const parent = dom.parent;
-            //如果前面的if/elseif值为true或undefined，则隐藏，否则显示
-            dom.dontRender = (module.objectManager.getElementParam(dom.parent.key,'$if')===true);
+            //如果前面的if/elseif值为true，则隐藏，否则显示
+            console.log(module.objectManager.getElementParam(dom.parent.key,'$if'));
+            dom.dontRender = (module.objectManager.getElementParam(dom.parent.key,'$if') === true);
         },
         5
     );
@@ -216,13 +216,16 @@ export default (function () {
      */
     createDirective('elseif', 
         function(module:Module,dom:Element){
-            const parent = dom.parent;
             let v = module.objectManager.getElementParam(dom.parent.key,'$if')
-            if(v === undefined || v === true || !this.value){
+            if(v === true){
                 dom.dontRender = true;
             }else{
-                module.objectManager.setElementParam(dom.parent.key,'$if',true);
-                dom.dontRender = false;
+                if(!this.value){
+                    dom.dontRender = true;
+                }else{
+                    module.objectManager.setElementParam(dom.parent.key,'$if',true);
+                    dom.dontRender = false;
+                }
             }
         },
         5

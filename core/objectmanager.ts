@@ -284,6 +284,7 @@ export  class ObjectManager {
      */
     public setElementParam(key:string,name:string,value:any){
         this.cache.set(`$doms.${key}.$params.${name}` ,value);
+        console.log(this.cache.get(`$doms.${key}.$params`));
     }
 
     /**
@@ -306,11 +307,12 @@ export  class ObjectManager {
     }
 
     /**
-     * 清除新树所有element
+     * 清除element 参数集
+     * @param key   dom key
      */
-    // public clearNewTree(){
-    //     this.cache.remove('$newdoms');
-    // }
+    public clearElementParams(key:string){
+        this.cache.remove(`$doms.${key}.$params`);
+    }
 
     /**
      * 清除指令集
