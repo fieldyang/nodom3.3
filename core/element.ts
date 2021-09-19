@@ -4,7 +4,6 @@ import { Expression } from "./expression";
 import { Model } from "./model";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
-import { ChangedDom } from "./types";
 import { Util } from "./util";
 
 /**
@@ -52,7 +51,7 @@ export class Element {
      * 事件集合,{eventName1:nodomNEvent1,...}
      * 一个事件名，可以绑定多个事件方法对象
      */
-    public events: Map<string, NEvent | NEvent[]> = new Map();
+    public events: Map<string, NEvent[]> = new Map();
 
     /**
      * 表达式+字符串数组，用于textnode
@@ -80,33 +79,12 @@ export class Element {
     public dontRender: boolean = false;
 
     /**
-     * 渲染前（获取model后）执行方法集合,可以是方法名（在module的methods中定义），也可以是函数
-     * 函数的this指向element的model，参数为(element,module)
-     */
-    private beforeRenderOps: any[] = [];
-
-    /**
-     * 渲染后（renderToHtml前）执行方法集合，可以是方法名（在module的methods中定义），也可以是函数
-     * 函数的this指向element的model，参数为(element,module)
-     */
-    private afterRenderOps: any[] = [];
-
-    /**
-     * 临时参数 map
-     */
-    private tmpParamMap: Map<string, any> = new Map();
-
-    /**
      * @param tag   标签名
      * @param key   key
      */
-    constructor(tag?: string,key?:string) {
+    constructor(tag?: string, key?: string) {
         this.tagName = tag; //标签
-        //检查是否为svg
-        if (tag && tag.toLowerCase() === 'svg') {
-            this.setTmpParam('isSvgNode', true);
-        }
-        if(key){
+        if (key) {
             this.key = key;
         }
     }
@@ -126,6 +104,7 @@ export class Element {
             }
             this.parent = parent;
         }
+
         //设置model为模块model
         if (!this.model) {
             this.model = module.model;
@@ -133,10 +112,8 @@ export class Element {
         //先执行model指令
         if (this.hasDirective('model')) {
             let d = this.getDirective('model');
-            d.exec(module, this, this.parent);
+            d.exec();
         }
-        //前置方法集合执行
-        this.doRenderOp(module, 'before');
 
         if (this.tagName) { //element
             if (!this.handleDirectives(module)) {
@@ -149,17 +126,13 @@ export class Element {
         }
 
         //子节点渲染，子模块不渲染
-        // if (!this.hasDirective('module') || ModuleFactory.get(parseInt(this.getProp('moduleId'))).firstRender) {
-            for (let i = 0; i < this.children.length; i++) {
-                let item = this.children[i];
-                if (!item.render(module, this)) {
-                    item.doDontRender(this);
-                    i--;
-                }
+        for (let i = 0; i < this.children.length; i++) {
+            let item = this.children[i];
+            if (!item.render(module, this)) {
+                item.doDontRender(this);
+                i--;
             }
-        // }
-        //后置方法集执行
-        this.doRenderOp(module, 'after');
+        }
         return true;
     }
 
@@ -170,125 +143,63 @@ export class Element {
      *          type 		类型
      *          parent 	父虚拟dom
      */
-    public renderToHtml(module: Module, params: ChangedDom) {
-        let el: HTMLElement;
-        let el1: Node;
-        let type = params.type;
-        let parent = params.parent;
-        //重置dontRender
-        //构建el
-        if (type === 'fresh' || type === 'add' || type === 'text') {
-            if (parent) {
-                el = module.getNode(parent.key);
-            } else {
-                el = module.getContainer();
+    public renderToHtml(module: Module, parentEl: HTMLElement, isRenderChild?: boolean) {
+        let el = module.getNode(this.key);
+        if (el) {   //html dom节点已存在
+            if (this.tagName) {
+                //设置属性
+                Util.getOwnProps(this.props).forEach((k) => {
+                    if (typeof this.props[k] !== 'function') {
+                        (<HTMLElement>el).setAttribute(k, this.props[k]);
+                    }
+                });
+                this.handleAssets((<HTMLElement>el));
+            } else {  //文本节点
+                (<any>el).textContent = this.textContent;
             }
-        } else if (!this.tagName) { //element节点才可以查找
-            el = module.getNode(this.key);
-            this.handleAssets(el);
-        }
-
-        if (!el) {
-            return;
-        }
-
-        switch (type) {
-            case 'fresh': //首次渲染
-                if (this.tagName) {
-                    el1 = newEl(this, null, el);
-                    //首次渲染需要生成子孙节点
-                    genSub(el1, this);
-                } else {
-                    el1 = newText(<string>this.textContent);
-                }
-                el.appendChild(el1);
-
-                break;
-            case 'text': //文本更改
-                if (!parent || !parent.children) {
-                    break;
-                }
-                let indexArr = [];
-                parent.children.forEach(v => [
-                    indexArr.push(v.key)
-                ])
-                let ind = indexArr.indexOf(this.key);
-                if (ind !== -1) {
-                    el.childNodes[ind].textContent = <string>this.textContent;
-                }
-                break;
-            case 'upd': //修改属性
-                //删除属性
-                if (params.removeProps) {
-                    params.removeProps.forEach((p) => {
-                        el.removeAttribute(p);
-                    });
-                }
-                //修改属性
-                if (params.changeProps) {
-                    params.changeProps.forEach((p) => {
-                        el.setAttribute(p['k'], p['v']);
-                    });
-                }
-
-                //修改直接绑定el上的属性（不是attribute）
-                if (params.changeAssets) {
-                    params.changeAssets.forEach((p) => {
-                        el[p['k']] = p['v'];
-                    });
-                }
-                break;
-            case 'rep': //替换节点
-                el1 = newEl(this, parent);
-                Util.replaceNode(el, el1);
-                break;
-            case 'add': //添加
-                if (this.tagName) {
-                    el1 = newEl(this, parent, el);
-                    genSub(el1, this);
-                } else {
-                    el1 = newText(this.textContent);
-                }
-                if (params.index === el.childNodes.length) {
-                    el.appendChild(el1);
-                } else {
-                    el.insertBefore(el1, el.childNodes[params.index]);
-                }
+        } else {
+            if (this.tagName) {
+                el = newEl(this, parentEl);
+            } else {
+                el = newText(this);
+            }
+            if (isRenderChild) {
+                genSub(el, this);
+            }
+            return el;
         }
 
         /**
          * 新建element节点
          * @param vdom 		虚拟dom
-         * @param parent 	父虚拟dom
-         * @param parentEl 	父element
+         * @param pEl 	    父element
          * @returns 		新的html element
          */
-        function newEl(vdom: Element, parent: Element, parentEl?: Node): any {
+        function newEl(vdom: Element, pEl: Node): any {
             //创建element
-            let el;
-            if (vdom.getTmpParam('isSvgNode')) {  //如果为svg node，则创建svg element
-                el = Util.newSvgEl(vdom.tagName);
-            } else {
-                el = Util.newEl(vdom.tagName);
-            }
+            let el = Util.newEl(vdom.tagName);
             //设置属性
             Util.getOwnProps(vdom.props).forEach((k) => {
-                if (typeof vdom.props[k] != 'function')
+                if (typeof vdom.props[k] != 'function') {
                     el.setAttribute(k, vdom.props[k]);
+                }
             });
-
+            //如果存储node，则不需要key
             el.setAttribute('key', vdom.key);
-            vdom.handleEvents(module, el, parent, parentEl);
+            //把el引用与key关系存放到cache中
+            module.setNode(vdom.key, el);
             vdom.handleAssets(el);
+            vdom.handleEvents(module, pEl);
             return el;
         }
 
         /**
          * 新建文本节点
          */
-        function newText(text: string | HTMLElement | DocumentFragment): any {
-            return document.createTextNode(<string>text || '');
-
+        function newText(dom: Element): any {
+            let node = document.createTextNode(<string>dom.textContent || '');
+            module.setNode(dom.key, node);
+            return node;
         }
 
         /**
@@ -301,10 +212,10 @@ export class Element {
                 vNode.children.forEach((item) => {
                     let el1;
                     if (item.tagName) {
-                        el1 = newEl(item, vNode, pEl);
+                        el1 = newEl(item, pEl);
                         genSub(el1, item);
                     } else {
-                        el1 = newText(item.textContent);
+                        el1 = newText(item);
                     }
                     pEl.appendChild(el1);
                 });
@@ -318,7 +229,7 @@ export class Element {
     public clone(): Element {
         let dst: Element = new Element();
         //不直接拷贝的属性
-        let notCopyProps: string[] = ['parent', 'directives','children', 'model'];
+        let notCopyProps: string[] = ['parent', 'directives', 'children', 'model'];
         //简单属性
         Util.getOwnProps(this).forEach((p) => {
             if (notCopyProps.includes(p)) {
@@ -333,7 +244,7 @@ export class Element {
 
         //指令复制
         for (let d of this.directives) {
-            dst.directives.push(d);
+            d.clone(dst);
         }
         //孩子节点
         for (let c of this.children) {
@@ -355,7 +266,7 @@ export class Element {
             if (d.expression) {
                 d.value = d.expression.val(this.model);
             }
-            d.exec(module, this, this.parent);
+            d.exec();
             //指令可能改变render标志
             if (this.dontRender) {
                 return false;
@@ -384,7 +295,6 @@ export class Element {
                 value += v;
             }
         });
-        
         return value;
     }
 
@@ -443,17 +353,15 @@ export class Element {
      * @param parent    父virtual dom
      * @param parentEl  父html element
      */
-    public handleEvents(module: Module, el: Node, parent: Element, parentEl?: Node) {
+    public handleEvents(module: Module, parentEl?: Node) {
         if (this.events.size === 0) {
             return;
         }
-        for (let evt of this.events.values()) {
-            if (Util.isArray(evt)) {
-                for (let evo of <NEvent[]>evt) {
-                    evo.bind(module, this, <HTMLElement>el, parent, parentEl);
+        for (let evt of this.events) {
+            if (evt[1]) {
+                for (let ev of evt[1]) {
+                    ev.bind(module, this, parentEl);
                 }
-            } else {
-                (<NEvent>evt).bind(module, this, <HTMLElement>el, parent, parentEl);
             }
         }
     }
@@ -693,14 +601,18 @@ export class Element {
         if (!styleStr) {
             return;
         } else {
-            let sa: string[] = styleStr.trim().split(/;\s+/);
+            let sa: string[] = styleStr.trim().split(/;\s*/);
             let index;
             if ((index = sa.indexOf(styStr)) !== -1) {
                 sa.splice(index, 1);
                 styleStr = sa.join(';');
             }
         }
-        this.props['style'] = styleStr;
+        if (styleStr == '') {
+            delete this.props['style'];
+        } else {
+            this.props['style'] = styleStr;
+        }
     }
     /**
      * 是否拥有属性
@@ -714,22 +626,17 @@ export class Element {
      * 获取属性值
      * @param propName  属性名
      */
-    public getProp(propName: string, isExpr?: boolean) {
-        if (isExpr) {
-            return this.exprProps[propName];
-        } else {
-            return this.props[propName];
-        }
+    public getProp(propName: string) {
+        return this.props[propName] || this.exprProps[propName]
     }
 
     /**
      * 设置属性值
      * @param propName  属性名
      * @param v         属性值
-     * @param isExpr    是否是表达式属性 默认false  
      */
-    public setProp(propName: string, v: any, isExpr?: boolean) {
-        if (isExpr) {
+    public setProp(propName: string, v: any) {
+        if (v instanceof Expression) {
             this.exprProps[propName] = v;
         } else {
             this.props[propName] = v;
@@ -803,111 +710,124 @@ export class Element {
 
     /**
      * 比较节点
-     * @param dst 	待比较节点
+     * @param dst 	    待比较节点
+     * @param updArr    改变的节点数组
+     * @param daArr     增删的节点数组
      * @returns	{type:类型 text/rep/add/upd,node:节点,parent:父节点, 
      * 			changeProps:改变属性,[{k:prop1,v:value1},...],removeProps:删除属性,[prop1,prop2,...],changeAssets:改变的asset}
      */
-    public compare(dst: Element, retArr: Array<ChangedDom>, deleteMap?: Map<string, Array<any>>, parentNode?: Element) {
+    public compare(dst: Element, changeArr: Array<any>) {
         if (!dst) {
             return;
         }
-        let re: ChangedDom = new ChangedDom();
-        let change: boolean = false;
         if (!this.tagName) { //文本节点
             if (!dst.tagName) {
                 if (this.textContent !== dst.textContent) {
-                    re.type = 'text';
-                    change = true;
+                    addChange(2, this, dst);
                 }
             } else { //节点类型不同
-                addDelKey(this, 'rep');
+                addChange(5, this, dst);
             }
         } else { //element节点
             if (this.tagName !== dst.tagName) { //节点类型不同
-                addDelKey(this, 'rep');
+                addChange(5, this, dst);
             } else { //节点类型相同，可能属性不同
-                //检查属性，如果不同则放到changeProps
-                re.changeProps = [];
-                re.changeAssets = [];
-                //待删除属性
-                re.removeProps = [];
+                let change = false;
 
-                //删除或增加的属性
-                Util.getOwnProps(dst.props).forEach((k) => {
-                    if (!this.hasProp(k)) {
-                        re.removeProps.push(k);
-                    }
-                });
-
-                //修改后的属性
-                Util.getOwnProps(this.props).forEach((k) => {
-                    let v1 = dst.props[k];
-                    if (this.props[k] !== v1) {
-                        re.changeProps.push({ k: k, v: this.props[k] });
-                    }
-                });
-                //修改后的asset
-                for (let kv of this.assets) {
-                    let v1 = dst.assets.get(kv[0]);
-                    if (kv[0] !== v1) {
-                        re.changeAssets.push({ k: kv[0], v: kv[1] });
-                    }
-                }
-
-                // props assets 改变或删除，加入渲染
-                if (re.changeProps.length > 0 || re.changeAssets.length > 0 || re.removeProps.length > 0) {
+                //属性比较
+                const [srcProps, dstProps] = [Util.getOwnProps(this.props), Util.getOwnProps(dst.props)];
+                if (srcProps.length !== dstProps.length) {
                     change = true;
-                    re.type = 'upd';
+                } else {
+                    for (let k of srcProps) {
+                        if (this.props[k] !== dst.props[k]) {
+                            change = true;
+                            break;
+                        }
+                    }
+                }
+
+                //asset比较
+                if (this.assets.size !== dst.assets.size) {
+                    change = true;
+                } else {
+                    for (let v of this.assets) {
+                        if (v[1] !== dst.assets.get(v[0])) {
+                            change = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (change) {
+                    addChange(2, this, null, dst);
                 }
             }
         }
-        //改变则加入数据
-        if (change) {
-            re.node = this;
-            if (parentNode) {
-                re.parent = parentNode;
-            }
-            retArr.push(re);
-        }
+
 
         //子节点处理
         if (!this.children || this.children.length === 0) {
             // 旧节点的子节点全部删除
             if (dst.children && dst.children.length > 0) {
-                dst.children.forEach(item => addDelKey(item));
+                dst.children.forEach(item => addChange(3, item, null, dst));
             }
         } else {
             //全部新加节点
             if (!dst.children || dst.children.length === 0) {
-                this.children.forEach(item => retArr.push(new ChangedDom(item, 'add', this)));
+                this.children.forEach(item => addChange(1, item, null, dst));
             } else { //都有子节点
+                //存储比较后需要add的key
+                let addObj = {};
                 //子节点对比策略
                 let [oldStartIdx, oldStartNode, oldEndIdx, oldEndNode] = [0, dst.children[0], dst.children.length - 1, dst.children[dst.children.length - 1]];
                 let [newStartIdx, newStartNode, newEndIdx, newEndNode] = [0, this.children[0], this.children.length - 1, this.children[this.children.length - 1]];
                 while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
                     if (sameKey(oldStartNode, newStartNode)) {
-                        newStartNode.compare(oldStartNode, retArr, deleteMap, this);
+                        newStartNode.compare(oldStartNode, changeArr);
                         newStartNode = this.children[++newStartIdx];
                         oldStartNode = dst.children[++oldStartIdx];
                     } else if (sameKey(oldEndNode, newEndNode)) {
-                        newEndNode.compare(oldEndNode, retArr, deleteMap, this);
+                        newEndNode.compare(oldEndNode, changeArr);
                         newEndNode = this.children[--newEndIdx];
                         oldEndNode = dst.children[--oldEndIdx];
                     } else if (sameKey(newStartNode, oldEndNode)) {
-                        //新前久后
-                        newStartNode.compare(oldEndNode, retArr, deleteMap, this);
+                        //新前旧后
+                        newStartNode.compare(oldEndNode, changeArr);
+                        //跳过插入点会提前移动的节点
+                        while (addObj.hasOwnProperty(oldStartNode.key)) {
+                            changeArr[addObj[oldStartNode.key]][0] = 4;
+                            delete addObj[oldStartNode.key];
+                            oldStartNode = dst.children[++oldStartIdx];
+                        }
                         //接在待操作老节点前面
-                        addDelKey(oldEndNode, 'insert', [oldStartNode.key])
+                        addChange(4, oldEndNode, oldStartNode, dst)
                         newStartNode = this.children[++newStartIdx];
                         oldEndNode = dst.children[--oldEndIdx];
                     } else if (sameKey(newEndNode, oldStartNode)) {
-                        newEndNode.compare(oldStartNode, retArr, deleteMap, this);
-                        //接在老节点后面 
-                        addDelKey(oldStartNode, 'insert', ['|' + oldEndNode.key])
+                        newEndNode.compare(oldStartNode, changeArr);
+                        //跳过插入点会提前移动的节点
+                        while (addObj.hasOwnProperty(oldEndNode.key)) {
+                            changeArr[addObj[oldEndNode.key]][0] = 4;
+                            delete addObj[oldEndNode.key];
+                            oldEndNode = dst.children[--oldEndIdx];
+                        }
+                        //接在 oldEndIdx 之后，但是再下一个节点可能移动位置，所以记录oldEndIdx节点
+                        addChange(4, oldStartNode, oldEndNode, dst, 1);
                         newEndNode = this.children[--newEndIdx];
                         oldStartNode = dst.children[++oldStartIdx];
                     } else {
-                        addDelKey(newStartNode, 'add', [oldStartNode.key]);
+                        //跳过插入点会提前移动的节点
+                        if (addObj.hasOwnProperty(oldStartNode.key)) {
+                            while (addObj.hasOwnProperty(oldStartNode.key)) {
+                                changeArr[addObj[oldStartNode.key]][0] = 4;
+                                delete addObj[oldStartNode.key];
+                                oldStartNode = dst.children[++oldStartIdx];
+                            }
+                            continue;//继续diff，暂不add
+                        }
+                        //加入到addObj
+                        addObj[newStartNode.key] = addChange(1, newStartNode, oldStartNode, dst) - 1;
                         newStartNode = this.children[++newStartIdx];
                     }
                 }
@@ -916,39 +836,45 @@ export class Element {
                     if (oldStartIdx > oldEndIdx) {
                         //没有老节点
                         for (let i = newStartIdx; i <= newEndIdx; i++) {
-                            retArr.push(new ChangedDom(this.children[i], 'add', this, i))
+                            // 添加到dst.children[i]前面
+                            addChange(1, this.children[i], i, dst);
                         }
                     } else {
-                        //有老节点
+                        //有老节点，需要删除
                         for (let i = oldStartIdx; i <= oldEndIdx; i++) {
-                            addDelKey(dst.children[i], 'del');
+                            let ch = dst.children[i];
+                            //如果要删除的节点在addArr中，则表示move，否则表示删除
+                            if (!addObj.hasOwnProperty(ch.key)) {
+                                addChange(3, ch, null, dst);
+                            } else {
+                                changeArr[addObj[ch.key]][0] = 4;
+                            }
                         }
                     }
                 }
             }
         }
-        function sameKey(newElement, oldElement) {
-            return newElement.key === oldElement.key;
+
+        /**
+         * 是否有相同key
+         * @param src   源节点
+         * @param dst   目标节点
+         * @returns     相同key为true，否则为false
+         */
+        function sameKey(src: Element, dst: Element): boolean {
+            return src.key === dst.key;
         }
-        //添加刪除替換的key
-        function addDelKey(element: Element, type?: string, insert?: Array<any>) {
-            let pKey:string = element.parent.key;
-            if (!deleteMap.has(pKey)) {
-                deleteMap.set(pKey, new Array());
-            }
-            //添加节点或者更改节点顺序
-            if (insert != undefined) {
-                deleteMap.get(pKey).push(type === 'add' ? [element.key, insert[0], 'add'] : [element.key, insert[0]]);
-            } else {
-                let ans;
-                //老节点的删除不能依据index
-                if (type == 'del') {
-                    ans = [element.key];
-                } else {
-                    ans = type == 'rep' ? element.parent.children.indexOf(element) + '|' + element.key : element.parent.children.indexOf(element);
-                }
-                deleteMap.get(pKey).push(ans);
-            }
+
+        /**
+         * 添加刪除替換
+        * @param type       类型 add 1, upd 2,del 3,move 4 ,rep 5
+        * @param dom        虚拟节点    
+        * @param dom1       相对节点
+        * @param parent     父节点
+        * @param extra      move时 0:相对节点前，1:相对节点后
+        */
+        function addChange(type: number, dom: Element, dom1?: Element | number, parent?: Element, loc?: number) {
+            return changeArr.push([type, dom, dom1, parent, loc]);
         }
     }
 
@@ -960,16 +886,13 @@ export class Element {
         //如果已经存在，则改为event数组，即同名event可以多个执行方法
         if (this.events.has(event.name)) {
             let ev = this.events.get(event.name);
-            let evs: NEvent[];
-            if (Util.isArray(ev)) {
-                evs = <NEvent[]>ev;
-            } else {
-                evs = [<NEvent>ev];
+            //相同事件不添加
+            if (ev.find(item => item.equal(event))) {
+                return;
             }
-            evs.push(event);
-            this.events.set(event.name, evs);
+            ev.push(event);
         } else {
-            this.events.set(event.name, event);
+            this.events.set(event.name, [event]);
         }
     }
 
@@ -1000,69 +923,39 @@ export class Element {
     }
 
     /**
-     * 设置临时参数
-     * @param key       参数名
-     * @param value     参数值
-     */
-    setTmpParam(key: string, value: any) {
-        this.tmpParamMap.set(key, value);
-    }
-
-    /**
-     * 获取临时参数
-     * @param key       参数名
-     * @returns         参数值
-     */
-    getTmpParam(key: string): any {
-        return this.tmpParamMap.get(key);
-    }
-
-    /**
-     * 删除临时参数
-     * @param key       参数名
-     */
-    removeTmpParam(key: string) {
-        this.tmpParamMap.delete(key);
-    }
-
-
-    /**
-     * 是否有临时参数
-     * @param key       参数名
-     */
-    hasTmpParam(key: string) {
-        return this.tmpParamMap.has(key);
-    }
-
-    /**
-     * 添加渲染附加操作
-     * @param method    方法名 
-     * @param type      类型 before,after
-     */
-    addRenderOp(method: any, type: string) {
-        if (type === 'before') {
-            this.beforeRenderOps.push(method);
-        } else {
-            this.afterRenderOps.push(method);
-        }
-    }
-
-    /**
-     * 执行渲染附加操作
+     * 保存cache，dom相关cache放在模块cache的 $doms 下
      * @param module    模块
-     * @param type      类型 before,after
+     * @param name      属性名
+     * @param value     属性值
      */
-    doRenderOp(module: Module, type: string) {
-        // 否则执行注册在element上的前置渲染方法
-        let arr = type === 'before' ? this.beforeRenderOps : this.afterRenderOps;
-        for (let m of arr) {
-            //可能是字符串
-            if (typeof m === 'string') {
-                m = module.getMethod(m);
-            }
-            if (m) {
-                m.apply(this.model, [this, module]);
-            }
-        }
+    saveCache(module: Module, name: string, value: any) {
+        module.saveCache(`$doms.${this.key}.${name}`, value);
+    }
+
+    /**
+     * 读cache内容
+     * @param module    模块 
+     * @param name      属性名
+     * @returns         属性值
+     */
+    readCache(module: Module, name: string): any {
+        return module.readCache(`$doms.${this.key}.${name}`);
+    }
+
+    /**
+     * 移除cache值
+     * @param module    模块 
+     * @param name      属性名
+     */
+    removeCache(module: Module, name: string) {
+        module.removeCache(`$doms.${this.key}.${name}`);
+    }
+
+    /**
+     * 清除dom cache
+     * @param module    模块
+     */
+    clearCache(module: Module) {
+        module.removeCache(`$doms.${this.key}`);
     }
 }

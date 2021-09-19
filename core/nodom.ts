@@ -1,7 +1,6 @@
 import { DirectiveManager } from "./directivemanager";
 import { NError } from "./error";
 import { NodomMessage_en } from "./locales/msg_en";
-import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
 import { Renderer } from "./renderer";
 import { Route } from "./route";
@@ -16,7 +15,6 @@ import { Util } from "./util";
  * nodom提示消息
  */
 export var NodomMessage;
-export let store:Object|undefined ;
 /**
  * 新建一个App
  * @param clazz     模块类
@@ -54,12 +52,8 @@ export function createRoute(config: IRouteCfg | Array<IRouteCfg>): Route {
  * @param init      初始化方法
  * @param handler   渲染时方法
  */
-export function createDirective(name: string, priority: number, init: Function, handler: Function) {
-    return DirectiveManager.addType(name,
-        priority,
-        init,
-        handler
-    );
+export function createDirective(name: string, handler: Function,priority?: number) {
+    return DirectiveManager.addType(name,handler,priority);
 }
 
 /**

@@ -4,7 +4,6 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<title>animation</title>
-		<script type="text/javascript" src="../dist/nodom.js"></script>
 		<link rel="stylesheet" href="./css/nodomui.css" />
 
 		<style>
@@ -20,74 +19,55 @@
 				width: 100px;
 				height: 100px;
 				margin: 20px;
-				display: block;
 			}
 
 			.container {
-				position: absolute;
-				left: 100px;
-				top: 100px;
+				border: 1px solid black;
 				display: flex;
 				flex-direction: row;
 			}
 
-			.nd-animation-focuse-enter {
-				transition: width 2s cubic-bezier(0.075, 0.82, 0.165, 1);
+			.shape-enter-active,
+			.shape-leave-active {
+				transition: all 1s ease;
 			}
-			.nd-animation-focuse-enter:hover {
+			.shape-enter-from,
+			.shape-leave-to {
+				height: 100px;
+				width: 100px;
+			}
+			.shape-enter-to,
+			.shape-leave-from {
+				height: 200px;
 				width: 200px;
+			}
+
+			.myfade-enter-active {
+				animation-name: myfade;
+				animation-duration: 1s;
+			}
+			.myfade-leave-active {
+				animation-name: myfade;
+				animation-duration: 1s;
+				animation-direction: reverse;
+			}
+			@keyframes myfade {
+				0% {
+					opacity: 0;
+				}
+				100% {
+					opacity: 1;
+				}
 			}
 		</style>
 	</head>
 
 	<body>
-		<div>
-			<button x-show="show < 3">show</button>
-			<button e-click="show2">show2</button>
-			<div class="container">
-				<div class="div1" x-animation="fade|show">
-					<label>动画1</label>
-				</div>
-				<div class="div2" x-animation="animation|show2">
-					<label>动画2</label>
-				</div>
-			</div>
-		</div>
+		<div></div>
 	</body>
-	<script>
-		nodom.app({
-			module: {
-				el: "div",
-				data: {
-					show: 1,
-					animation1: {
-						name: "focuse",
-					},
-					animation: {
-						name: {
-							enter: "fade",
-							leave: "scale-fixtop",
-						},
-						duration: {
-							enter: "0.3s",
-							leave: "0.3s",
-						},
-						delay: {
-							enter: "1s",
-							leave: "1s",
-						},
-					},
-				},
-				methods: {
-					show(dom, module) {
-						this.show++;
-						// this.show = !this.show;
-					},
-					show2(dom, module) {
-						this.show2 = !this.show2;
-					},
-				},
-			},
-		});
+	<script type="module">
+		import { nodom } from "../dist/nodom.js";
+		import { MAnimation } from "./modules/manimation.js";
+		nodom(MAnimation, "div");
 	</script>
 </html>

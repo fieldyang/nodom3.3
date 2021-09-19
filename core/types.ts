@@ -1,74 +1,5 @@
-import { Element } from "./element";
 import { Module } from "./module";
 import { Route } from "./route";
-
-/**
- * module class obj
- */
-export interface IMdlClassObj {
-    /**
-     * class名或class
-     */
-    class?: any;
-
-    /**
-     * 模块名
-     */
-    name?: string;
-
-    /**
-     * class文件路径
-     */
-    path?: string;
-
-    /**
-     * 模型
-     */
-    model?: any;
-    /**
-     * 实例
-     */
-    instance?: Module;
-    /**
-     * 数据
-     */
-    data?: string | Object;
-    /**
-     * 是否单例
-     */
-    singleton?: boolean;
-    /**
-     * 懒加载
-     */
-    lazy?: boolean;
-
-    /**
-     * 是否正在初始化
-     */
-    initing?: boolean;
-
-    /**
-     * 等待模块初始化的id列表
-     */
-    waitList?: number[];
-    className?: string;
-}
-
-export interface ExpressionMd {
-    obj: any,
-    key: any,
-    moduleName: any,
-}
-export interface RegisterOps {
-    /**
-     * 模块名
-     */
-    name: string,
-    /**
-     * 模块类名
-     */
-    class: string
-}
 
 /**
  * 应用初始化配置类型
@@ -121,78 +52,11 @@ export interface ITipMessage {
     WeekDays: Object;
 }
 
-/**
- * 改变的dom类型
- * 用于比较需要修改渲染的节点属性存储
- */
-export class ChangedDom {
-    /**
-     * 改变方式
-     */
-    public type: string;
-    /**
-     * 改变的节点
-     */
-    public node: Element;
-    /**
-     * 父虚拟dom
-     */
-    public parent: Element;
-    /**
-     * 在父节点中的位置
-     */
-    public index: number;
-
-    /**
-     * 改变的属性数组
-     * [{prop1:value1},...]
-     */
-    public changeProps: Array<Object>;
-
-    /**
-     * 改变的asset
-     */
-    public changeAssets: Array<Object>;
-
-    /**
-     * 移除的属性名数组
-     */
-    public removeProps: Array<string>;
-
-    /**
-     * 
-     * @param node      虚拟节点
-     * @param type      修改类型  add(添加节点),del(删除节点),upd(更新节点),rep(替换节点),text(修改文本内容)
-     * @param parent    父虚拟dom
-     * @param index     在父节点中的位置索引
-     */
-    constructor(node?: Element, type?: string, parent?: Element, index?: number) {
-        this.node = node;
-        this.type = type;
-        this.parent = parent;
-        this.index = index;
-    }
-}
 
 /**
- * 自定义标签配置
+ *  AST类
  */
-export interface IDefineElementCfg {
-    /**
-     * 初始化方法
-     */
-    init: Function,
-
-    /**
-     * 渲染时方法
-     */
-    handler?: Function
-}
-
-/**
- *  AST对象约束
- */
-export interface ASTObj extends Object {
+export interface IASTObj {
     /**
      * 节点类型，如果是原生节点，如div则是div，如果是文本节点则是text。如果是注释则为comment
      */
@@ -210,7 +74,7 @@ export interface ASTObj extends Object {
     /**
      * 子节点数组，与textContent互斥
      */
-    children?: Array<ASTObj>;
+    children?: Array<IASTObj>;
 
     /**
      * 表达式数组

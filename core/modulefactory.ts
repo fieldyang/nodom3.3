@@ -10,9 +10,9 @@ export class ModuleFactory {
     private static modules: Map<number, Module> = new Map();
 
     /**
-     * 模块类集合 {className:instance}
+     * 模块类集合 {className:class}
      */
-    public static classes: Map<string, Module> = new Map();
+    public static classes: Map<string, any> = new Map();
 
     /**
      * 主模块
@@ -20,26 +20,22 @@ export class ModuleFactory {
     private static mainModule: Module;
     /**
      * 添加模块到工厂
-     * @param id    模块id
-     * @param item  模块存储对象
+     * @param item  模块对象
      */
-    public static add(item: Module) {
-        //第一个为主模块
+    public static add(item:Module) {
+        // //第一个为主模块
         if(this.modules.size === 0){
             this.mainModule = item;
         }
         this.modules.set(item.id, item);
 
-        //加入模块类map
-        if(!this.classes.has(item.constructor.name)){
-            this.classes.set(item.constructor.name,item);
-        }
+        //添加模块类
+        this.addClass(item.constructor);
     }
 
     /**
      * 获得模块
      * @param name  类、类名或实例id
-     * @param props 传递给子模块的外部属性(用于产生模版)
      */
     public static get(name:any): Module {
         if(typeof name === 'number'){
@@ -54,8 +50,19 @@ export class ModuleFactory {
      * @param clazzName     模块类名
      * @returns     true/false
      */
-    public static has(clazzName:string):boolean{
+    public static hasClass(clazzName:string):boolean{
         return this.classes.has(clazzName);
+    }
+
+    /**
+     * 添加模块类
+     * @param clazz     模块类
+     */
+    public static addClass(clazz:any){
+        if(this.classes.has(clazz.name)){
+            return;
+        }
+        this.classes.set(clazz.name,clazz);
     }
 
     /**
@@ -65,24 +72,21 @@ export class ModuleFactory {
      */
     private static getInstance(clazz:any): Module {
         let className = (typeof clazz === 'string')?clazz:clazz.name;
+        let cls;
         // 初始化模块
         if(!this.classes.has(className) && typeof clazz === 'function'){
-            Reflect.construct(clazz,[]);
-        }
-        let src = this.classes.get(className);
-        if(!src){
-            return;
+            cls = clazz;
+        }else{
+            cls = this.classes.get(className);
         }
         
-        //未初始化
-        if(src.state === 0){
-            src.init();
-            return src;
-        }else{
-            let m: Module = Reflect.construct(src.constructor, []);
-            m.init();
-            return m;
+        if(!cls){
+            return;
         }
+
+        let m:Module = Reflect.construct(cls, []);
+        m.init();
+        return m;
     }
     /**
      * 从工厂移除模块

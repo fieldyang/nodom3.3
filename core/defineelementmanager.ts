@@ -1,4 +1,4 @@
-import { IDefineElementCfg } from "./types";
+import { DefineElement } from "./defineelement";
 
 /**
  * 自定义元素管理器
@@ -7,7 +7,7 @@ export class DefineElementManager {
     /**
      * 自定义element
      */
-    private static elements: Map<string, IDefineElementCfg> = new Map();
+    private static elements: Map<string, DefineElement> = new Map();
     /**
      * 添加自定义元素类
      * @param clazz  自定义元素类或类数组

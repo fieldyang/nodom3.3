@@ -86,6 +86,7 @@ export class Router {
         if (this.waitList.length === 0) {
             return;
         }
+        
         let path:string = this.waitList.shift();
         this.start(path).then(()=>{
             //继续加载
@@ -106,10 +107,7 @@ export class Router {
         }else{
             parentModule = await this.getModule(diff[0]);
         }
-        //父模块不存在，不继续处理
-        if(!parentModule){
-            return;
-        }
+        
         //onleave事件，从末往前执行
         for (let i = diff[1].length - 1; i >= 0; i--) {
             const r = diff[1][i];
@@ -129,13 +127,12 @@ export class Router {
             //module置为不激活
             module.unactive();
         }
-        
         if (diff[2].length === 0) { //路由相同，参数不同
             let route:Route = diff[0];
             if (route !== null) {
                 let module:Module = await this.getModule(route);
                 // 模块处理
-                this.dependHandle(module,route,parentModule);
+                this.dependHandle(module,route,diff[3]?.module);
             }
         } else { //路由不同
             //加载模块
@@ -208,6 +205,7 @@ export class Router {
         if(typeof module === 'function'){ 
             module = ModuleFactory.get(module);
         }
+        console.log(module);
         route.module = module;
         return module;
     }
@@ -215,7 +213,7 @@ export class Router {
      * 比较两个路径对应的路由链
      * @param path1 	第一个路径
      * @param path2 	第二个路径
-     * @returns 		数组 [父路由，第一个需要销毁的路由数组，第二个需要增加的路由数组]
+     * @returns 		数组 [父路由或不同参数的路由，第一个需要销毁的路由数组，第二个需要增加的路由数组，不同参数路由的父路由]
      */
     private static compare(path1:string, path2:string):Array<any> {
         // 获取路由id数组
@@ -229,7 +227,7 @@ export class Router {
         if (path2) {
             arr2 = this.getRouteList(path2);
         }
-        
+
         let len = 0;
         if (arr1 !== null) {
             len = arr1.length;
@@ -252,6 +250,7 @@ export class Router {
             if (arr1[i].id === arr2[i].id) {
                 //比较参数
                 if (JSON.stringify(arr1[i].data) !== JSON.stringify(arr2[i].data)) {
+                    i++;
                     break;
                 }
             } else {
@@ -269,19 +268,27 @@ export class Router {
             retArr2 = arr2.slice(i);
         }
         
-        //上一级路由和上二级路由
+        //上一级路由或参数不同的当前路由
         let p1:Route = null;
-        
-        if(arr1 && i>0){
+        //上二级路由或参数不同路由的上一级路由
+        let p2:Route = null;
+        if(arr2 && i>0){
             // 可能存在空路由，需要向前遍历
             for (let j=i-1;j>=0; j--) {
-                if (arr1[j].module) {
-                     p1 = arr1[j];
-                    break;
+                if(!p1){
+                    if (arr2[j].module) {
+                        p1 = arr2[j];
+                        continue;
+                    }
+                }else if(!p2){
+                    if (arr2[j].module) {
+                        p2 = arr2[j];
+                        break;
+                    }
                 }
             }
         }
-        return [p1, retArr1, retArr2];
+        return [p1, retArr1, retArr2,p2];
     }
 
     /**
@@ -321,16 +328,17 @@ export class Router {
         if (!Util.isEmpty(route.data)) {
             o['data'] = route.data;
         }
-        
         module.model['$route'] = o;
-        if(pm.state === 4){  //被依赖模块处于渲染后状态
-            module.setContainer(pm.getNode(this.routerKeyMap.get(pm.id)));
-            this.setDomActive(pm,route.fullPath);
-        }else{ //被依赖模块不处于被渲染后状态
-            pm.addRenderOps(function(m,p){
-                module.setContainer(m.getNode(Router.routerKeyMap.get(m.id)));
-                me.setDomActive(m,p);
-            },1,[pm,route.fullPath],true);
+        if(pm){
+            if(pm.state === 4){  //被依赖模块处于渲染后状态
+                module.setContainer(<HTMLElement>pm.getNode(this.routerKeyMap.get(pm.id)));
+                this.setDomActive(pm,route.fullPath);
+            }else{ //被依赖模块不处于被渲染后状态
+                pm.addRenderOps(function(m,p){
+                    module.setContainer(m.getNode(Router.routerKeyMap.get(m.id)));
+                    me.setDomActive(m,p);
+                },1,[pm,route.fullPath],true);
+            }
         }
     }
 
