@@ -1,11 +1,10 @@
 import { Directive } from "../core/directive";
 import { Element } from "../core/element";
 import { NEvent } from "../core/event";
-import { Expression } from "../core/expression";
 import { Model } from "../core/model";
 import { Module } from "../core/module";
 import { ModuleFactory } from "../core/modulefactory";
-import { createDirective, createRoute } from "../core/nodom";
+import { createDirective} from "../core/nodom";
 import { Router } from "../core/router";
 import { Util } from "../core/util";
 
@@ -27,20 +26,14 @@ export default (function () {
         'module',
         function(module:Module,dom:Element){
             let m: Module;
-            let props = {};
-            Object.getOwnPropertyNames(dom.props).forEach(p => {
-                props[p] = dom.props[p];
-            });
-            Object.getOwnPropertyNames(dom.exprProps).forEach(p => {
-                props[p] = dom.exprProps[p].val(dom.model);
-            });
             //存在moduleId，表示已经渲染过，不渲染
             let mid = this.getParam(module,dom,'moduleId');
             if (mid) {
                 m = ModuleFactory.get(mid);
                 if(!dom.hasProp('once')){
+                    dom.handleProps(module);
                     //设置props，如果改变了props，启动渲染
-                    m.setProps(props,true);    
+                    m.setProps(dom.props);    
                 }
             } else {
                 m = ModuleFactory.get(this.value);
@@ -48,9 +41,6 @@ export default (function () {
                     return;
                 }
                 
-                // 后面不再执行表达式属性
-                delete dom.exprProps;
-
                 //保留modelId
                 this.setParam(module,dom,'moduleId',m.id);
                 //添加到父模块
@@ -60,7 +50,8 @@ export default (function () {
                 //添加到渲染器
                 m.active();
                 //设置props，如果改变了props，启动渲染
-                m.setProps(props,true);
+                dom.handleProps(module);
+                m.setProps(dom.props);
             }
         },
         8
@@ -103,7 +94,6 @@ export default (function () {
                 let node = dom.clone();
                 //设置modelId
                 node.model = rows[i];
-                console.log(rows[i].key);
                 //设置key
                 if (rows[i].$key) {
                     setKey(node, key, rows[i].$key);
@@ -198,7 +188,7 @@ export default (function () {
      */
     createDirective('if',
         function(module:Module,dom:Element){
-            module.objectManager.setElementParam(dom.parent.key,'$if',this.value);
+            dom.parent.setParam(module,'$if',this.value);
             dom.dontRender = !this.value;
         },
         5
@@ -212,7 +202,7 @@ export default (function () {
         'else',
         function(module:Module,dom:Element){
             //如果前面的if/elseif值为true，则隐藏，否则显示
-            dom.dontRender = (module.objectManager.getElementParam(dom.parent.key,'$if') === true);
+            dom.dontRender = (dom.parent.getParam(module,'$if') === true);
         },
         5
     );
@@ -222,14 +212,14 @@ export default (function () {
      */
     createDirective('elseif', 
         function(module:Module,dom:Element){
-            let v = module.objectManager.getElementParam(dom.parent.key,'$if');
+            let v = dom.parent.getParam(module,'$if');
             if(v === true){
                 dom.dontRender = true;
             }else{
                 if(!this.value){
                     dom.dontRender = true;
                 }else{
-                    module.objectManager.setElementParam(dom.parent.key,'$if',true);
+                    dom.parent.setParam(module,'$if',true);
                     dom.dontRender = false;
                 }
             }
@@ -243,7 +233,7 @@ export default (function () {
      createDirective(
          'endif', 
         function(module:Module,dom:Element){
-            module.objectManager.removeElementParam(dom.parent.key,'$if');
+            dom.parent.removeParam(module,'$if');
         },
         5
     );
@@ -266,13 +256,9 @@ export default (function () {
      */
     createDirective('data',
         function(module:Module,dom:Element){
-            if (typeof this.value !== 'object') {
+            if (typeof this.value !== 'object' || !dom.hasDirective('module')){
                 return;
             }
-            if(!dom.hasDirective('module')){
-                return;
-            }
-            
             let mdlDir:Directive = dom.getDirective(module,'module');
             let mid = mdlDir.getParam(module,dom,'moduleId');
             if(!mid){
@@ -419,33 +405,22 @@ export default (function () {
             if (dom.tagName.toLowerCase() === 'a') {
                 dom.setProp('href','javascript:void(0)');
             }
-            let ac;
-            if (dom.hasProp('active')) {
-                ac = dom.getProp('active');
-                //active 转expression
-                dom.setProp('active',new Expression(module,ac));
-                //保存activeName
-                //TODO 删除
-                this.setParam(module,dom,'activeName',ac);
-            }
             dom.setProp('path', this.value);
-            
-            // 设置激活字段
-            if (ac) {
-                Router.addActiveField(module, this.value, dom.model, ac);
-            }
-
-            //延迟激活（指令执行后才执行属性处理，延迟才能获取active prop的值）
-            setTimeout(()=>{
-                // 路由路径以当前路径开始
-                if (dom.getProp('active') === true && this.value.startsWith(Router.currentPath)) {
+            //有激活属性
+            if (dom.hasProp('active')) {
+                let acName = dom.getProp('active');
+                dom.delProp('active');
+                //active 转expression
+                Router.addActiveField(module, this.value, dom.model, acName);
+                if(this.value.startsWith(Router.currentPath) && dom.model[acName]){
                     Router.go(this.value);
                 }
-            }, 0);
-            //尚未加载事件
-            if(!this.getParam(module,dom,'inited')){
-                //添加click事件
-                let evt:NEvent = new NEvent(module,'click',
+            }
+            
+            //添加click事件,避免重复创建事件对象，创建后缓存
+            let event:NEvent = module.objectManager.get('$routeClickEvent');
+            if(!event){
+                event = new NEvent(module,'click',
                     (dom, module, e) => {
                         let path = dom.getProp('path');
                         if (!path) {
@@ -458,10 +433,9 @@ export default (function () {
                         Router.go(path);
                     }
                 );
-                dom.addEvent(evt);
-                //设置route事件标志
-                this.setParam(module,dom,'inited',true);
+                module.objectManager.set('$routeClickEvent',event);
             }
+            dom.addEvent(event);
         }
     );
 
@@ -479,51 +453,29 @@ export default (function () {
      * 插头指令
      * 用于模块中，可实现同名替换
      */
-    createDirective('swap',
+    createDirective('slot',
         function(module:Module,dom:Element){
             const parent = dom.parent;
             this.value = this.value || 'default';
             let pd:Directive = parent.getDirective(module,'module');
-            if(pd){ //父模块替代dom，替换子模块中的plug
+            //父dom有module指令，表示为替代节点，替换子模块中的对应的slot节点；否则为子模块定义slot节点
+            if(pd){ 
                 if(module.children.length===0){
                     return;
                 }
-                let m = ModuleFactory.get(module.children[module.children.length-1]);
+                let m = ModuleFactory.get(pd.getParam(module,parent,'moduleId'));
                 if(m){
-                    // 加入等待替换map
-                    add(m,this.value,dom);
+                    //缓存当前替换节点
+                    m.objectManager.set('$slots.' + this.value,dom);
                 }
                 //设置不渲染
                 dom.dontRender = true;
-            }else{ // 原模版plug指令
-                // 如果父dom带module指令，则表示为替换，不加入plug map
-                replace(module,this.value,dom);
-            }
-
-            /**
-             * 添加到待替换的 map
-             * @param name      替代器 name
-             * @param dom       替代dom
-             */
-            function add(module:Module,name:string,dom:Element){
-                if(!module.swapMap){
-                    module.swapMap = new Map();
+            }else{ //源slot节点
+                //获取替换节点进行替换
+                let rdom = module.objectManager.get('$slots.' + this.value);
+                if(rdom){
+                    dom.children = rdom.children;
                 }
-                module.swapMap.set(name,dom);
-            }
-
-            /**
-             * 替换dom树中swap
-             * @param name     替代器名 
-             * @param dom       被替代的dom
-             */
-            function replace(module:Module,name:string,dom:Element){
-                if(!module.swapMap || !module.swapMap.has(name)){
-                    return;
-                }
-                let rdom = module.swapMap.get(name);
-                //替换源swap节点的子节点
-                dom.children = rdom.children;
             }
         },
         5

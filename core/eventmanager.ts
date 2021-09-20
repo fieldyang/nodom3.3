@@ -11,6 +11,12 @@ export class EventManager{
      * @param dom 
      */
     public static bind(module:Module,dom:Element){
+        //判断并设置事件绑定标志
+        if(dom.getParam(module,'$eventDispatched')){
+            return;
+        }
+        dom.setParam(module,'$eventDispatched',true);
+
         let el = module.objectManager.getNode(dom.key);
         for (let evt of dom.events) {
             if(evt[1].length === 0) return;
@@ -26,29 +32,33 @@ export class EventManager{
                     //加入父对象
                     dom.parent.addEvent(ev);
                     // 保存代理dom信息
-                    let delgs = ev.getParam('$delgs');
+                    let delgs = ev.getParam(dom.parent,'$delgs');
                     if(!delgs){
                         delgs = {};
-                        ev.setParam('$delgs',delgs);
+                        ev.setParam(dom.parent,'$delgs',delgs);
                     }
                     delgs[dom.key] = dom;
                     //从本地移除
                     evt[1].splice(ii--,1);
-                    let pkey = dom.parent.key;
+                    const parent = dom.parent;
                     //如果父无此事件，则需要绑定到父事件
-                    let eh = module.objectManager.getElementParam(pkey,'$eventhandler.' + evt[0]);
+                    let eh = parent.getParam(module,'$eventhandler.' + evt[0]);
                     if(!eh){
                         // 保存handler
-                        module.objectManager.setElementParam(pkey,'$eventhandler.' + evt[0] + '.handler',handler);
-                        module.objectManager.setElementParam(pkey,'$eventhandler.' + evt[0] + '.capture',ev.capture);
-                        module.objectManager.getNode(pkey).addEventListener(evt[0],handler,ev.capture);
+                        parent.setParam(module,'$eventhandler.' + evt[0],{
+                            handler:handler,
+                            capture:ev.capture
+                        });
+                        module.objectManager.getNode(parent.key).addEventListener(evt[0],handler,ev.capture);
                     }
                 }
             }
 
             // 保存handler
-            module.objectManager.setElementParam(dom.key,'$eventhandler.' + evt[0] + '.handler',handler);
-            module.objectManager.setElementParam(dom.key,'$eventhandler.' + evt[0] + '.capture',capture);
+            dom.setParam(module,'$eventhandler.' + evt[0],{
+                handler:handler,
+                capture:capture
+            });
             el.addEventListener(evt[0],handler,capture);
         }
 
@@ -86,7 +96,7 @@ export class EventManager{
                 }
                 //代理事件，需要作用在子节点上
                 if(ev.delg){ // 代理
-                    let delgs = ev.getParam('$delgs');
+                    let delgs = ev.getParam(dom,'$delgs');
                     //向上找节点
                     for(let i=0;i<e.path.length&&e.path[i] !== el;i++){
                         let el1 = e.path[i];
@@ -129,7 +139,7 @@ export class EventManager{
         let evts;
         if(ev.delg){
             evts = dom.parent.events.get(ev.name);
-            let delgs = ev.getParam('$delgs');
+            let delgs = ev.getParam(dom.parent,'$delgs');
             delete delgs[dom.key];
             //如果代理不为空，则不删除事件
             if(Object.keys(delgs).length > 0){
@@ -141,14 +151,13 @@ export class EventManager{
         if(!evts){
             return;
         }
-        console.log('unbind');
         let index;
         if((index = evts.findIndex(item=>item === ev.id)) === -1) return;
         //从事件数组移除
         evts.splice(index,1);
         //判断并解绑
         if(evts.length === 0){
-            let cfg = module.objectManager.getElementParam(dom.key,'$eventhandler.' + ev.name);
+            let cfg = dom.getParam(module,'$eventhandler.' + ev.name);
             if(cfg.handler){
                 (<HTMLElement>dom.getEl(module)).removeEventListener(ev.name,cfg.handler,cfg.capture);
             }

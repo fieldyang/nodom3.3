@@ -93,7 +93,7 @@ export  class ObjectManager {
      * @param value     参数值
      */
     public setDirectiveParam(id:number,key:string,name:string,value:any){
-        this.cache.set('$directives.' + id + '.$params.' + key + '.' + name,value);
+        this.cache.set('$doms.' + key + '$directives.' + id + '.$params.' + name,value);
     }
 
     /**
@@ -104,7 +104,7 @@ export  class ObjectManager {
      * @returns         参数值
      */
     public getDirectiveParam(id:number,key:string,name:string){
-        return this.cache.get('$directives.' + id + '.$params.' + key + '.'  + name);
+        return this.cache.get('$doms.' + key + '$directives.' + id + '.$params.' + name);
     }
 
     /**
@@ -114,15 +114,16 @@ export  class ObjectManager {
      * @param name      参数名
      */
     public removeDirectiveParam(id:number,key:string,name:string){
-        this.cache.remove('$directives.' + id + '.$params.' + key + '.' + name);
+        this.cache.remove('$doms.' + key + '$directives.' + id + '.$params.' + name);
     }
 
     /**
      * 清空指令参数
      * @param id        指令id
+     * @param key       dom key
      */
-    public clearDirectiveParam(id:number){
-        this.cache.remove('$directives.' + id + '.$params');
+    public clearDirectiveParam(id:number,key:string){
+        this.cache.remove('$doms.' + key + '$directives.' + id + '.$params.' + name);
     }
 
     /**
@@ -130,7 +131,7 @@ export  class ObjectManager {
      * @param id        表达式id
      * @returns         表达式对象
      */
-     public getExpression(id:number):Expression{
+    public getExpression(id:number):Expression{
         return this.cache.get('$expressions.' + id);
     }
 
@@ -178,38 +179,42 @@ export  class ObjectManager {
     /**
      * 设置事件参数
      * @param id        事件id
+     * @param key       dom key
      * @param name      参数名  
      * @param value     参数值
      */
-    public setEventParam(id:number,name:string,value:any){
-        this.cache.set('$events.' + id + '.$params.' + name,value);
+    public setEventParam(id:number,key:String,name:string,value:any){
+        this.cache.set('$doms.' + key + '$events.' + id + '.$params.' + name,value);
     }
 
     /**
      * 获取事件参数值
      * @param id        事件id
+     * @param key       dom key 
      * @param name      参数名
      * @returns         参数值
      */
-    public getEventParam(id:number,name:string){
-        return this.cache.get('$events.' + id + '.$params.' + name);
+    public getEventParam(id:number,key:string,name:string){
+        return this.cache.get('$doms.' + key + '$events.' + id + '.$params.' + name);
     }
 
     /**
      * 移除事件参数
      * @param id        事件id
+     * @param key       dom key
      * @param name      参数名
      */
-    public removeEventParam(id:number,name:string){
-        this.cache.remove('$events.' + id + '.$params.' + name);
+    public removeEventParam(id:number,key:string,name:string){
+        this.cache.remove('$doms.' + key + '$events.' + id + '.$params.' + name);
     }
 
     /**
      * 清空事件参数
      * @param id        事件id
+     * @param key       dom key 
      */
-    public clearEventParam(id:number){
-        this.cache.remove('$events.' + id + '.$params');
+    public clearEventParam(id:number,key:string){
+        this.cache.remove('$doms.' + key + '$events.' + id + '.$params');
     }
 
     /**

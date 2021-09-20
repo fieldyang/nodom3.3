@@ -24,11 +24,14 @@
     <div><span >hello world</span></div>
 </body>
 <script>
-    let event = new MouseEvent('tap');
-    document.querySelector('div').addEventListener('tap',(e)=>{
-        console.log(e,e.target,'div',e.path,e.currentTarget);
-        console.log(this);
-    });
+    // let event = new MouseEvent('tap');
+    // document.querySelector('div').addEventListener('tap',(e)=>{
+    //     console.log(e,e.target,'div',e.path,e.currentTarget);
+    //     console.log(this);
+    // });
+
+    let txt = document.createTextNode('abcd<b>abcd</b>');
+    document.querySelector('div').appendChild(txt);
     // document.querySelector('span').addEventListener('click',(e)=>{
     //     console.log(e,e.target,'span',e.path);
     // });

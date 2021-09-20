@@ -38,7 +38,9 @@ class FOR extends DefineElement{
     }
 }
 
-
+/**
+ * IF 元素
+ */
 class IF extends DefineElement{
     constructor(node: Element,module:Module){
         super(node,module);
@@ -58,7 +60,9 @@ class ELSE extends DefineElement{
         node.addDirective(new Directive(module,'else',null));
     }
 }
-
+/**
+ * ELSEIF 元素
+ */
 class ELSEIF extends DefineElement{
     constructor(node: Element,module:Module){
         super(node,module);
@@ -71,7 +75,9 @@ class ELSEIF extends DefineElement{
         node.addDirective(new Directive(module,'elseif',cond));
     }
 }
-
+/**
+ * ENDIF 元素
+ */
 class ENDIF extends DefineElement{
     constructor(node: Element,module:Module){
         super(node,module);
@@ -79,18 +85,17 @@ class ENDIF extends DefineElement{
     }
 }
 
-
 /**
  * 替代器
  */
-class SWAP extends DefineElement{
+class SLOT extends DefineElement{
     constructor(node: Element,module:Module){
         super(node,module);
         //条件
         let cond = node.getProp('name') || 'default';
         node.delProp('name');
-        node.addDirective(new Directive(module,'swap',cond));
+        node.addDirective(new Directive(module,'slot',cond));
     }
 }
 
-DefineElementManager.add([MODULE,FOR,IF,ELSE,ELSEIF,ENDIF,SWAP]);
+DefineElementManager.add([MODULE,FOR,IF,ELSE,ELSEIF,ENDIF,SLOT]);

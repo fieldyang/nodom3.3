@@ -117,11 +117,6 @@ export class Module {
     public objectManager:ObjectManager;
 
     /**
-     * 交换器  {交换器名(默认default):要替代的dom}
-     */
-    public swapMap:Map<string,Element>;
-    
-    /**
      * 构造器
      */
     constructor() {
@@ -543,9 +538,8 @@ export class Module {
     /**
      * 设置props
      * @param props     属性值
-     * @param render    是否触发渲染，如果为true，则props改变后执行render
      */
-    public setProps(props:any,render?:boolean){
+    public setProps(props:any){
         //为提升性能，只进行浅度比较
         //如果相同且属性值不含对象，则返回
         let change:boolean = !Util.compare(this.props,props);
@@ -562,9 +556,7 @@ export class Module {
         if(change){
             this.props = props;
             this.compile();
-            if(render){
-                this.active();
-            }
+            this.active();
         }
     }
 

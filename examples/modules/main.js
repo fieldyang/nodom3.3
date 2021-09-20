@@ -8,18 +8,21 @@ export class ModuleMain extends Module{
                 <div>y is {{y}}</div>
                 <div>x.y is {{x.y}}</div>
                 <h2>默认plug</h2>
+                <p>第一个子模块</p>
                 <ModuleA x-data={{getData()}} xxx='111'>
-                    <swap name='s1'>
+                    <slot>
                         <h3 style='color:blue'> hello change plug 1</h3>    
-                    </swap>
-                    <swap name='s2'>替换的第二个swap  {{name}}</swap>
+                    </slot>
+                    <slot name='s2'>替换的第二个slot  {{name}}</slot>
                 </ModuleA>
-                <hr>
+                <hr/>
+                <p>第二个子模块</p>
                 <h2>替换plug</h2>
-                <ModuleA x-data={{{n:'name',x1:'x.y',x2:['y',true]}}} xxx='222' once>
-                    <swap name='s1'>
+                <ModuleA x-data={{{n:'name',x1:'x.y',x2:['y',true]}}} xxx='222'>
+                    <slot>
                         <h3 style='color:red'> hello change plug 2</h3>    
-                    </swap>
+                    </slot>
+                    
                 </ModuleA>
            </div>
         `

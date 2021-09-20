@@ -111,7 +111,6 @@ export class Element {
             }
             this.parent = parent;
         }
-        
         //设置model为模块model
         if (!this.model) {
             this.model = module.model;
@@ -127,7 +126,10 @@ export class Element {
                     this.doDontRender(module,parent);
                     return false;
                 }
-                this.handleProps(module);
+                //模块指令已经执行了属性计算，此处不再计算
+                if(!this.hasDirective('module')){
+                    this.handleProps(module);
+                }
             } else{ //textContent
                 this.handleText(module);
             }
@@ -266,7 +268,6 @@ export class Element {
             if(d.type === 'model'){
                 continue;
             }
-
             let dir:Directive = module.objectManager.getDirective(d.id);
             if(dir.expression){
                 dir.value = module.objectManager.getExpression(dir.expression).val(module,this.model);
@@ -286,11 +287,15 @@ export class Element {
      * @param module    模块
      */
     public handleExpression(exprArr: Array<Expression | string>, module: Module) {
-        let model: Model = this.model;
         let value = '';
         exprArr.forEach((v) => {
             if (typeof v === 'number') { //处理表达式
-                let v1 = module.objectManager.getExpression(v).val(module,this.model);
+                let expr = module.objectManager.getExpression(v);
+                if(!expr){
+                    console.log(v);
+                    return;
+                }
+                let v1 = expr.val(module,this.model);
                 value += v1 !== undefined ? v1 : '';
             } else {
                 value += v;
@@ -416,11 +421,11 @@ export class Element {
 
     /**
      * 是否有某个类型的指令
-     * @param directiveType 	指令类型名
-     * @returns true/false
+     * @param typeName 	    指令类型名
+     * @returns             true/false
      */
-    public hasDirective(directiveType:string): boolean {
-        return this.directives.findIndex(item => item.name === directiveType) !== -1;
+    public hasDirective(typeName:string): boolean {
+        return this.directives.findIndex(item => item.type === typeName) !== -1;
     }
 
     /**
@@ -565,20 +570,23 @@ export class Element {
         }
         this.props.set('style',styleStr);
     }
+
     /**
      * 是否拥有属性
      * @param propName  属性名
+     * @param isExpr    是否只检查表达式属性
      */
-    public hasProp(propName: string) {
-        return this.props.has(propName) || this.exprProps.has(propName);
+    public hasProp(propName: string,isExpr?:boolean) {
+        return isExpr?this.exprProps.has(propName):(this.props.has(propName) || this.exprProps.has(propName));
     }
 
     /**
      * 获取属性值
      * @param propName  属性名
+     * @param isExpr    是否只获取表达式属性
      */
-    public getProp(propName: string) {
-        return this.props.get(propName) || this.exprProps.get(propName)
+    public getProp(propName: string,isExpr?:boolean) {
+        return isExpr?this.exprProps.get(propName):(this.props.get(propName) || this.exprProps.get(propName));
     }
 
     /**
@@ -802,16 +810,24 @@ export class Element {
 
     /**
      * 添加事件
-     * @param event         事件对象
+     * @param event     事件对象或事件id
+     * @param name      事件名，第一个参数为event对象时无效
      */
-    public addEvent(event: NEvent) {
-        if(!this.events.has(event.name)){
-            this.events.set(event.name, [event.id]);
+    public addEvent(event: NEvent|number,name?:string) {
+        let eid;
+        if(event instanceof NEvent){
+            eid = event.id;
+            name = event.name;
         }else{
-            let arr = this.events.get(event.name);
+            eid = event;
+        }
+        if(!this.events.has(name)){
+            this.events.set(name, [eid]);
+        }else{
+            let arr = this.events.get(name);
             //已添加的事件，不再添加
-            if(arr.indexOf(event.id) === -1){
-                arr.push(event.id);
+            if(arr.indexOf(eid) === -1){
+                arr.push(eid);
             }
         }
     }
@@ -869,4 +885,32 @@ export class Element {
         }
     }
 
+    /**
+     * 设置cache参数
+     * @param module    模块
+     * @param name      参数名
+     * @param value     参数值
+     */
+    public setParam(module:Module,name:string,value:any){
+        module.objectManager.setElementParam(this.key,name,value);
+    }
+
+    /**
+     * 获取参数值
+     * @param module    模块 
+     * @param name      参数名
+     * @returns         参数值
+     */
+    public getParam(module:Module,name:string){
+        return module.objectManager.getElementParam(this.key,name);
+    }
+
+    /**
+     * 移除参数
+     * @param module    模块
+     * @param name      参数名
+     */
+    public removeParam(module:Module,name:string){
+        module.objectManager.removeElementParam(this.key,name);
+    }
 }

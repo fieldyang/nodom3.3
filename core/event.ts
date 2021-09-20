@@ -142,30 +142,38 @@ export class NEvent {
 
     /**
      * 设置附加参数值
-     * @param key       参数名
+     * @param dom       虚拟dom
+     * @param name       参数名
      * @param value     参数值
      */
-    public setParam(key: string, value: any) {
-        this.module.objectManager.setEventParam(this.id,key,value);
+    public setParam(dom:Element,name: string, value: any) {
+        this.module.objectManager.setEventParam(this.id,dom.key,name,value);
     }
 
     /**
      * 获取附加参数值
-     * @param key   参数名
+     * @param dom   虚拟dom
+     * @param name  参数名
      * @returns     参数值
      */
-    public getParam(key: string) {
-        return this.module.objectManager.getEventParam(this.id,key);
+    public getParam(dom:Element,name: string) {
+        return this.module.objectManager.getEventParam(this.id,dom.key,name);
     }
 
-    public removeParam(key:string){
-        return this.module.objectManager.removeEventParam(this.id,key);
+    /**
+     * 移除参数
+     * @param dom   虚拟dom
+     * @param name   参数名
+     */
+    public removeParam(dom:Element,name: string) {
+        return this.module.objectManager.removeEventParam(this.id,dom.key,name);
     }
     /**
-     * 清cache
+     * 清参数cache
+     * @param dom   虚拟dom
      */
-    public clearParam(){
-        this.module.objectManager.clearEventParam(this.id);
+    public clearParam(dom:Element){
+        this.module.objectManager.clearEventParam(this.id,dom.key);
     }
     /**
      * 获取事件对象target

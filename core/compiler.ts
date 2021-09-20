@@ -1,5 +1,6 @@
 import { DefineElementManager } from "./defineelementmanager";
 import { Directive } from "./directive";
+import { DirectiveManager } from "./directivemanager";
 import { Element } from "./element";
 import { NEvent } from "./event";
 import { Expression } from "./expression";
@@ -175,12 +176,7 @@ export class Compiler {
         }
         //后置处理
         this.postHandleNode(ele);
-        //指令排序
-        if(ele.directives && ele.directives.length>1){
-            ele.directives.sort((a, b) => {
-                return a.type.prio - b.type.prio;
-            });
-        }
+        ele.sortDirective();
         
         return [ele,tagName];
 
