@@ -813,7 +813,6 @@ export class Element {
             if(arr.indexOf(event.id) === -1){
                 arr.push(event.id);
             }
-            console.log(arr);
         }
     }
 

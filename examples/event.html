@@ -24,9 +24,12 @@
 		class Module1 extends Module{
 			template(){
 				return `
-				<ul x-show='show' e-click='clickP:capture:once'>
-					<li x-repeat={{edus}} e-click='clickItem:delg'><span>{{eduName}}</span></li>
-				</ul>
+				<div>
+					<div>hello</div>
+					<ul x-show='show' e-click='clickP:delg' >
+						<li x-repeat={{edus}} e-click='clickItem:capture' e-mousewheel='clickItem:delg:once'><span>{{eduName}}</span></li>
+					</ul>
+				</div>
 				`
 			}
 			data = {
@@ -44,6 +47,9 @@
 			methods = {
 				clickP:function(d,module){
 					console.log('parent',this);
+				},
+				outP:function(dom,module){
+					console.log('out parent',this);
 				},
 				clickItem:function(d,m,module){
 					console.log('child',this);

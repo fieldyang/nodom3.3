@@ -35,7 +35,7 @@ export default (function () {
                 props[p] = dom.exprProps[p].val(dom.model);
             });
             //存在moduleId，表示已经渲染过，不渲染
-            let mid = this.getParam('moduleId');
+            let mid = this.getParam(module,dom,'moduleId');
             if (mid) {
                 m = ModuleFactory.get(mid);
                 if(!dom.hasProp('once')){
@@ -52,7 +52,7 @@ export default (function () {
                 delete dom.exprProps;
 
                 //保留modelId
-                this.setParam(module,'moduleId',m.id);
+                this.setParam(module,dom,'moduleId',m.id);
                 //添加到父模块
                 module.addChild(m.id);
                 //设置容器
@@ -103,6 +103,7 @@ export default (function () {
                 let node = dom.clone();
                 //设置modelId
                 node.model = rows[i];
+                console.log(rows[i].key);
                 //设置key
                 if (rows[i].$key) {
                     setKey(node, key, rows[i].$key);
@@ -126,6 +127,12 @@ export default (function () {
             // 不渲染该节点
             dom.dontRender = true;
 
+            /**
+             * 修改repeat下的dom key
+             * @param node  节点
+             * @param key   原始key
+             * @param id    数据id
+             */
             function setKey(node, key, id) {
                 node.key = key + '_' + id;
                 node.children.forEach((dom) => {
@@ -205,7 +212,6 @@ export default (function () {
         'else',
         function(module:Module,dom:Element){
             //如果前面的if/elseif值为true，则隐藏，否则显示
-            console.log(module.objectManager.getElementParam(dom.parent.key,'$if'));
             dom.dontRender = (module.objectManager.getElementParam(dom.parent.key,'$if') === true);
         },
         5
@@ -217,7 +223,6 @@ export default (function () {
     createDirective('elseif', 
         function(module:Module,dom:Element){
             let v = module.objectManager.getElementParam(dom.parent.key,'$if');
-            console.log('elseif',v);
             if(v === true){
                 dom.dontRender = true;
             }else{
@@ -238,7 +243,6 @@ export default (function () {
      createDirective(
          'endif', 
         function(module:Module,dom:Element){
-            console.log('endif');
             module.objectManager.removeElementParam(dom.parent.key,'$if');
         },
         5
@@ -270,7 +274,7 @@ export default (function () {
             }
             
             let mdlDir:Directive = dom.getDirective(module,'module');
-            let mid = mdlDir.getParam(module,'moduleId');
+            let mid = mdlDir.getParam(module,dom,'moduleId');
             if(!mid){
                 return;
             }
@@ -361,7 +365,7 @@ export default (function () {
             }
 
             //初始化
-            if(!this.getParam(module,'inited')){
+            if(!this.getParam(module,dom,'inited')){
                 dom.addEvent(new NEvent(module,'change',
                     function(dom, module, e, el){
                         if (!el) {
@@ -400,7 +404,7 @@ export default (function () {
                         }
                     }
                 ));
-                this.setParam(module,'inited',true);
+                this.setParam(module,dom,'inited',true);
             }
         },
         10
@@ -415,17 +419,17 @@ export default (function () {
             if (dom.tagName.toLowerCase() === 'a') {
                 dom.setProp('href','javascript:void(0)');
             }
-            
+            let ac;
             if (dom.hasProp('active')) {
-                let ac = dom.getProp('active');
+                ac = dom.getProp('active');
                 //active 转expression
                 dom.setProp('active',new Expression(module,ac));
                 //保存activeName
-                this.setParam(module,'activeName',ac);
+                //TODO 删除
+                this.setParam(module,dom,'activeName',ac);
             }
             dom.setProp('path', this.value);
             
-            let ac = this.getParam(module,'activeName');
             // 设置激活字段
             if (ac) {
                 Router.addActiveField(module, this.value, dom.model, ac);
@@ -438,13 +442,11 @@ export default (function () {
                     Router.go(this.value);
                 }
             }, 0);
-
             //尚未加载事件
-            if(!this.getParam(module,'inited')){
+            if(!this.getParam(module,dom,'inited')){
                 //添加click事件
                 let evt:NEvent = new NEvent(module,'click',
                     (dom, module, e) => {
-                        console.log(dom);
                         let path = dom.getProp('path');
                         if (!path) {
                             let dir: Directive = dom.getDirective('route');
@@ -458,7 +460,7 @@ export default (function () {
                 );
                 dom.addEvent(evt);
                 //设置route事件标志
-                this.setParam(module,'inited',true);
+                this.setParam(module,dom,'inited',true);
             }
         }
     );

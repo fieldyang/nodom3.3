@@ -454,14 +454,14 @@ export class Module {
         delete this.methods[name];
     }
 
-    // /**
-    //  * 获取虚拟dom节点
-    //  * @param key               dom key
-    //  * @param fromVirtualDom    是否从源虚拟dom数获取，否则从渲染树获取
-    //  */
-    // public getElement(key: string | Object) {
-    //     return this.renderTree.query(key);
-    // }
+    /**
+     * 获取虚拟dom节点
+     * @param key               dom key
+     * @param fromVirtualDom    是否从源虚拟dom数获取，否则从渲染树获取
+     */
+    public getElement(key: string | Object) :Element{
+        return this.renderTree.query(<string>key);
+    }
 
     /**
      * 获取模块容器

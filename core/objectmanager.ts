@@ -88,30 +88,33 @@ export  class ObjectManager {
     /**
      * 设置指令参数
      * @param id        指令id
+     * @param key       dom key
      * @param name      参数名  
      * @param value     参数值
      */
-    public setDirectiveParam(id:number,name:string,value:any){
-        this.cache.set('$directives.' + id + '.$params.' + name,value);
+    public setDirectiveParam(id:number,key:string,name:string,value:any){
+        this.cache.set('$directives.' + id + '.$params.' + key + '.' + name,value);
     }
 
     /**
      * 获取指令参数值
      * @param id        指令id
+     * @param key       dom key
      * @param name      参数名
      * @returns         参数值
      */
-    public getDirectiveParam(id:number,name:string){
-        return this.cache.get('$directives.' + id + '.$params.' + name);
+    public getDirectiveParam(id:number,key:string,name:string){
+        return this.cache.get('$directives.' + id + '.$params.' + key + '.'  + name);
     }
 
     /**
      * 移除指令参数
      * @param id        指令id
+     * @param key       dom key
      * @param name      参数名
      */
-    public removeDirectiveParam(id:number,name:string){
-        this.cache.remove('$directives.' + id + '.$params.' + name);
+    public removeDirectiveParam(id:number,key:string,name:string){
+        this.cache.remove('$directives.' + id + '.$params.' + key + '.' + name);
     }
 
     /**

@@ -21,15 +21,17 @@
     <title>Document</title>
 </head>
 <body>
-    <div ><span >hello world</span></div>
+    <div><span >hello world</span></div>
 </body>
 <script>
-    document.querySelector('div').addEventListener('click',(e)=>{
-        console.log(e,e.target,'div',e.path);
-    },false);
-    document.querySelector('span').addEventListener('click',(e)=>{
-        console.log(e,e.target,'span',e.path);
-    },true);
+    let event = new MouseEvent('tap');
+    document.querySelector('div').addEventListener('tap',(e)=>{
+        console.log(e,e.target,'div',e.path,e.currentTarget);
+        console.log(this);
+    });
+    // document.querySelector('span').addEventListener('click',(e)=>{
+    //     console.log(e,e.target,'span',e.path);
+    // });
     
 
     

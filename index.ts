@@ -4,7 +4,7 @@ export { DirectiveManager } from "./core/directivemanager";
 export { DirectiveType } from "./core/directivetype";
 export { Element } from "./core/element";
 export { NError } from "./core/error";
-export { ExternalNEvent, NEvent } from "./core/event";
+export { NEvent } from "./core/event";
 export { EventManager } from "./core/eventmanager";
 
 export { Expression } from "./core/expression";
@@ -28,6 +28,7 @@ export * from "./core/nodom";
 export { Util } from './core/util';
 export * from "./extend/defineelementinit";
 export * from "./extend/directiveinit";
+export * from "./extend/eventinit";
 
 
 
