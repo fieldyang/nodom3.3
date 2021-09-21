@@ -41,22 +41,13 @@ export class NEvent {
     /**
      * 模块id
      */
-    private module: Module;
+    public module: Module;
 
     /**
-     * 事件所属虚拟dom
+     * 依赖事件，用于扩展事件存储原始事件对戏
      */
-    public dom: Element;
-
-    /**
-     * 事件绑定的target
-     */
-    public el:HTMLElement;
-
-    /**
-     * 触屏监听器
-     */
-    public touchListeners: Map<string, NEvent>;
+    public dependEvent:NEvent;
+    
 
     /**
      * @param module        模块
@@ -106,7 +97,7 @@ export class NEvent {
         if (handler) {
             this.handler = handler;
         }
-
+        
         if (document.ontouchend) { //触屏设备
             switch (this.name) {
                 case 'click':
@@ -123,7 +114,7 @@ export class NEvent {
                     break;
             }
         } else { //转非触屏
-            switch (this.name) {
+            /*switch (this.name) {
                 case 'tap':
                     this.name = 'click';
                     break;
@@ -136,7 +127,7 @@ export class NEvent {
                 case 'touchmove':
                     this.name = 'mousemove';
                     break;
-            }
+            }*/
         }
     }
 
@@ -174,12 +165,5 @@ export class NEvent {
      */
     public clearParam(dom:Element){
         this.module.objectManager.clearEventParam(this.id,dom.key);
-    }
-    /**
-     * 获取事件对象target
-     * @returns     target
-     */
-    public getEl():HTMLElement{
-        return <HTMLElement>this.module.objectManager.getNode(this.dom.key);
     }
 }

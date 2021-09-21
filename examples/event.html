@@ -26,8 +26,8 @@
 				return `
 				<div>
 					<div>hello</div>
-					<ul x-show='show' e-click='clickP' >
-						<li x-repeat={{edus}} e-click='clickItem:delg:once' e-mousewheel='clickItem:delg:once'><span>{{eduName}}</span></li>
+					<ul x-show='show' e-click='clickP' e-swipedown='swipedown'>
+						<li x-repeat={{edus}} e-tap='clickItem:delg:once' e-mousewheel='clickItem:delg:once'><span>{{eduName}}</span></li>
 					</ul>
 				</div>
 				`
@@ -45,25 +45,28 @@
 				}
 			}
 			methods = {
-				clickP:function(d,module){
+				clickP:function(d,module,evo,e){
 					console.log('parent',this);
 				},
-				outP:function(dom,module){
+				swipedown:function(d,module,evo,e){
+					console.log(e.v0);
+				},
+				outP:function(dom,module,evo,e){
 					console.log('out parent',this);
 				},
-				clickItem:function(d,m,module){
+				clickItem:function(d,module,evo,e){
 					console.log('child',this);
 				},
-				show:function(dom,module,e,el){
+				show:function(dom,module,evo,e){
 					this.show = !this.show;
 					this.sum();
 				},
-				change:function(dom,module){
+				change:function(dom,module,evo,e){
 					this.edus.push({
 						eduId:5,eduName:'博士后'
 					})
 				},
-				change1:function(dom,module){
+				change1:function(dom,module,evo,e){
 					this.edus[0].eduName = '幼儿园';
 					
 				}

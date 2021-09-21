@@ -810,24 +810,16 @@ export class Element {
 
     /**
      * 添加事件
-     * @param event     事件对象或事件id
-     * @param name      事件名，第一个参数为event对象时无效
+     * @param event     事件对象
      */
-    public addEvent(event: NEvent|number,name?:string) {
-        let eid;
-        if(event instanceof NEvent){
-            eid = event.id;
-            name = event.name;
+    public addEvent(event: NEvent) {
+        if(!this.events.has(event.name)){
+            this.events.set(event.name, [event.id]);
         }else{
-            eid = event;
-        }
-        if(!this.events.has(name)){
-            this.events.set(name, [eid]);
-        }else{
-            let arr = this.events.get(name);
+            let arr = this.events.get(event.name);
             //已添加的事件，不再添加
-            if(arr.indexOf(eid) === -1){
-                arr.push(eid);
+            if(arr.indexOf(event.id) === -1){
+                arr.push(event.id);
             }
         }
     }
