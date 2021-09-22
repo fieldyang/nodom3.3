@@ -91,7 +91,6 @@ export class MAnimation extends Module {
                 <div class="container">
                     <div class='div2' x-animation={{animaiton}}></div>
                 </div>  
-
             </div> 
 	`;
 	}
