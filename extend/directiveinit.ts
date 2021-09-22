@@ -528,9 +528,6 @@ export default (function () {
             const afterLeave =
                 confObj.hooks?.leave?.after ? confObj.hooks.leave.after : confObj.hooks?.after || undefined;
 
-            // 提取 离开动画结束之后 元素的隐藏模式
-            const hiddenMode = confObj.hiddenMode || 'display';
-
             // 定义动画或者过渡结束回调。
             let handler = () => {
                 const el: HTMLElement = document.querySelector(`[key='${dom.key}']`)
@@ -538,15 +535,12 @@ export default (function () {
                 if (!tigger) {
                     if (isAppear) {
                         // 离开动画结束之后 把元素隐藏
-                        if (hiddenMode && hiddenMode == 'visibility') {
-                            el.style.visibility = 'hidden';
-                        } else {
-                            el.style.display = 'none';
-                        }
+                        el.style.display = 'none';
                     }
                     if (afterLeave) {
                         afterLeave.apply(module.model, [module]);
                     }
+                    // 这里如果style里面写了width和height 那么给他恢复成他写的，不然
                     [el.style.width, el.style.height] = getOriginalWidthAndHeight(dom);
                     // 结束之后删除掉离开动画相关的类
                     el.classList.remove(nameLeave + '-leave-active')
@@ -557,7 +551,6 @@ export default (function () {
                     // 进入动画结束之后删除掉相关的类
                     el.classList.remove(nameEnter + '-enter-active')
                 }
-                // confObj.tigger = false;
                 // 清除事件监听
                 el.removeEventListener('animationend', handler);
                 el.removeEventListener('transitionend', handler);
@@ -579,11 +572,7 @@ export default (function () {
                     // el不存在，第一次渲染
                     if (isAppear) {
                         // 是进入离开动画，管理初次渲染的状态，让他隐藏
-                        if (hiddenMode && hiddenMode == 'visibility') {
-                            dom.addStyle('visibility:hidden')
-                        } else {
-                            dom.addStyle('display:none')
-                        }
+                        dom.addStyle('display:none')
                     }
                     // 通过虚拟dom将元素渲染出来
                     dom.dontRender = false;
@@ -593,13 +582,8 @@ export default (function () {
                         let el: HTMLElement = document.querySelector(`[key='${dom.key}']`);
                         if (isAppear) {
                             // 动画/过渡 是进入离开动画/过渡，并且当前是需要让他隐藏所以我们不播放动画，直接隐藏。
-                            if (hiddenMode && hiddenMode == 'visibility') {
-                                dom.removeStyle('visibility:hidden');
-                                el.style.visibility = 'hidden';
-                            } else {
-                                dom.removeStyle('display:none');
-                                el.style.display = 'none'
-                            }
+                            dom.removeStyle('display:none');
+                            el.style.display = 'none'
                         } else {
                             //  动画/过渡 是 **非进入离开动画/过渡** 我们不管理元素的隐藏，所以我们让他播放一次Leave动画。
                             changeStateFromShowToHide(el);
@@ -619,11 +603,7 @@ export default (function () {
                     // el不存在，是初次渲染
                     if (isAppear) {
                         // 管理初次渲染元素的隐藏显示状态
-                        if (hiddenMode && hiddenMode == 'visibility') {
-                            dom.addStyle('visibility:hidden')
-                        } else {
-                            dom.addStyle('display:none')
-                        }
+                        dom.addStyle('display:none')
                     }
                     // 让他渲染出来
                     dom.dontRender = false;
@@ -632,13 +612,8 @@ export default (function () {
                         // 等虚拟dom把元素更新上去了之后，取得元素
                         let el: HTMLElement = document.querySelector(`[key='${dom.key}']`);
                         if (isAppear) {
-                            if (hiddenMode && hiddenMode == 'visibility') {
-                                dom.removeStyle('visibility:hidden');
-                                el.style.visibility = 'hidden';
-                            } else {
-                                dom.removeStyle('display:none');
-                                el.style.display = 'none'
-                            }
+                            dom.removeStyle('display:none');
+                            el.style.display = 'none'
                         }
                         // Enter动画与Leave动画不同，
                         //不管动画是不是进入离开动画，我们在初次渲染的时候都要执行一遍动画
@@ -704,12 +679,11 @@ export default (function () {
                     }, delay);
                 } else {
                     // 动画类型是aniamtion
-                    // 删除上一次动画的结束状态
                     el.classList.remove(nameEnter + '-enter-to');
                     // 设置动画的类名
                     el.classList.add(nameLeave + '-leave-active');
-                    // 增加这次动画的结束状态
-                    el.classList.add(nameLeave + '-leave-to');
+
+                    el.classList.add(nameLeave + '-leave-to')
                     // 动画延时时间
                     if (delayLeave != '0s') {
                         el.style.animationDelay = delayLeave;
@@ -774,11 +748,7 @@ export default (function () {
                         requestAnimationFrame(() => {
                             // 过渡开始之前先将元素显示
                             if (isAppear) {
-                                if (hiddenMode && hiddenMode == 'visibility') {
-                                    el.style.visibility = 'visible';
-                                } else {
-                                    el.style.display = '';
-                                }
+                                el.style.display = '';
                             }
                             // 再下一帧触发过渡 否则过渡触发不了
                             requestAnimationFrame(() => {
@@ -816,13 +786,9 @@ export default (function () {
                     setTimeout(() => {
                         // 动画开始之前先将元素显示
                         if (isAppear) {
-                            if (hiddenMode && hiddenMode == 'visibility') {
-                                el.style.visibility = 'visible';
-                            } else {
-                                el.style.display = '';
-                            }
+                            el.style.display = '';
                         }
-                        el.classList.remove(nameLeave + '-leave-to')
+                        el.classList.remove(nameLeave + '-leave-to');
                         // 设置动画的类名
                         el.classList.add(nameEnter + '-enter-active');
 
@@ -855,7 +821,6 @@ export default (function () {
                     el.style.visibility = 'hidden';
 
                     el.style.display = '';
-
 
                     let width = window.getComputedStyle(el).getPropertyValue("width");
                     let height = window.getComputedStyle(el).getPropertyValue("height");
