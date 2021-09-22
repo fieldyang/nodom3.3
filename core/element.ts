@@ -41,13 +41,13 @@ export class Element {
      * 静态属性(attribute)集合
      * {prop1:value1,...}
      */
-    public props: Map<string,any> = new Map();
+    public props: Map<string, any> = new Map();
 
     /**
      * 含表达式的属性集合
      * {prop1:value1,...}
      */
-    public exprProps: Map<string,number> = new Map();
+    public exprProps: Map<string, number> = new Map();
 
     /**
      * 事件集合,{eventName1:nodomNEvent1,...}
@@ -78,7 +78,7 @@ export class Element {
     /**
      * 静态标志，不进行渲染，只管自己，不管子节点
      */
-    public isStatic:boolean = true;
+    public isStatic: boolean = false;
 
     /**
      * 不渲染标志，单次渲染有效
@@ -89,9 +89,9 @@ export class Element {
      * @param tag       标签名
      * @param key       key
      */
-    constructor(tag?: string,key?:string) {
+    constructor(tag?: string, key?: string) {
         this.tagName = tag; //标签
-        if(key){
+        if (key) {
             this.key = key;
         }
     }
@@ -116,21 +116,21 @@ export class Element {
             this.model = module.model;
         }
         //先执行model指令
-        if(this.hasDirective('model')){
-            let d = this.getDirective(module,'model');
-            d.exec(module,this);
+        if (this.hasDirective('model')) {
+            let d = this.getDirective(module, 'model');
+            d.exec(module, this);
         }
-        if(!this.isStatic){  //静态节点不渲染
+        if (!this.isStatic) {  //静态节点不渲染
             if (this.tagName) { //element
                 if (!this.handleDirectives(module)) {
-                    this.doDontRender(module,parent);
+                    this.doDontRender(module, parent);
                     return false;
                 }
                 //模块指令已经执行了属性计算，此处不再计算
-                if(!this.hasDirective('module')){
+                if (!this.hasDirective('module')) {
                     this.handleProps(module);
                 }
-            } else{ //textContent
+            } else { //textContent
                 this.handleText(module);
             }
         }
@@ -138,8 +138,8 @@ export class Element {
         //子节点渲染
         for (let i = 0; i < this.children.length; i++) {
             let item = this.children[i];
-            if(!item.render(module, this)) {
-                item.doDontRender(module,this);
+            if (!item.render(module, this)) {
+                item.doDontRender(module, this);
                 i--;
             }
         }
@@ -153,63 +153,63 @@ export class Element {
      *          type 		类型
      *          parent 	父虚拟dom
      */
-    public renderToHtml(module: Module, parentEl:HTMLElement,isRenderChild?:boolean) {
+    public renderToHtml(module: Module, parentEl: HTMLElement, isRenderChild?: boolean) {
         let el = module.objectManager.getNode(this.key);
-        if(el){   //html dom节点已存在
-            if(this.tagName){
+        if (el) {   //html dom节点已存在
+            if (this.tagName) {
                 //设置属性
-                for(let v of this.props){
-                    if (typeof v[1] != 'function'){
+                for (let v of this.props) {
+                    if (typeof v[1] != 'function') {
                         (<HTMLElement>el).setAttribute(v[0], v[1]);
                     }
                 }
                 this.handleAssets((<HTMLElement>el));
-            }else{  //文本节点
+            } else {  //文本节点
                 (<any>el).textContent = this.textContent;
             }
-        }else{
-            if(this.tagName){
-                el = newEl(this,parentEl);
-            }else{
+        } else {
+            if (this.tagName) {
+                el = newEl(this, parentEl);
+            } else {
                 el = newText(this);
             }
-            if(isRenderChild){
+            if (isRenderChild) {
                 genSub(el, this);
             }
             return el;
         }
-        
+
         /**
          * 新建element节点
          * @param vdom 		虚拟dom
          * @param pEl 	    父element
          * @returns 		新的html element
          */
-        function newEl(vdom: Element,pEl:Node): any {
+        function newEl(vdom: Element, pEl: Node): any {
             //创建element
-            let el= Util.newEl(vdom.tagName);
+            let el = Util.newEl(vdom.tagName);
             //设置属性
-            for(let v of vdom.props){
-                if (typeof v[1] != 'function'){
+            for (let v of vdom.props) {
+                if (typeof v[1] != 'function') {
                     el.setAttribute(v[0], v[1]);
                 }
             }
-            
+
             //如果存储node，则不需要key
             el.setAttribute('key', vdom.key);
             //把el引用与key关系存放到cache中
-            module.objectManager.saveNode(vdom.key,el);
+            module.objectManager.saveNode(vdom.key, el);
             vdom.handleAssets(el);
-            vdom.handleEvents(module,pEl);
+            vdom.handleEvents(module, pEl);
             return el;
         }
 
         /**
          * 新建文本节点
          */
-        function newText(dom:Element): any {
+        function newText(dom: Element): any {
             let node = document.createTextNode(<string>dom.textContent || '');
-            module.objectManager.saveNode(dom.key,node);
+            module.objectManager.saveNode(dom.key, node);
             return node;
         }
 
@@ -223,7 +223,7 @@ export class Element {
                 vNode.children.forEach(item => {
                     let el1;
                     if (item.tagName) {
-                        el1 = newEl(item,pEl);
+                        el1 = newEl(item, pEl);
                         genSub(el1, item);
                     } else {
                         el1 = newText(item);
@@ -252,7 +252,7 @@ export class Element {
             }
         });
         //判断并设置静态标志
-        if(dst.tagName){
+        if (dst.tagName) {
             dst.isStatic = (dst.exprProps.size === 0 && dst.directives.length === 0);
         }
         return dst;
@@ -265,14 +265,14 @@ export class Element {
     public handleDirectives(module: Module) {
         for (let d of this.directives) {
             //model指令已经执行，不再执行
-            if(d.type === 'model'){
+            if (d.type === 'model') {
                 continue;
             }
-            let dir:Directive = module.objectManager.getDirective(d.id);
-            if(dir.expression){
-                dir.value = module.objectManager.getExpression(dir.expression).val(module,this.model);
+            let dir: Directive = module.objectManager.getDirective(d.id);
+            if (dir.expression) {
+                dir.value = module.objectManager.getExpression(dir.expression).val(module, this.model);
             }
-            dir.exec(module,this);
+            dir.exec(module, this);
             //指令可能改变render标志
             if (this.dontRender) {
                 return false;
@@ -291,11 +291,11 @@ export class Element {
         exprArr.forEach((v) => {
             if (typeof v === 'number') { //处理表达式
                 let expr = module.objectManager.getExpression(v);
-                if(!expr){
+                if (!expr) {
                     console.log(v);
                     return;
                 }
-                let v1 = expr.val(module,this.model);
+                let v1 = expr.val(module, this.model);
                 value += v1 !== undefined ? v1 : '';
             } else {
                 value += v;
@@ -310,11 +310,11 @@ export class Element {
       */
     public handleProps(module: Module) {
         for (let k of this.exprProps) {
-            let v = module.objectManager.getExpression(k[1]).val(module,this.model);
+            let v = module.objectManager.getExpression(k[1]).val(module, this.model);
             if (k[0] === 'style') {
                 this.addStyle(v);
             } else {
-                this.props.set(k[0],v);
+                this.props.set(k[0], v);
             }
         }
     }
@@ -354,7 +354,7 @@ export class Element {
         if (this.events.size === 0) {
             return;
         }
-        EventManager.bind(module,this);
+        EventManager.bind(module, this);
         // for (let evt of this.events) {
         //     if(evt[1]){
         //         for (let eid of evt[1]) {
@@ -378,14 +378,14 @@ export class Element {
             return;
         }
         //数组
-        directives.forEach(d=>{
+        directives.forEach(d => {
             let ind;
             if ((ind = this.directives.findIndex(item => item.type === d)) !== -1) {
                 this.directives.splice(ind, 1);
             }
         });
 
-        if(!this.isStatic && directives.length === 0 && this.exprProps.size === 0){
+        if (!this.isStatic && directives.length === 0 && this.exprProps.size === 0) {
             this.isStatic = true;
         }
     }
@@ -397,10 +397,10 @@ export class Element {
      */
     public addDirective(directive: Directive, sort?: boolean) {
         //不重复添加
-        if(this.directives.find(item=>item.type === directive.type.name)){
+        if (this.directives.find(item => item.type === directive.type.name)) {
             return;
         }
-        this.directives.push({type:directive.type.name,id:directive.id});
+        this.directives.push({ type: directive.type.name, id: directive.id });
         //指令按优先级排序
         if (sort) {
             this.sortDirective();
@@ -411,10 +411,10 @@ export class Element {
     /**
      * 指令排序
      */
-    public sortDirective(){
+    public sortDirective() {
         if (this.directives.length > 1) {
             this.directives.sort((a, b) => {
-                return DirectiveManager.getType(a.type).prio < DirectiveManager.getType(b.type).prio?-1:1;
+                return DirectiveManager.getType(a.type).prio < DirectiveManager.getType(b.type).prio ? -1 : 1;
             });
         }
     }
@@ -424,7 +424,7 @@ export class Element {
      * @param typeName 	    指令类型名
      * @returns             true/false
      */
-    public hasDirective(typeName:string): boolean {
+    public hasDirective(typeName: string): boolean {
         return this.directives.findIndex(item => item.type === typeName) !== -1;
     }
 
@@ -434,9 +434,9 @@ export class Element {
      * @param directiveType 	指令类型名
      * @returns                 指令对象
      */
-    public getDirective(module:Module,directiveType:string): Directive {
-        let r:any = this.directives.find(item => item.type === directiveType);
-        if(r){
+    public getDirective(module: Module, directiveType: string): Directive {
+        let r: any = this.directives.find(item => item.type === directiveType);
+        if (r) {
             return module.objectManager.getDirective(r.id);
         }
     }
@@ -445,10 +445,10 @@ export class Element {
      * 移除子节点
      * @param dom   子dom
      */
-    public removeChild(module:Module,dom: Element) {
+    public removeChild(module: Module, dom: Element) {
         let ind: number;
         // 移除
-        if (Util.isArray(this.children) && (ind = this.children.findIndex(item=>item===dom)) !== -1) {
+        if (Util.isArray(this.children) && (ind = this.children.findIndex(item => item === dom)) !== -1) {
             this.children.splice(ind, 1);
             //从对象管理器删除
             module.objectManager.removeSavedNode(dom.key);
@@ -458,7 +458,7 @@ export class Element {
     /**
      * 添加子节点
      */
-    public add(dom:Element){
+    public add(dom: Element) {
         this.children.push(dom);
         dom.parent = this;
     }
@@ -498,7 +498,7 @@ export class Element {
             if (!sa.includes(cls)) {
                 sa.push(cls);
                 clazz = sa.join(' ');
-                this.props.set('class',clazz);
+                this.props.set('class', clazz);
             }
         }
     }
@@ -519,7 +519,7 @@ export class Element {
                 clazz = sa.join(' ');
             }
         }
-        this.props.set('class',clazz);
+        this.props.set('class', clazz);
     }
     /**
          * 查询style
@@ -547,7 +547,7 @@ export class Element {
             if (!sa.includes(styStr)) {
                 sa.push(styStr);
                 styleStr = sa.join(';');
-                this.props.set('style',styleStr);
+                this.props.set('style', styleStr);
             }
         }
     }
@@ -568,7 +568,7 @@ export class Element {
                 styleStr = sa.join(';');
             }
         }
-        this.props.set('style',styleStr);
+        this.props.set('style', styleStr);
     }
 
     /**
@@ -576,8 +576,8 @@ export class Element {
      * @param propName  属性名
      * @param isExpr    是否只检查表达式属性
      */
-    public hasProp(propName: string,isExpr?:boolean) {
-        return isExpr?this.exprProps.has(propName):(this.props.has(propName) || this.exprProps.has(propName));
+    public hasProp(propName: string, isExpr?: boolean) {
+        return isExpr ? this.exprProps.has(propName) : (this.props.has(propName) || this.exprProps.has(propName));
     }
 
     /**
@@ -585,8 +585,8 @@ export class Element {
      * @param propName  属性名
      * @param isExpr    是否只获取表达式属性
      */
-    public getProp(propName: string,isExpr?:boolean) {
-        return isExpr?this.exprProps.get(propName):(this.props.get(propName) || this.exprProps.get(propName));
+    public getProp(propName: string, isExpr?: boolean) {
+        return isExpr ? this.exprProps.get(propName) : (this.props.get(propName) || this.exprProps.get(propName));
     }
 
     /**
@@ -595,11 +595,11 @@ export class Element {
      * @param v         属性值
      */
     public setProp(propName: string, v: any) {
-        if(v instanceof Expression){
-            this.exprProps.set(propName,v.id);
+        if (v instanceof Expression) {
+            this.exprProps.set(propName, v.id);
             this.isStatic = false;
         } else {
-            this.props.set(propName,v);
+            this.props.set(propName, v);
         }
     }
 
@@ -620,7 +620,7 @@ export class Element {
             this.props.delete(<string>props);
         }
         //判断并设置静态标志
-        if(!this.isStatic && this.directives.length === 0 && this.exprProps.size === 0){
+        if (!this.isStatic && this.directives.length === 0 && this.exprProps.size === 0) {
             this.isStatic = true;
         }
     }
@@ -657,22 +657,22 @@ export class Element {
         if (!this.tagName) { //文本节点
             if (!dst.tagName) {
                 if (this.textContent !== dst.textContent) {
-                    addChange(2,this,null,dst.parent);
+                    addChange(2, this, null, dst.parent);
                 }
             } else { //节点类型不同
-                addChange(5,this,null, dst.parent);
+                addChange(5, this, null, dst.parent);
             }
         } else { //element节点
             if (this.tagName !== dst.tagName) { //节点类型不同
-                addChange(5,this,null, dst.parent);
-            } else if(!this.isStatic || !dst.isStatic){ //节点类型相同，但有一个不是静态节点，进行属性和asset比较
+                addChange(5, this, null, dst.parent);
+            } else if (!this.isStatic || !dst.isStatic) { //节点类型相同，但有一个不是静态节点，进行属性和asset比较
                 let change = false;
                 //属性比较
-                if(this.props.size !== dst.props.size){
+                if (this.props.size !== dst.props.size) {
                     change = true;
-                }else{
-                    for(let v of this.props){
-                        if(v[1] !== dst.props.get(v[0])){
+                } else {
+                    for (let v of this.props) {
+                        if (v[1] !== dst.props.get(v[0])) {
                             change = true;
                             break;
                         }
@@ -680,18 +680,18 @@ export class Element {
                 }
 
                 //asset比较
-                if(this.assets.size !== dst.assets.size){
+                if (this.assets.size !== dst.assets.size) {
                     change = true;
-                }else{
-                    for(let v of this.assets){
-                        if(v[1] !== dst.assets.get(v[0])){
+                } else {
+                    for (let v of this.assets) {
+                        if (v[1] !== dst.assets.get(v[0])) {
                             change = true;
                             break;
                         }
                     }
                 }
-                if(change){
-                    addChange(2,this,null,dst.parent);
+                if (change) {
+                    addChange(2, this, null, dst.parent);
                 }
             }
         }
@@ -700,15 +700,15 @@ export class Element {
         if (!this.children || this.children.length === 0) {
             // 旧节点的子节点全部删除
             if (dst.children && dst.children.length > 0) {
-                dst.children.forEach(item => addChange(3,item,null,dst));
+                dst.children.forEach(item => addChange(3, item, null, dst));
             }
         } else {
             //全部新加节点
             if (!dst.children || dst.children.length === 0) {
-                this.children.forEach(item => addChange(1, item,null, dst));
+                this.children.forEach(item => addChange(1, item, null, dst));
             } else { //都有子节点
                 //存储比较后需要add的key
-                let addObj={};
+                let addObj = {};
                 //子节点对比策略
                 let [oldStartIdx, oldStartNode, oldEndIdx, oldEndNode] = [0, dst.children[0], dst.children.length - 1, dst.children[dst.children.length - 1]];
                 let [newStartIdx, newStartNode, newEndIdx, newEndNode] = [0, this.children[0], this.children.length - 1, this.children[this.children.length - 1]];
@@ -724,40 +724,40 @@ export class Element {
                     } else if (sameKey(newStartNode, oldEndNode)) {
                         //新前旧后
                         newStartNode.compare(oldEndNode, changeArr);
-                       //跳过插入点会提前移动的节点
-                        while(addObj.hasOwnProperty(oldStartNode.key)){
+                        //跳过插入点会提前移动的节点
+                        while (addObj.hasOwnProperty(oldStartNode.key)) {
                             changeArr[addObj[oldStartNode.key]][0] = 4;
                             delete addObj[oldStartNode.key];
                             oldStartNode = dst.children[++oldStartIdx];
                         }
-                         //接在待操作老节点前面
-                        addChange(4,oldEndNode,  oldStartNode,dst);
+                        //接在待操作老节点前面
+                        addChange(4, oldEndNode, oldStartNode, dst);
                         newStartNode = this.children[++newStartIdx];
                         oldEndNode = dst.children[--oldEndIdx];
                     } else if (sameKey(newEndNode, oldStartNode)) {
                         newEndNode.compare(oldStartNode, changeArr);
-                         //跳过插入点会提前移动的节点
-                        while(addObj.hasOwnProperty(oldEndNode.key)){
+                        //跳过插入点会提前移动的节点
+                        while (addObj.hasOwnProperty(oldEndNode.key)) {
                             changeArr[addObj[oldEndNode.key]][0] = 4;
                             delete addObj[oldEndNode.key];
                             oldEndNode = dst.children[--oldEndIdx];
                         }
                         //接在 oldEndIdx 之后，但是再下一个节点可能移动位置，所以记录oldEndIdx节点
-                        addChange(4, oldStartNode, oldEndNode,dst,1);
+                        addChange(4, oldStartNode, oldEndNode, dst, 1);
                         newEndNode = this.children[--newEndIdx];
                         oldStartNode = dst.children[++oldStartIdx];
                     } else {
                         //跳过插入点会提前移动的节点
-                        if(addObj.hasOwnProperty(oldStartNode.key)){
-                            while(addObj.hasOwnProperty(oldStartNode.key)){
-                                   changeArr[addObj[oldStartNode.key]][0] = 4;
-                                   delete addObj[oldStartNode.key];
+                        if (addObj.hasOwnProperty(oldStartNode.key)) {
+                            while (addObj.hasOwnProperty(oldStartNode.key)) {
+                                changeArr[addObj[oldStartNode.key]][0] = 4;
+                                delete addObj[oldStartNode.key];
                                 oldStartNode = dst.children[++oldStartIdx];
                             }
                             continue;//继续diff，暂不add
                         }
-                       //加入到addObj
-                        addObj[newStartNode.key]= addChange(1, newStartNode, oldStartNode,dst)-1;
+                        //加入到addObj
+                        addObj[newStartNode.key] = addChange(1, newStartNode, oldStartNode, dst) - 1;
                         newStartNode = this.children[++newStartIdx];
                     }
                 }
@@ -767,16 +767,16 @@ export class Element {
                         //没有老节点
                         for (let i = newStartIdx; i <= newEndIdx; i++) {
                             // 添加到dst.children[i]前面
-                            addChange(1,this.children[i], i ,dst);
+                            addChange(1, this.children[i], i, dst);
                         }
                     } else {
                         //有老节点，需要删除
                         for (let i = oldStartIdx; i <= oldEndIdx; i++) {
-                            let ch=dst.children[i];
+                            let ch = dst.children[i];
                             //如果要删除的节点在addArr中，则表示move，否则表示删除
-                            if(!addObj.hasOwnProperty(ch.key)){ 
-                                addChange(3,ch,null,dst);
-                            }else{
+                            if (!addObj.hasOwnProperty(ch.key)) {
+                                addChange(3, ch, null, dst);
+                            } else {
                                 changeArr[addObj[ch.key]][0] = 4;
                             }
                         }
@@ -791,10 +791,10 @@ export class Element {
          * @param dst   目标节点
          * @returns     相同key为true，否则为false
          */
-        function sameKey(src:Element, dst:Element):boolean {
+        function sameKey(src: Element, dst: Element): boolean {
             return src.key === dst.key;
         }
-        
+
         /**
          * 添加刪除替換
         * @param type       类型 add 1, upd 2,del 3,move 4 ,rep 5
@@ -803,8 +803,8 @@ export class Element {
         * @param parent     父节点
         * @param extra      move时 0:相对节点前，1:相对节点后
         */
-        function addChange(type:number,dom: Element, dom1?: Element|number,parent?:Element,loc?:number) {
-            return changeArr.push([type,dom,dom1,parent,loc]);
+        function addChange(type: number, dom: Element, dom1?: Element | number, parent?: Element, loc?: number) {
+            return changeArr.push([type, dom, dom1, parent, loc]);
         }
     }
 
@@ -813,12 +813,12 @@ export class Element {
      * @param event     事件对象
      */
     public addEvent(event: NEvent) {
-        if(!this.events.has(event.name)){
+        if (!this.events.has(event.name)) {
             this.events.set(event.name, [event.id]);
-        }else{
+        } else {
             let arr = this.events.get(event.name);
             //已添加的事件，不再添加
-            if(arr.indexOf(event.id) === -1){
+            if (arr.indexOf(event.id) === -1) {
                 arr.push(event.id);
             }
         }
@@ -829,7 +829,7 @@ export class Element {
      * @param eventName     事件名
      * @returns             事件对象或事件对象数组
      */
-    public getEvent(eventName:string){
+    public getEvent(eventName: string) {
         return this.events.get(eventName);
     }
 
@@ -838,14 +838,14 @@ export class Element {
      * 关联操作，包括:
      *  1 节点(子节点)含有module指令，需要unactive
      */
-    public doDontRender(module:Module,parent?:Element) {
-        if(parent){
-            parent.removeChild(module,this);
+    public doDontRender(module: Module, parent?: Element) {
+        if (parent) {
+            parent.removeChild(module, this);
         }
         //对于模块容器，对应module需unactive
         if (this.hasDirective('module')) {
             let mdl = ModuleFactory.get(parseInt(this.getProp('moduleId')));
-            if(mdl){
+            if (mdl) {
                 mdl.unactive();
             }
         }
@@ -856,7 +856,7 @@ export class Element {
      * @param module    模块 
      * @returns         对应的html dom
      */
-    public getEl(module:Module):Node{
+    public getEl(module: Module): Node {
         return module.objectManager.getNode(this.key);
     }
 
@@ -883,8 +883,8 @@ export class Element {
      * @param name      参数名
      * @param value     参数值
      */
-    public setParam(module:Module,name:string,value:any){
-        module.objectManager.setElementParam(this.key,name,value);
+    public setParam(module: Module, name: string, value: any) {
+        module.objectManager.setElementParam(this.key, name, value);
     }
 
     /**
@@ -893,8 +893,8 @@ export class Element {
      * @param name      参数名
      * @returns         参数值
      */
-    public getParam(module:Module,name:string){
-        return module.objectManager.getElementParam(this.key,name);
+    public getParam(module: Module, name: string) {
+        return module.objectManager.getElementParam(this.key, name);
     }
 
     /**
@@ -902,7 +902,7 @@ export class Element {
      * @param module    模块
      * @param name      参数名
      */
-    public removeParam(module:Module,name:string){
-        module.objectManager.removeElementParam(this.key,name);
+    public removeParam(module: Module, name: string) {
+        module.objectManager.removeElementParam(this.key, name);
     }
 }
