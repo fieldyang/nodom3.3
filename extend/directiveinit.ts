@@ -489,7 +489,6 @@ export default (function () {
     createDirective('animation',
         function (module: Module, dom: Element) {
             const confObj = this.value
-            // const confObj = directive.value;
             if (!Util.isObject(confObj)) {
                 return new Error('未找到animation配置对象');
             }
@@ -629,82 +628,95 @@ export default (function () {
             function changeStateFromShowToHide(el: HTMLElement) {
                 // 动画类型是transitiojn
                 if (type == 'transition') {
-                    // 移除掉上一次过渡的最终状态
-                    el.classList.remove(nameEnter + '-enter-to')
-
-                    // 设置过渡的类名
-                    el.classList.add(nameLeave + '-leave-active');
-
-                    // 设置离开过渡的开始类
-                    el.classList.add(nameLeave + '-leave-from');
+                    // 前面已经对transition的初始状态进行了设置，我们需要在下一帧设置结束状态才能触发过渡
 
                     // 获得宽高的值 因为 宽高的auto 百分比 calc计算值都无法拿来触发动画或者过渡。
                     let [width, height] = getElRealSzie(el);
+                    // setTimeout(() => {
+                    requestAnimationFrame(() => {
+                        // 移除掉上一次过渡的最终状态
+                        el.classList.remove(nameEnter + '-enter-to')
 
-                    if (nameLeave == 'fold-height') {
-                        el.style.height = height;
-                    } else if (nameLeave == 'fold-width') {
-                        el.style.width = width;
-                    }
-                    let delay = parseFloat(delayEnter) * 1000
-                    // 处理离开过渡的延时
-                    // el.style.transitionDelay = delayEnter;
-                    el.style.transitionDelay = '0s';
-                    // 处理过渡的持续时间
-                    if (durationEnter != '0s') {
-                        el.style.transitionDuration = durationEnter;
-                    }
-                    // 处理过渡的时间函数
-                    if (timingFunctionEnter != 'ease') {
-                        el.style.transitionTimingFunction = timingFunctionEnter;
-                    }
-                    // 在触发过渡之前执行hook
-                    if (beforeLeave) {
-                        beforeLeave.apply(module.model, [module]);
-                    }
-                    // 前面已经对transition的初始状态进行了设置，我们需要在下一帧设置结束状态才能触发过渡
-                    setTimeout(() => {
-                        // 添加结束状态
-                        el.classList.add(nameLeave + '-leave-to');
-                        // 在动画或者过渡开始之前移除掉初始状态
-                        el.classList.remove(nameLeave + '-leave-from');
+                        // 设置过渡的类名
+                        el.classList.add(nameLeave + '-leave-active');
 
+                        // 设置离开过渡的开始类
+                        el.classList.add(nameLeave + '-leave-from');
+
+                        // fold过渡的开始状态
                         if (nameLeave == 'fold-height') {
-                            el.style.height = '0px';
+                            el.style.height = height;
                         } else if (nameLeave == 'fold-width') {
-                            el.style.width = '0px';
+                            el.style.width = width;
                         }
-                        // 添加过渡结束事件监听
-                        el.addEventListener('transitionend', handler);
-                    }, delay);
+
+                        // 处理离开过渡的延时
+                        if (delayEnter != '0s') {
+                            el.style.transitionDelay = delayEnter;
+                        }
+                        // 处理过渡的持续时间
+                        if (durationEnter != '0s') {
+                            el.style.transitionDuration = durationEnter;
+                        }
+                        // 处理过渡的时间函数
+                        if (timingFunctionEnter != 'ease') {
+                            el.style.transitionTimingFunction = timingFunctionEnter;
+                        }
+                        // 在触发过渡之前执行hook
+                        if (beforeLeave) {
+                            beforeLeave.apply(module.model, [module]);
+                        }
+                        requestAnimationFrame(() => {
+                            // 添加结束状态
+                            el.classList.add(nameLeave + '-leave-to');
+                            // 在动画或者过渡开始之前移除掉初始状态
+                            el.classList.remove(nameLeave + '-leave-from');
+
+                            if (nameLeave == 'fold-height') {
+                                el.style.height = '0px';
+                            } else if (nameLeave == 'fold-width') {
+                                el.style.width = '0px';
+                            }
+                            // 添加过渡结束事件监听
+                            el.addEventListener('transitionend', handler);
+                        })
+
+                    });
                 } else {
-                    // 动画类型是aniamtion
-                    el.classList.remove(nameEnter + '-enter-to');
-                    // 设置动画的类名
-                    el.classList.add(nameLeave + '-leave-active');
 
-                    el.classList.add(nameLeave + '-leave-to')
-                    // 动画延时时间
-                    if (delayLeave != '0s') {
-                        el.style.animationDelay = delayLeave;
-                    }
-                    // 动画持续时间
-                    if (durationLeave != '0s') {
-                        el.style.animationDuration = durationLeave;
-                    }
+                    requestAnimationFrame(() => {
+                        // 动画类型是aniamtion
+                        el.classList.remove(nameEnter + '-enter-to');
+                        // 设置动画的类名
+                        el.classList.add(nameLeave + '-leave-active');
 
-                    if (timingFunctionLeave != 'ease') {
-                        el.style.animationTimingFunction = timingFunctionLeave;
-                    }
+                        el.classList.add(nameLeave + '-leave-from')
+                        // 动画延时时间
+                        if (delayLeave != '0s') {
+                            el.style.animationDelay = delayLeave;
+                        }
 
-                    // 在触发动画之前执行hook
-                    if (beforeLeave) {
-                        beforeLeave.apply(module.model, [module]);
-                    }
-                    // 重定位一下触发动画
-                    void el.offsetWidth;
-                    //添加动画结束时间监听
-                    el.addEventListener('animationend', handler);
+                        // 动画持续时间
+                        if (durationLeave != '0s') {
+                            el.style.animationDuration = durationLeave;
+                        }
+
+                        if (timingFunctionLeave != 'ease') {
+                            el.style.animationTimingFunction = timingFunctionLeave;
+                        }
+                        requestAnimationFrame(() => {
+                            // 重定位一下触发动画
+                            el.classList.add(nameLeave + '-leave-to')
+                            el.classList.remove(nameLeave + '-leave-from')
+                            // 在触发动画之前执行hook
+                            if (beforeLeave) {
+                                beforeLeave.apply(module.model, [module]);
+                            }
+                            void el.offsetWidth;
+                            //添加动画结束时间监听
+                            el.addEventListener('animationend', handler);
+                        })
+                    })
                 }
             }
 
@@ -716,27 +728,7 @@ export default (function () {
                 // 动画类型是transition
                 if (type == 'transition') {
 
-                    // 移除掉上一次过渡的最终状态
-                    el.classList.remove(nameLeave + '-leave-to');
-                    // 添加过渡的类名
-                    el.classList.add(nameEnter + '-enter-active');
-                    // 给进入过渡设置开始类名
-                    el.classList.add(nameEnter + '-enter-from');
-                    // 获得元素的真实尺寸
-                    let [width, height] = getElRealSzie(el);
-                    if (nameEnter == 'fold-height') {
-                        el.style.height = '0px'
-                    } else if (nameEnter == 'fold-width') {
-                        el.style.width = '0px'
-                    }
-                    // 设置过渡持续时间
-                    if (durationEnter != '0s') {
-                        el.style.transitionDuration = durationEnter;
-                    }
-                    // 设置过渡时间函数
-                    if (timingFunctionEnter != 'ease') {
-                        el.style.transitionTimingFunction = timingFunctionEnter;
-                    }
+
                     // 对于进入/离开动画
                     // Enter过渡的延迟时间与Leave过渡的延迟时间处理不一样
                     // 我们这里把延迟统一设置成0s，然后通过定时器来设置延时，
@@ -745,12 +737,33 @@ export default (function () {
                     let delay = parseFloat(delayEnter) * 1000;
                     setTimeout(() => {
                         // 下一帧请求过渡效果
+                        let [width, height] = getElRealSzie(el);
                         requestAnimationFrame(() => {
+                            // 移除掉上一次过渡的最终状态
+                            el.classList.remove(nameLeave + '-leave-to');
+                            // 添加过渡的类名
+                            el.classList.add(nameEnter + '-enter-active');
+                            // 给进入过渡设置开始类名
+                            el.classList.add(nameEnter + '-enter-from');
+                            // 获得元素的真实尺寸
+                            if (nameEnter == 'fold-height') {
+                                el.style.height = '0px'
+                            } else if (nameEnter == 'fold-width') {
+                                el.style.width = '0px'
+                            }
+                            // 设置过渡持续时间
+                            if (durationEnter != '0s') {
+                                el.style.transitionDuration = durationEnter;
+                            }
+                            // 设置过渡时间函数
+                            if (timingFunctionEnter != 'ease') {
+                                el.style.transitionTimingFunction = timingFunctionEnter;
+                            }
                             // 过渡开始之前先将元素显示
                             if (isAppear) {
                                 el.style.display = '';
                             }
-                            // 再下一帧触发过渡 否则过渡触发不了
+                            // 下一帧触发过渡 否则过渡触发不了
                             requestAnimationFrame(() => {
                                 if (beforeEnter) {
                                     beforeEnter.apply(module.model, [module]);
@@ -771,35 +784,40 @@ export default (function () {
                     }, delay);
                 } else {
                     // 动画类型是aniamtion
-                    // 设置动画的持续时间
-                    if (durationEnter != '0s') {
-                        el.style.animationDuration = durationEnter;
-                    }
-                    // 设置动画的时间函数
-                    if (timingFunctionEnter != 'ease') {
-                        el.style.animationTimingFunction = durationEnter;
-                    }
-
                     // 这里动画的延迟时间也与过渡类似的处理方式。
                     el.style.animationDelay = "0s";
                     let delay = parseFloat(delayEnter) * 1000;
                     setTimeout(() => {
                         // 动画开始之前先将元素显示
-                        if (isAppear) {
-                            el.style.display = '';
-                        }
-                        el.classList.remove(nameLeave + '-leave-to');
-                        // 设置动画的类名
-                        el.classList.add(nameEnter + '-enter-active');
+                        requestAnimationFrame(() => {
+                            el.classList.remove(nameLeave + '-leave-to');
+                            // 设置动画的类名
+                            el.classList.add(nameEnter + '-enter-active');
 
-                        el.classList.add(nameEnter + '-enter-to')
-                        // 在触发过渡之前执行hook 
-                        if (beforeEnter) {
-                            beforeEnter.apply(module.model, [module]);
-                        }
-                        // 重定位一下触发动画
-                        void el.offsetWidth;
-                        el.addEventListener('animationend', handler);
+                            el.classList.add(nameEnter + '-enter-from')
+                            // 设置动画的持续时间
+                            if (durationEnter != '0s') {
+                                el.style.animationDuration = durationEnter;
+                            }
+                            // 设置动画的时间函数
+                            if (timingFunctionEnter != 'ease') {
+                                el.style.animationTimingFunction = durationEnter;
+                            }
+                            if (isAppear) {
+                                el.style.display = '';
+                            }
+                            requestAnimationFrame(() => {
+                                el.classList.add(nameEnter + '-enter-to')
+                                el.classList.remove(nameEnter + '-enter-from')
+                                // 在触发过渡之前执行hook 
+                                if (beforeEnter) {
+                                    beforeEnter.apply(module.model, [module]);
+                                }
+                                // 重定位一下触发动画
+                                void el.offsetWidth;
+                                el.addEventListener('animationend', handler);
+                            })
+                        })
                     }, delay);
                 }
             }

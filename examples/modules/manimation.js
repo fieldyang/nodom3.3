@@ -3,7 +3,7 @@ export class MAnimation extends Module {
 	template() {
 		return `
             <div>
-               <!-- <h1>基础用法</h1>
+                <h1>基础用法</h1>
                 <p> 你需要为x-animation指令指定一个对象，其中包括name和tigger </p>
                 <p>name 为你过渡的类名，tigger为你过渡的触发条件</p>
                 <p>过渡可分为enter和leave，播放enter还是leave由tigger触发，tigger：true的时候播放enter，tigger:false的时候播放leave</p>
@@ -53,7 +53,7 @@ export class MAnimation extends Module {
                 <h2>fade</h2>
                 <div class="container">
                     <div class='div2' x-animation={{transition7}}></div>
-                </div> -->
+                </div> 
 
 
                 <p>对于进入离开过渡，你可以分别配置，你也可以控制延时时间和播放时间以及timingFunction</p>
@@ -65,7 +65,7 @@ export class MAnimation extends Module {
 
 
 
-             <!--   <h1>动画</h1>
+                <h1>动画</h1>
                 <p>我们将fade效果从transiton改为animation</p>
                 <pre>
                     .myfade-enter-active {
@@ -90,7 +90,7 @@ export class MAnimation extends Module {
                 <h2>fade动画</h2>
                 <div class="container">
                     <div class='div2' x-animation={{animaiton}}></div>
-                </div>  -->
+                </div>  
 
             </div> 
 	`;
