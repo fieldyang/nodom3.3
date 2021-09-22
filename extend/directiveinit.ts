@@ -727,8 +727,6 @@ export default (function () {
             function changeStateFromHideToShow(el: HTMLElement) {
                 // 动画类型是transition
                 if (type == 'transition') {
-
-
                     // 对于进入/离开动画
                     // Enter过渡的延迟时间与Leave过渡的延迟时间处理不一样
                     // 我们这里把延迟统一设置成0s，然后通过定时器来设置延时，
