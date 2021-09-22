@@ -157,7 +157,7 @@ export class Module {
      * @param props     props对象，在模版容器dom中进行配置，从父模块传入
      * @returns         模版串
      */
-    private template(props?:any):string{
+    public template(props?:any):string{
         return null;
     }
     

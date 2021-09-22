@@ -2,6 +2,7 @@ import { DefineElementManager } from "./defineelementmanager";
 import { Directive } from "./directive";
 import { DirectiveManager } from "./directivemanager";
 import { Element } from "./element";
+import { NError } from "./error";
 import { NEvent } from "./event";
 import { Expression } from "./expression";
 import { Module } from "./module";
@@ -70,7 +71,7 @@ export class Compiler {
         // 标签名数组
         let tagNames = [];
         // 标签对象数组
-        let tagObjs = [];
+        let tagObjs:Element[] = [];
         // 根节点
         let root:Element;
         tagStack.forEach((tag,ii)=>{
@@ -100,11 +101,12 @@ export class Compiler {
                     // 添加到父节点
                     let po = tagObjs.pop();
                     po.children = po.children.concat(chds);
+                    this.handleSlot(po);
                     if(tagObjs.length>0){
                         tagObjs[tagObjs.length-1].children.push(po);
                     }
                 }else{
-                    throw '模版格式错误';
+                    throw new NError('wrongTempate');
                 }
             }else { //标签头
                 //去掉标签前后< >
@@ -134,7 +136,7 @@ export class Compiler {
         });
         
         if(tagNames.length>0){
-            throw '模版定义错误';
+            throw new NError('wrongTempate');
         }
         return root;
     }
@@ -242,6 +244,29 @@ export class Compiler {
             }
             pName=undefined;
             startValue=false;
+        }
+    }
+
+    /**
+     * 处理模块子节点为slot节点
+     * @param dom   dom节点
+     */
+    private handleSlot(dom:Element){
+        if(dom.hasDirective('module')){ //po为子模块，其所有子模块判断是否加上slot
+            let slotCt:Element;
+            for(let j=0;j<dom.children.length;j++){
+                let c = dom.children[j];
+                if(c.hasDirective('slot')){
+                    continue;
+                }
+                if(!slotCt){
+                    slotCt = new Element('div');
+                    slotCt.addDirective(new Directive(this.module,'slot',null));
+                }
+                slotCt.add(c);
+                //当前位置，用slot替代
+                dom.children.splice(j--,1,slotCt);
+            }
         }
     }
 

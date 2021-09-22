@@ -24,6 +24,19 @@ export class ModuleMain extends Module{
                     </slot>
                     
                 </ModuleA>
+
+                <p>第三个子模块</p>
+                <h2>默认子节点自动转换为slot节点</h2>
+                <ModuleA xxx='333'>
+                    
+                    <p style='color:gold'>
+                        我自动作为solot节点
+                    </p>
+                    <h3 style='color:gold'>
+                        我自动作为solot节点
+                    </h3>
+                    <slot>hahaha</slot>
+                </ModuleA>
            </div>
         `
     }
