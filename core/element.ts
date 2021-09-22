@@ -547,8 +547,8 @@ export class Element {
             if (!sa.includes(styStr)) {
                 sa.push(styStr);
                 styleStr = sa.join(';');
-                this.props.set('style', styleStr);
             }
+
         }
     }
 
@@ -568,7 +568,11 @@ export class Element {
                 styleStr = sa.join(';');
             }
         }
-        this.props.set('style', styleStr);
+        if (styleStr == '') {
+            this.props.delete('style');
+        } else {
+            this.props.set('style', styleStr);
+        }
     }
 
     /**
