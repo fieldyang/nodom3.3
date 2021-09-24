@@ -1,3 +1,4 @@
+import { GlobalCache } from "./globalcache";
 import { Model } from "./model";
 import { Module } from "./module";
 import { Util } from "./util";
@@ -33,7 +34,8 @@ export class Expression {
                 }
             }
         `);
-        module.objectManager.saveExpression(this);
+        // module.objectManager.saveExpression(this);
+        GlobalCache.saveExpression(this);
     }
 
     /**

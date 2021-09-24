@@ -124,6 +124,7 @@ export class Module {
         this.objectManager = new ObjectManager(this);
         this.methods = {};
         this.state = 0;
+        console.log('new module',this.id);
         //加入模块工厂
         ModuleFactory.add(this);
         // 初始化模型工厂
@@ -204,6 +205,7 @@ export class Module {
         if (this.state === 2) {
             return true;
         }
+        
 
         //容器没就位或state不为active则不渲染，返回渲染失败
         if (this.state < 3 || !this.getContainer()) {
@@ -317,7 +319,6 @@ export class Module {
         this.container.appendChild(this.objectManager.getNode(root.key));
         //执行首次渲染后事件
         this.doModuleEvent('onFirstRender');
-        //设置旧dom结构
     }
 
     /**
@@ -464,6 +465,8 @@ export class Module {
     public getContainer(): HTMLElement {
         if(!this.container){
             if(this.containerKey){
+                // let pc = this.getParent().getContainer();
+                // this.container = pc.querySelector("[key='"+ this.containerKey +"']");
                 this.container = <HTMLElement>this.getParent().objectManager.getNode(this.containerKey);
             }
         }
@@ -543,6 +546,7 @@ export class Module {
         //为提升性能，只进行浅度比较
         //如果相同且属性值不含对象，则返回
         let change:boolean = !Util.compare(this.props,props);
+        
         if(!change){
             if(props){
                 for(let p in props){

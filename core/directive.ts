@@ -4,6 +4,7 @@ import { Element } from "./element";
 import { Module } from "./module";
 import { Util } from "./util";
 import { Expression } from "./expression";
+import { GlobalCache } from "./globalcache";
 
 /**
  * 指令类
@@ -47,7 +48,8 @@ export  class Directive {
             this.value = value;
         }
         //存入指令缓存
-        module.objectManager.saveDirective(this);
+        // module.objectManager.saveDirective(this);
+        GlobalCache.saveDirective(this);
     }
 
     /**

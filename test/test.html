@@ -21,22 +21,18 @@
     <title>Document</title>
 </head>
 <body>
-    <div><span >hello world</span></div>
+    <div></div>
 </body>
 <script>
-    // let event = new MouseEvent('tap');
-    // document.querySelector('div').addEventListener('tap',(e)=>{
-    //     console.log(e,e.target,'div',e.path,e.currentTarget);
-    //     console.log(this);
-    // });
+    let p1 = document.querySelector('div');
+    let div1 = document.createElement('div');
+    div1.innerHTML = 'this is div1';
+    p1.appendChild(div1);
 
-    let txt = document.createTextNode('abcd<b>abcd</b>');
-    document.querySelector('div').appendChild(txt);
-    // document.querySelector('span').addEventListener('click',(e)=>{
-    //     console.log(e,e.target,'span',e.path);
-    // });
-    
-
+    let div2 = document.createElement('div');
+    div2.innerHTML = 'this is div2';
+    div1.appendChild(div2);
+    console.log(div2,div1);
     
 </script>
 

@@ -1,20 +1,29 @@
 import {Module} from '../../dist/nodom.js'
 import {ModuleA} from './modulea.js'
+import {ModuleB} from './moduleb.js'
+import {ModuleC} from './modulec.js'
 export class ModuleMain extends Module{
     template(){
         return `
             <div>
-                <button e-click='change'>change</button>
+                <!--<button e-click='change'>change</button>
                 <div>y is {{y}}</div>
                 <div>x.y is {{x.y}}</div>
-                <h2>默认plug</h2>
-                <p>第一个子模块</p>
-                <ModuleA x-data={{getData()}} xxx='111'>
-                    <slot>
+                <h2>默认slot</h2>
+                <p>第一个子模块</p> -->
+                <ModuleA p1='true' xxx='111'>
+                    <ModuleB p2='false'>
+                         <ModuleC>
+                            <div>hahaha</div>
+                         </ModuleC>
+                     </ModuleB>
+                    <!--<slot>
                         <h3 style='color:blue'> hello change plug 1</h3>    
                     </slot>
                     <slot name='s2'>替换的第二个slot  {{name}}</slot>
+                    -->
                 </ModuleA>
+                <!--
                 <hr/>
                 <p>第二个子模块</p>
                 <h2>替换plug</h2>
@@ -36,7 +45,7 @@ export class ModuleMain extends Module{
                         我自动作为solot节点
                     </h3>
                     <slot>hahaha</slot>
-                </ModuleA>
+                </ModuleA>-->
            </div>
         `
     }
@@ -72,6 +81,6 @@ export class ModuleMain extends Module{
         }
         
     }
-    modules = [ModuleA]
+    modules = [ModuleA,ModuleB,ModuleC]
     
 }

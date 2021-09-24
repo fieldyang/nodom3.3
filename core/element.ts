@@ -171,9 +171,9 @@ export class Element {
             if(this.tagName){
                 el = newEl(this,parentEl);
             }else{
-                el = newText(this);
+                el = newText(this,parentEl);
             }
-            if(isRenderChild){
+            if(this.tagName  && isRenderChild){
                 genSub(el, this);
             }
             return el;
@@ -199,17 +199,22 @@ export class Element {
             el.setAttribute('key', vdom.key);
             //把el引用与key关系存放到cache中
             module.objectManager.saveNode(vdom.key,el);
+            // if(vdom.key === '2'){
+                console.log(el);
+            // }
             vdom.handleAssets(el);
             vdom.handleEvents(module,pEl);
+            pEl.appendChild(el);
             return el;
         }
 
         /**
          * 新建文本节点
          */
-        function newText(dom:Element): any {
+        function newText(dom:Element,pEl:Node): any {
             let node = document.createTextNode(<string>dom.textContent || '');
             module.objectManager.saveNode(dom.key,node);
+            pEl.appendChild(node);
             return node;
         }
 
@@ -226,9 +231,8 @@ export class Element {
                         el1 = newEl(item,pEl);
                         genSub(el1, item);
                     } else {
-                        el1 = newText(item);
+                        el1 = newText(item,pEl);
                     }
-                    pEl.appendChild(el1);
                 });
             }
         }
@@ -269,6 +273,9 @@ export class Element {
                 continue;
             }
             let dir:Directive = module.objectManager.getDirective(d.id);
+            if(!dir){
+                continue;
+            }
             if(dir.expression){
                 dir.value = module.objectManager.getExpression(dir.expression).val(module,this.model);
             }

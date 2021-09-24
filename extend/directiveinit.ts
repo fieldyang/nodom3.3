@@ -40,7 +40,7 @@ export default (function () {
                 if (!m) {
                     return;
                 }
-                
+                console.log(module,m);
                 //保留modelId
                 this.setParam(module,dom,'moduleId',m.id);
                 //添加到父模块
@@ -51,7 +51,11 @@ export default (function () {
                 m.active();
                 //设置props，如果改变了props，启动渲染
                 dom.handleProps(module);
-                m.setProps(dom.props);
+                let props = Object.create(null);
+                for(let o of dom.props){
+                    props[o[0]] = o[1];
+                }
+                m.setProps(props);
             }
         },
         8
@@ -459,7 +463,7 @@ export default (function () {
             this.value = this.value || 'default';
             let pd:Directive = parent.getDirective(module,'module');
             //父dom有module指令，表示为替代节点，替换子模块中的对应的slot节点；否则为子模块定义slot节点
-            if(pd){ 
+            if(pd){
                 if(module.children.length===0){
                     return;
                 }
@@ -468,11 +472,13 @@ export default (function () {
                     //缓存当前替换节点
                     m.objectManager.set('$slots.' + this.value,dom);
                 }
+                
                 //设置不渲染
                 dom.dontRender = true;
             }else{ //源slot节点
                 //获取替换节点进行替换
                 let rdom = module.objectManager.get('$slots.' + this.value);
+                console.log(rdom,module);
                 if(rdom){
                     dom.children = rdom.children;
                 }

@@ -6,7 +6,7 @@ export { Element } from "./core/element";
 export { NError } from "./core/error";
 export { NEvent } from "./core/event";
 export { EventManager } from "./core/eventmanager";
-
+export { GlobalCache } from "./core/globalcache";
 export { Expression } from "./core/expression";
 export { NFactory } from "./core/factory";
 

@@ -1,6 +1,5 @@
 import { DefineElementManager } from "./defineelementmanager";
 import { Directive } from "./directive";
-import { DirectiveManager } from "./directivemanager";
 import { Element } from "./element";
 import { NError } from "./error";
 import { NEvent } from "./event";
@@ -260,12 +259,15 @@ export class Compiler {
                     continue;
                 }
                 if(!slotCt){
-                    slotCt = new Element('div');
+                    slotCt = new Element('div',this.genKey());
                     slotCt.addDirective(new Directive(this.module,'slot',null));
+                    //当前位置，用slot替代
+                    dom.children.splice(j,1,slotCt);
+                }else{
+                    //直接删除
+                    dom.children.splice(j--,1);
                 }
                 slotCt.add(c);
-                //当前位置，用slot替代
-                dom.children.splice(j--,1,slotCt);
             }
         }
     }
@@ -327,6 +329,7 @@ export class Compiler {
         // 模块类判断
         if (ModuleFactory.hasClass(node.tagName)) {
             node.addDirective(new Directive(this.module,'module',node.tagName));
+            node.setProp('role','module');
             node.tagName = 'div';
         }else if(DefineElementManager.has(node.tagName)){ //自定义元素
             let clazz = DefineElementManager.get(node.tagName);
@@ -339,7 +342,7 @@ export class Compiler {
      * @returns     key
      */
     private genKey():string{
-        // return this.module.id + '_' + this.currentId++;
+        // return this.module.id + '_' + this.elementId++;
         return this.elementId++ + '';
     }
 }

@@ -1,4 +1,5 @@
 import { Element } from "./element";
+import { GlobalCache } from "./globalcache";
 import { Model } from "./model";
 import { Module } from "./module";
 import { Util } from "./util";
@@ -61,7 +62,8 @@ export class NEvent {
         this.name = eventName;
         this.module = module;
         
-        module.objectManager.saveEvent(this);
+        GlobalCache.saveEvent(this);
+        // module.objectManager.saveEvent(this);
         //如果事件串不为空，则不需要处理
         if (eventStr) {
             let tp = typeof eventStr;
