@@ -34,7 +34,23 @@ export class Compiler {
         let ast = this.compileTemplateToAst(elementStr);
         return ast;
     }
-
+    private handleSlot(node: Element) {
+        if (node.hasDirective('module')) {
+            let slotCt: Element;
+            for (let i = 0; i < node.children.length; i++) {
+                const c = node.children[i];
+                if (c.hasDirective('slot')) {
+                    continue;
+                }
+                if (!slotCt) {
+                    slotCt = new Element('div');
+                    slotCt.addDirective(new Directive(this.module, 'slot', null))
+                }
+                slotCt.add(c);
+                node.children.splice(i, 1, slotCt);
+            }
+        }
+    }
     /**
      * 前置处理
      * 包括：模块类元素、自定义元素
@@ -111,7 +127,6 @@ export class Compiler {
                 if (attrValue?.startsWith('{{')) {
                     attrValue = this.compileExpression(attrValue)[0];
                     attrValue = this.module.objectManager.getExpression(attrValue);
-                    // attrValue = new Expression(attrValue.substring(2, attrValue.length - 2));
                 }
                 if (attrName != undefined) {
                     attrs.set(attrName, attrValue ? attrValue : '');
@@ -249,6 +264,7 @@ export class Compiler {
             c.children = [];
         }
         stack1[ind].children = stack1[ind].children.concat(chd);
+        this.handleSlot(stack1[ind]);
         let pop = stack1.pop();
         if (stack1.length != 0) {
             stack1[stack1.length - 1].children.push(pop);

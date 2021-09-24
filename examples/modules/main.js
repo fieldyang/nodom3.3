@@ -1,8 +1,8 @@
-import {Module} from '../../dist/nodom.js'
-import {ModuleA} from './modulea.js'
-export class ModuleMain extends Module{
-    template(){
-        return `
+import { Module } from "../../dist/nodom.js";
+import { ModuleA } from "./modulea.js";
+export class ModuleMain extends Module {
+	template() {
+		return `
             <div>
                 <button e-click='change'>change</button>
                 <div>y is {{y}}</div>
@@ -24,41 +24,49 @@ export class ModuleMain extends Module{
                     </slot>
                     
                 </ModuleA>
+
+                <p>第三个子模块</p>
+                <h2>默认子节点自动转换为slot节点</h2>
+                <ModuleA xxx='333'>
+                    
+                    <p style='color:gold'>
+                        我自动作为solot节点
+                    </p>
+                    <slot name='s2'>hahaha</slot>
+                    <h3 style='color:gold'>
+                        我自动作为solot节点
+                    </h3>
+                </ModuleA>
            </div>
-        `
-    }
-    data = {
-            show:true,
-            x:{
-                y:123
-            },
-            y:'hello world!',
-            name:'yanglei',
-            rows:[
-                {name:'yang'},
-                {name:'lei'},
-            ]
-        }
-    
-    methods = {
-        getData(){
-            // return {
-            //     x1:'x.y',
-            //     x2:['y',true]
-            // }
-            return{
-                n:'name',
-                x1:'x.y',
-                x2:['y',true]
-            }
-        },
-        change(){
-            this.show = false;
-            this.y = 'aaaa';
-            // console.log(this);
-        }
-        
-    }
-    modules = [ModuleA]
-    
+        `;
+	}
+	data = {
+		show: true,
+		x: {
+			y: 123,
+		},
+		y: "hello world!",
+		name: "yanglei",
+		rows: [{ name: "yang" }, { name: "lei" }],
+	};
+
+	methods = {
+		getData() {
+			// return {
+			//     x1:'x.y',
+			//     x2:['y',true]
+			// }
+			return {
+				n: "name",
+				x1: "x.y",
+				x2: ["y", true],
+			};
+		},
+		change() {
+			this.show = false;
+			this.y = "aaaa";
+			// console.log(this);
+		},
+	};
+	modules = [ModuleA];
 }

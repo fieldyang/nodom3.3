@@ -51,7 +51,8 @@ export const NodomMessage_en = {
         config:"{0} config parameter error",
         config1:"{0} config parameter '{1}' error",
         itemnotempty:"{0} '{1}' config item '{2}' not allow empty",
-		itemincorrect:"{0} '{1}' config item '{2}' error"
+		itemincorrect:"{0} '{1}' config item '{2}' error",
+        wrongTemplate:"wrong template"
     },
 
     /**
