@@ -302,7 +302,6 @@ export class Element {
             if (typeof v === 'number') { //处理表达式
                 let expr = module.objectManager.getExpression(v);
                 if(!expr){
-                    console.log(v);
                     return;
                 }
                 let v1 = expr.val(module,this.model);

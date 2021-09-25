@@ -149,7 +149,7 @@ export  class ObjectManager {
             GlobalCache.removeExpression(id);
             if(ex){
                 this.cache.set('$expressions.' + id,ex);
-                return ex.$instance;
+                return ex;
             }
         }
         return ex;
