@@ -1,4 +1,4 @@
-import { Compiler } from "..";
+import { Compiler } from "./compiler";
 import { Element } from "./element";
 import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
@@ -210,7 +210,6 @@ export class Module {
         if (this.state < 3 || !this.getContainer()) {
             return false;
         }
-        console.time('t1');
         //编译
         if(!this.originTree){
             this.compile();
@@ -290,7 +289,6 @@ export class Module {
         }
         
         //设置已渲染状态
-        console.timeEnd('t1');
         this.state = 4;
         //执行后置方法
         this.doRenderOps(1);
