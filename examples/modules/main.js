@@ -47,7 +47,7 @@ export class ModuleMain extends Module{
                     <slot>hahaha</slot>
                 </ModuleA>-->
 
-                <mod-a temp={{"<div x-repeat={{rows}}>{{name}}</div>"}}>
+                <mod-a temp={{genTemp()}}>
                 </mod-a>
            </div>
         `

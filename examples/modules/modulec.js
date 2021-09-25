@@ -27,4 +27,4 @@ export class ModuleC extends Module{
     }
 }
 
-registModule('modc',ModuleC);
+registModule(ModuleC,'modc');

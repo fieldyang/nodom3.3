@@ -58,8 +58,10 @@ export function createDirective(name: string, handler: Function,priority?: numbe
 
 /**
  * 注册模块
+ * @param clazz     模块类
+ * @param name      注册名，如果没有，则为类名
  */
-export function registModule(name:string,clazz:any){
+export function registModule(clazz:any,name?:string){
     ModuleFactory.addClass(clazz,name);
 }
 

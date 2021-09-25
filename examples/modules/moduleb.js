@@ -30,4 +30,4 @@ export class ModuleB extends Module{
     modules = [ModuleC]
 }
 
-registModule('mod-b',ModuleB);
+registModule(ModuleB,'mod-b');
