@@ -836,7 +836,6 @@ export class Element {
     public getEvent(eventName: string) {
         return this.events.get(eventName);
     }
-
     /**
      * 执行不渲染关联操作
      * 关联操作，包括:

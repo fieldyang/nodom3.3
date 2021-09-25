@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="../dist/nodom.js"></script>
+    <script src="config/module.js"></script>
+    <script type="text/javascript" src="./js/kayak.js"></script>
+    <style>
+        .red{
+            color: red;
+        }
+    </style>
+    <title>store</title>
+</head>
+
+<body>
+    <div id="app">
+       <div>状态管理仓库</div> 
+        <span>简单计数器:</span>
+        <button e-click='add' class='red'>加</button>
+        <button e-click='del'class='red'>减</button>
+
+        <b class='red'> total:{{num}}</b>
+        <hr>
+        <Count></Count>
+        <hr>
+        <md-a>
+            <div x-slot='picture'>
+                <section>我是A模块,点击</section>
+                <button e-click='addStore' class='red'>A模块：加</button>
+                <div></div>
+                <button e-click='delStore' class='red'>A模块：减</button>
+                <hr>
+                <md-a>
+                    <div x-slot="picture">
+                        <section>我是A模块的子模块B模块,请点击</section>
+                        <button e-click='addStore' class='red'>B模块：加</button>
+                        <div></div>
+                        <button e-click='delStore' class='red'>B模块：减</button>
+                        <hr>
+                        <md-a>
+                            <div x-slot="picture">
+                                <section>我是B模块的子模块C模块,请点击</section>
+                                <button e-click='addStore' class='red'>C模块：加</button>
+                                <div></div>
+                                <button e-click='delStore' class='red'>C模块：减</button>
+                            </div>
+                        </md-a>
+                    </div>
+                </md-a>
+            </div>
+        </md-a>
+        <hr>
+
+    </div>
+</body>
+
+<script>
+    //初始化store,状态管理
+    const store = nodom.newStore((pre = 0, action) => {
+        switch (action.type) {
+            case 'add':
+                return pre + 1;
+            case 'del':
+                return pre - 1;
+            default:
+                return pre;
+        }
+    });
+    nodom.app({
+        store,
+        module: {
+            el: '#app',
+            data: {
+                name: 'kyle',
+                num: 0
+            },
+            methods: {
+                onBeforeFirstRender: function (model) {
+                    store.subscribe(() => {
+                        // console.log(store.getState());
+                        //store只负责数据管理，不负责更新页面
+                        this.num = store.getState();
+                    });
+                },
+                registerModule: () => {
+                    return [{
+                        /**
+                         * name自定义标签名，class,模块类名
+                         * **/
+                        name: "Count",
+                        class: "Store",
+                    }];
+                },
+                add: function (dom, module) {
+                    const {
+                        store
+                    } = module;
+
+                    store.dispatch({
+                        type: 'add'
+                    });
+                },
+                del: function (dom, module) {
+                    const {
+                        store
+                    } = module;
+
+                    store.dispatch({
+                        type: 'del'
+                    });
+                }
+            }
+        }
+    })
+</script>
+
+</html>
