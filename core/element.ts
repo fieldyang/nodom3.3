@@ -17,6 +17,12 @@ export class Element {
      */
     public key: string;
 
+
+    /**
+     * 别名，设置后，在模版中以别名方式使用，不再支持模块类名
+     */
+    public alias:string;
+
     /**
      * 绑定模型
      */
@@ -698,7 +704,9 @@ export class Element {
                 }
             }
         }
-
+        if(this.staticNum>0){
+            this.staticNum--;
+        }
         //子节点处理
         if (!this.children || this.children.length === 0) {
             // 旧节点的子节点全部删除

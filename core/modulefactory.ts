@@ -57,12 +57,16 @@ export class ModuleFactory {
     /**
      * 添加模块类
      * @param clazz     模块类
+     * @param name      注册别名
      */
-    public static addClass(clazz:any){
+    public static addClass(clazz:any,name?:string){
         if(this.classes.has(clazz.name)){
             return;
         }
         this.classes.set(clazz.name,clazz);
+        if(name){
+            this.classes.set(name,clazz);
+        }
     }
 
     /**

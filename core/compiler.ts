@@ -29,7 +29,6 @@ export class Compiler {
     * @returns              虚拟dom
     */
     public compile(elementStr: string): Element {
-        // 这里是把模板串通过正则表达式匹配 生成AST
         return this.compileTemplate(elementStr);
     }
 
@@ -67,7 +66,6 @@ export class Compiler {
             textStack.push(tmp);
             st = regExp.lastIndex;
         }
-
         // 标签名数组
         let tagNames = [];
         // 标签对象数组
@@ -225,7 +223,6 @@ export class Compiler {
                 if(((r=/((?<=^')(.*?)(?='$))|((?<=^")(.*?)(?="$)|((?<=^`)(.*?)(?=`$)))/.exec(value)) !== null)){
                     value = r[0].trim();
                 }
-                
                 //表达式编译
                 if(/^\{\{[\S\s]*\}\}$/.test(value)){
                     value = me.compileExpression(value)[0];
@@ -328,7 +325,6 @@ export class Compiler {
         // 模块类判断
         if (ModuleFactory.hasClass(node.tagName)) {
             node.addDirective(new Directive(this.module,'module',node.tagName));
-            // node.setProp('role','module');
             node.tagName = 'div';
         }else if(DefineElementManager.has(node.tagName)){ //自定义元素
             let clazz = DefineElementManager.get(node.tagName);

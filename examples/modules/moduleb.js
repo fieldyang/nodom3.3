@@ -1,4 +1,4 @@
-import {Module} from '../../dist/nodom.js'
+import {Module,registModule} from '../../dist/nodom.js'
 import { ModuleC } from './modulec.js';
 
 export class ModuleB extends Module{
@@ -29,3 +29,5 @@ export class ModuleB extends Module{
 
     modules = [ModuleC]
 }
+
+registModule('mod-b',ModuleB);

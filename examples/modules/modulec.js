@@ -1,4 +1,4 @@
-import {Module} from '../../dist/nodom.js'
+import {Module,registModule} from '../../dist/nodom.js'
 
 export class ModuleC extends Module{
     template(props){
@@ -26,3 +26,5 @@ export class ModuleC extends Module{
         }
     }
 }
+
+registModule('modc',ModuleC);

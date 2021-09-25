@@ -17,11 +17,6 @@ export class Module {
     public id: number;
 
     /**
-     * 模块名(模块内(父模块的子模块之间)唯一)，如果不设置，则系统会自动生成Module+id
-     */
-    public name: string;
-
-    /**
      * 数据，模块中定义
      */
     public data: any;
@@ -572,4 +567,3 @@ export class Module {
         this.originTree = new Compiler(this).compile(this.template(this.props));
     }
 }
-

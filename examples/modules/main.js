@@ -11,18 +11,18 @@ export class ModuleMain extends Module{
                 <div>x.y is {{x.y}}</div>
                 <h2>默认slot</h2>
                 <p>第一个子模块</p> -->
-                <ModuleA p1='true' xxx='111'>
-                    <ModuleB p2='false'>
-                         <ModuleC>
+                <mod-a p1='true' xxx='111'>
+                    <mod-b p2='false'>
+                         <modc>
                             <div>hahaha</div>
-                         </ModuleC>
-                     </ModuleB>
+                        </modc>
+                    </mod-b>
                     <!--<slot>
                         <h3 style='color:blue'> hello change plug 1</h3>    
                     </slot>
                     <slot name='s2'>替换的第二个slot  {{name}}</slot>
                     -->
-                </ModuleA>
+                </mod-a>
                 <!--
                 <hr/>
                 <p>第二个子模块</p>
@@ -46,6 +46,9 @@ export class ModuleMain extends Module{
                     </h3>
                     <slot>hahaha</slot>
                 </ModuleA>-->
+
+                <mod-a temp={{"<div x-repeat={{rows}}>{{name}}</div>"}}>
+                </mod-a>
            </div>
         `
     }
@@ -78,9 +81,15 @@ export class ModuleMain extends Module{
             this.show = false;
             this.y = 'aaaa';
             // console.log(this);
+        },
+        genTemp(){
+            return `
+                <p>这是传递的子模版</p>
+                <div x-repeat={{rows}}>{{name}}</div>
+            `
         }
         
     }
-    modules = [ModuleA,ModuleB,ModuleC]
+    // modules = [ModuleA,ModuleB,ModuleC]
     
 }

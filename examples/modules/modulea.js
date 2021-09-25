@@ -1,16 +1,22 @@
-import {Module} from '../../dist/nodom.js'
+import {Module,registModule} from '../../dist/nodom.js'
 import {ModuleB} from './moduleb.js'
 export class ModuleA extends Module{
     template(props){
-        console.log(props);
         if(props.p1){
-            console.log('aaa');
             return `
                 <div>
                     <div>这是子模块A</div>
                     <slot></slot>
                 </div>
             `
+        }else if(props.temp){
+            return `
+                <div>
+                    <h1>props传模版</h1>
+                    ${props.temp}
+                </div>
+            `
+            
         }else{
             return `
                 <div>
@@ -33,7 +39,8 @@ export class ModuleA extends Module{
     data = {
         name:'yang',
         x1:0,
-        x2:0
+        x2:0,
+        rows:[{name:'nodom1'},{name:'nodom2'},{name:'nodom3'}]
     }
 
     methods = {
@@ -45,6 +52,7 @@ export class ModuleA extends Module{
             this.x2 = 'hahaha'
         }
     }
-
     modules = [ModuleB];
 }
+
+registModule('mod-a',ModuleA);
