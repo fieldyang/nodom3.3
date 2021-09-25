@@ -34,7 +34,6 @@ export class Expression {
                 }
             }
         `);
-        // module.objectManager.saveExpression(this);
         GlobalCache.saveExpression(this);
     }
 

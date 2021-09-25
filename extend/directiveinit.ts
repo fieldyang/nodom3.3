@@ -40,7 +40,6 @@ export default (function () {
                 if (!m) {
                     return;
                 }
-                console.log(module,m);
                 //保留modelId
                 this.setParam(module,dom,'moduleId',m.id);
                 //添加到父模块
@@ -478,7 +477,6 @@ export default (function () {
             }else{ //源slot节点
                 //获取替换节点进行替换
                 let rdom = module.objectManager.get('$slots.' + this.value);
-                console.log(rdom,module);
                 if(rdom){
                     dom.children = rdom.children;
                 }

@@ -280,8 +280,6 @@ export class Compiler {
         let ele = new Element(null,this.genKey());
         if(/\{\{[\s\S]+\}\}/.test(txt)){  //检查是否含有表达式
             ele.expressions = <any[]>this.compileExpression(txt);
-            //有表达式，设置非静态
-            ele.isStatic = false;
         }else{
             ele.textContent = txt;
         }

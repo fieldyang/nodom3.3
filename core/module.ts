@@ -124,7 +124,6 @@ export class Module {
         this.objectManager = new ObjectManager(this);
         this.methods = {};
         this.state = 0;
-        console.log('new module',this.id);
         //加入模块工厂
         ModuleFactory.add(this);
         // 初始化模型工厂

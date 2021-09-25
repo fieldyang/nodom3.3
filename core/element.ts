@@ -76,9 +76,12 @@ export class Element {
     public tagName: string;
 
     /**
-     * 静态标志，不进行渲染，只管自己，不管子节点
+     * staticNum 静态标识数
+     *  0 表示静态，不进行比较
+     *  > 0 每次比较后-1
+     *  < 0 不处理
      */
-    public isStatic:boolean = true;
+    public staticNum:number = 0;
 
     /**
      * 不渲染标志，单次渲染有效
@@ -89,11 +92,13 @@ export class Element {
      * @param tag       标签名
      * @param key       key
      */
-    constructor(tag?: string,key?:string) {
+    constructor(tag?: string,key?:string,module?:Module) {
         this.tagName = tag; //标签
         if(key){
             this.key = key;
         }
+        //新建节点，设置为至少比较一次
+        this.staticNum = 1;
     }
 
     /**
@@ -111,6 +116,7 @@ export class Element {
             }
             this.parent = parent;
         }
+
         //设置model为模块model
         if (!this.model) {
             this.model = module.model;
@@ -120,21 +126,21 @@ export class Element {
             let d = this.getDirective(module,'model');
             d.exec(module,this);
         }
-        if(!this.isStatic){  //静态节点不渲染
-            if (this.tagName) { //element
-                if (!this.handleDirectives(module)) {
-                    this.doDontRender(module,parent);
-                    return false;
-                }
-                //模块指令已经执行了属性计算，此处不再计算
-                if(!this.hasDirective('module')){
-                    this.handleProps(module);
-                }
-            } else{ //textContent
-                this.handleText(module);
+        
+        if (this.tagName) { //element
+            if (!this.handleDirectives(module)) {
+                this.doDontRender(module,parent);
+                return false;
             }
+            this.handleProps(module);
+            //如果有表达式属性，则staticNum为-1
+            if(this.exprProps.size>0){
+                this.staticNum = -1;
+            }
+        } else{ //textContent
+            this.handleText(module);
         }
-
+    
         //子节点渲染
         for (let i = 0; i < this.children.length; i++) {
             let item = this.children[i];
@@ -199,9 +205,6 @@ export class Element {
             el.setAttribute('key', vdom.key);
             //把el引用与key关系存放到cache中
             module.objectManager.saveNode(vdom.key,el);
-            // if(vdom.key === '2'){
-                console.log(el);
-            // }
             vdom.handleAssets(el);
             vdom.handleEvents(module,pEl);
             pEl.appendChild(el);
@@ -243,6 +246,10 @@ export class Element {
      */
     public clone(): Element {
         let dst: Element = new Element();
+        //如果staticNum>0，则表示为新编译节点，第二次clone时预设为不再需要比较
+        if(this.staticNum>0){
+            this.staticNum--;
+        }
         //不直接拷贝的属性
         let notCopyProps: string[] = ['parent', 'model'];
         Util.getOwnProps(this).forEach((p) => {
@@ -255,10 +262,6 @@ export class Element {
                 dst[p] = this[p];
             }
         });
-        //判断并设置静态标志
-        if(dst.tagName){
-            dst.isStatic = (dst.exprProps.size === 0 && dst.directives.length === 0);
-        }
         return dst;
     }
 
@@ -347,6 +350,7 @@ export class Element {
     public handleText(module) {
         if (this.expressions !== undefined && this.expressions.length > 0) {
             this.textContent = this.handleExpression(this.expressions, module) || '';
+            this.staticNum = -1;
         }
     }
 
@@ -391,10 +395,6 @@ export class Element {
                 this.directives.splice(ind, 1);
             }
         });
-
-        if(!this.isStatic && directives.length === 0 && this.exprProps.size === 0){
-            this.isStatic = true;
-        }
     }
 
     /**
@@ -412,7 +412,6 @@ export class Element {
         if (sort) {
             this.sortDirective();
         }
-        this.isStatic = false;
     }
 
     /**
@@ -604,7 +603,6 @@ export class Element {
     public setProp(propName: string, v: any) {
         if(v instanceof Expression){
             this.exprProps.set(propName,v.id);
-            this.isStatic = false;
         } else {
             this.props.set(propName,v);
         }
@@ -626,10 +624,8 @@ export class Element {
             this.exprProps.delete(<string>props);
             this.props.delete(<string>props);
         }
-        //判断并设置静态标志
-        if(!this.isStatic && this.directives.length === 0 && this.exprProps.size === 0){
-            this.isStatic = true;
-        }
+        //设置静态标志，至少要比较一次
+        this.staticNum = 1;
     }
 
     /**
@@ -661,9 +657,10 @@ export class Element {
         if (!dst) {
             return;
         }
+        
         if (!this.tagName) { //文本节点
             if (!dst.tagName) {
-                if (this.textContent !== dst.textContent) {
+                if ((this.staticNum || dst.staticNum) && this.textContent !== dst.textContent) {
                     addChange(2,this,null,dst.parent);
                 }
             } else { //节点类型不同
@@ -672,7 +669,7 @@ export class Element {
         } else { //element节点
             if (this.tagName !== dst.tagName) { //节点类型不同
                 addChange(5,this,null, dst.parent);
-            } else if(!this.isStatic || !dst.isStatic){ //节点类型相同，但有一个不是静态节点，进行属性和asset比较
+            } else if(this.staticNum || dst.staticNum){ //节点类型相同，但有一个不是静态节点，进行属性和asset比较
                 let change = false;
                 //属性比较
                 if(this.props.size !== dst.props.size){
@@ -911,5 +908,11 @@ export class Element {
      */
     public removeParam(module:Module,name:string){
         module.objectManager.removeElementParam(this.key,name);
+    }
+
+    public changeStatic(force?:boolean){
+        if(force){
+
+        }
     }
 }

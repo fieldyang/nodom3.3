@@ -310,5 +310,4 @@ export class GlobalCache{
     public static clearSaveDoms(){
         this.remove('$doms');
     }
-
 }

@@ -63,7 +63,6 @@ export class NEvent {
         this.module = module;
         
         GlobalCache.saveEvent(this);
-        // module.objectManager.saveEvent(this);
         //如果事件串不为空，则不需要处理
         if (eventStr) {
             let tp = typeof eventStr;

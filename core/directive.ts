@@ -48,7 +48,6 @@ export  class Directive {
             this.value = value;
         }
         //存入指令缓存
-        // module.objectManager.saveDirective(this);
         GlobalCache.saveDirective(this);
     }
 

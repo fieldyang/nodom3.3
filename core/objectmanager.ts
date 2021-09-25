@@ -70,10 +70,11 @@ export  class ObjectManager {
         let d = this.cache.get('$directives.' + id + '.$instance');
         if(!d){
             d = GlobalCache.get('$directives.' + id);
+            GlobalCache.removeDirective(id);
             if(d){
                 this.cache.set('$directives.' + id,d);
+                return d.$instance;
             }
-            return d.$instance;
         }
         return d;
     }
@@ -145,10 +146,11 @@ export  class ObjectManager {
         let ex = this.cache.get('$expressions.' + id);
         if(!ex){
             ex = GlobalCache.get('$expressions.' + id);
+            GlobalCache.removeExpression(id);
             if(ex){
                 this.cache.set('$expressions.' + id,ex);
+                return ex.$instance;
             }
-            return ex.$instance;
         }
         return ex;
     }
@@ -178,10 +180,12 @@ export  class ObjectManager {
         let ev = this.cache.get('$events.' + id + '.$instance')
         if(!ev){
             ev = GlobalCache.get('$events.' + id);
+            GlobalCache.removeEvent(id);
             if(ev){
                 this.cache.set('$events.' + id,ev);
+                return ev.$instance;
             }
-            return ev.$instance;
+            
         }
         return ev;
     }
