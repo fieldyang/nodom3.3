@@ -26,7 +26,6 @@ export class NCache{
                 }
             }
         }
-        
         if(p){
             return p[key];
         }

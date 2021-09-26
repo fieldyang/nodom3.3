@@ -1,10 +1,9 @@
 import { Compiler } from "..";
-import { NCache } from "./cache";
-import { DirectiveFactory } from "./directivefactory";
 import { Element } from "./element";
 import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
 import { ModuleFactory } from "./modulefactory";
+import { ObjectManager } from "./objectmanager";
 import { Renderer } from "./renderer";
 import { Util } from "./util";
 
@@ -88,11 +87,6 @@ export class Module {
     public modelManager: ModelManager;
 
     /**
-     * 指令工厂
-     */
-    public directiveFactory:DirectiveFactory;
-
-    /**
      * 放置模块的容器
      */
     private container: HTMLElement;
@@ -113,26 +107,21 @@ export class Module {
     private postRenderOps:any[] = [];
 
     /**
-     * 缓存
-     * 缓存说明：
-     * dom相关：  $doms.${dom.key}
-     * 旧dom相关：$oldDoms.${dom.key}
-     * 指令相关：$doms.${dom.key}.$directives.${directive.type}
-     * key htmldom映射: $virtualDoms
+     * 编译后的dom树
      */
-    private cache:NCache;
+    public originTree:Element;
 
     /**
-     * 交换器  {交换器名(默认default):要替代的dom}
+     * 对象管理器，用于管理虚拟dom节点、指令、表达式、事件对象
      */
-    public swapMap:Map<string,Element>;
-    
+    public objectManager:ObjectManager;
+
     /**
      * 构造器
      */
     constructor() {
         this.id = Util.genId();
-        this.cache = new NCache();
+        this.objectManager = new ObjectManager(this);
         this.methods = {};
         this.state = 0;
         //加入模块工厂
@@ -168,7 +157,7 @@ export class Module {
      * @param props     props对象，在模版容器dom中进行配置，从父模块传入
      * @returns         模版串
      */
-    private template(props?:any):string{
+    public template(props?:any):string{
         return null;
     }
     
@@ -220,12 +209,13 @@ export class Module {
         if (this.state < 3 || !this.getContainer()) {
             return false;
         }
-        // 保存上次的dom缓存
-        this.saveCache('$oldDoms',this.readCache('$doms'));
-        //重置工作dom缓存
-        this.saveCache('$doms',{});
+        console.time('t1');
         //编译
-        let root:Element = new Compiler(this).compile(this.template(this.props));
+        if(!this.originTree){
+            this.compile();
+        }
+        let root:Element = this.originTree.clone();
+        
         //执行前置方法
         this.doRenderOps(0);
         if (!this.renderTree) {
@@ -246,33 +236,33 @@ export class Module {
                 //刪除和替換
                 for(let item of changeDoms){
                     let[n1,n2,pEl] = [
-                        item[1]?this.getNode(item[1].key):null,
-                        item[2]&&typeof item[2]==='object'?this.getNode(item[2].key):null,
-                        item[3]?this.getNode(item[3].key):null
+                        item[1]?this.objectManager.getNode(item[1].key):null,
+                        item[2]&&typeof item[2]==='object'?this.objectManager.getNode(item[2].key):null,
+                        item[3]?this.objectManager.getNode(item[3].key):null
                     ];
                     switch(item[0]){
                         case 1: //添加
                             //把新dom缓存添加到旧dom缓存
-                            this.saveCache(`$oldDoms.${item[1].key}`,this.readCache(`$doms.${item[1].key}`));
+                            // this.objectManager.saveOldElement(this.objectManager.getNewElement(item[1].key));
                             item[1].renderToHtml(this,pEl,true);
-                            n1 = this.getNode(item[1].key);
+                            n1 = this.objectManager.getNode(item[1].key);
                             if(!n2){ //不存在添加节点或为索引号
                                 if(typeof item[2] === 'number' && pEl.childNodes.length-1>item[2]){
                                     pEl.insertBefore(n1,pEl.childNodes[item[2]]);
                                 }else{
                                     pEl.appendChild(n1);
                                 }
-                                
                             }else{
                                 pEl.insertBefore(n1,n2);
                             }
                             break;
                         case 2: //修改
-                            item[1].renderToHtml(this,pEl);
+                            item[1].renderToHtml(this);
                             break;
                         case 3: //删除
                             //清除缓存
-                            this.clearDomCache(item[1],true);
+                            this.objectManager.removeSavedNode(item[1].key);
+                            //从html dom树移除
                             pEl.removeChild(n1);
                             break;
                         case 4: //移动
@@ -288,9 +278,8 @@ export class Module {
                             break;
                         default: //替换
                             //替换之前的dom缓存
-                            this.saveCache(`$oldDoms.${item[1].key}`,this.readCache(`$doms.${item[1].key}`));
                             item[1].renderToHtml(this,pEl,true);
-                            n1 = this.getNode(item[1].key);
+                            n1 = this.objectManager.getNode(item[1].key);
                             pEl.replaceChild(n1,n2);
                     }
                 }
@@ -298,12 +287,9 @@ export class Module {
             //执行每次渲染后事件
             this.doModuleEvent('onRender');
         }
-        //把old dom 缓存置为doms
-        this.saveCache('$doms',this.readCache('$oldDoms'));
-        //移除旧dom cache
-        this.removeCache('$oldDoms');
         
         //设置已渲染状态
+        console.timeEnd('t1');
         this.state = 4;
         //执行后置方法
         this.doRenderOps(1);
@@ -328,9 +314,10 @@ export class Module {
         Util.empty(this.container);
         //渲染到html
         root.renderToHtml(this, this.container,true);
-        this.container.appendChild(this.getNode(root.key));
+        this.container.appendChild(this.objectManager.getNode(root.key));
         //执行首次渲染后事件
         this.doModuleEvent('onFirstRender');
+        //设置旧dom结构
     }
 
     /**
@@ -463,30 +450,12 @@ export class Module {
     }
 
     /**
-     * 保存key对应的html node
-     * @param key       dom key
-     * @param node      node
-     */
-    public setNode(key:string,node:Node){
-        this.saveCache(`$virtualDoms.${key}`,node);
-    }
-    /**
-     * 获取模块下的html节点
-     * @param key       el key
-     * @param oldTree   是否从旧树中获取
-     * @returns         html element
-     */
-    public getNode(key: string): Node {
-        return this.readCache(`$virtualDoms.${key}`);
-    }
-
-    /**
      * 获取虚拟dom节点
      * @param key               dom key
      * @param fromVirtualDom    是否从源虚拟dom数获取，否则从渲染树获取
      */
-    public getElement(key: string | Object) {
-        return this.renderTree.query(key);
+    public getElement(key: string | Object) :Element{
+        return this.renderTree.query(<string>key);
     }
 
     /**
@@ -495,7 +464,7 @@ export class Module {
     public getContainer(): HTMLElement {
         if(!this.container){
             if(this.containerKey){
-                this.container = <HTMLElement>this.getParent().getNode(this.containerKey);
+                this.container = <HTMLElement>this.getParent().objectManager.getNode(this.containerKey);
             }
         }
         return this.container;
@@ -569,9 +538,8 @@ export class Module {
     /**
      * 设置props
      * @param props     属性值
-     * @param render    是否触发渲染，如果为true，则props改变后执行render
      */
-    public setProps(props:any,render?:boolean){
+    public setProps(props:any){
         //为提升性能，只进行浅度比较
         //如果相同且属性值不含对象，则返回
         let change:boolean = !Util.compare(this.props,props);
@@ -587,49 +555,20 @@ export class Module {
         }
         if(change){
             this.props = props;
-            if(render){
-                this.active();
-            }
+            this.compile();
+            this.active();
         }
     }
 
     /**
-     * 保存到cache
-     * @param key       键，支持"."
-     * @param value     值
+     * 编译
      */
-    public saveCache(key:string,value:any){
-        this.cache.set(key,value);
-    }
-
-    /**
-     * 从cache读取
-     * @param key   键，支持"."
-     * @returns     缓存的值或undefined
-     */
-    public readCache(key){
-        return this.cache.get(key);
-    }
-
-    /**
-     * 从cache移除
-     * @param key   键，支持"."
-     */
-    public removeCache(key){
-        this.cache.remove(key);
-    }
-
-    /**
-     * 清除dom cache
-     * @param dom   待删除的dom 
-     * @param old   是否从旧虚拟dom映射表删除，默认false
-     */
-    public clearDomCache(dom:Element,old?:boolean){
-        if(!old){
-            dom.clearCache(this);
-        }else{
-            this.removeCache(`$oldDoms.${dom.key}`);
-        }
+    public compile(){
+        //清除缓存
+        this.objectManager.clearDirectives();
+        this.objectManager.clearExpressions();
+        this.objectManager.clearEvents();
+        this.originTree = new Compiler(this).compile(this.template(this.props));
     }
 }
 

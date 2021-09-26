@@ -1,0 +1,25 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "module":"es2020",
+    // "module":"amd",
+    "target": "ES2015",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "lib": [
+      "es5",
+      "es6",
+      "dom",
+      "ES2017"
+    ],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "outDir":"./dist",
+    // "declaration": true,
+    // "declarationDir":"./dist/types"
+  },
+  "include":["**/*.ts", "index.ts", "test.ts"],
+  "exclude": [
+    "./examples"
+  ]
+}

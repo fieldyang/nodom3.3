@@ -18,12 +18,11 @@
 			template() {
 				return ` 
 		              <div>
-		                 <div class='a     b   c'></div>
-                        
+                        <div a={{"<p>abc</p>"}}></div>
 		              </div>
 				`;
 			}
-			data = {
+			model = {
 				xx: 11,
 				discount: 0.7,
 				foods: [

@@ -1,5 +1,4 @@
 import { DirectiveType } from "./directivetype";
-
 /**
  * 指令管理器
  */

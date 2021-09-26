@@ -1,7 +1,14 @@
+<<<<<<< HEAD
+import { Module } from "../../dist/nodom.js";
+export class MRepeat extends Module {
+	template() {
+		return `
+=======
 import {Module} from '../../dist/nodom.js'
 export class MRepeat extends Module{
     template(){
         return `
+>>>>>>> 336098f0c5db8ff4d25308a1963f72a1fac84a0f
         <div class="view">
             <button e-click='pop'>pop</button>
             <button e-click='push'>push</button>
@@ -20,10 +27,18 @@ export class MRepeat extends Module{
             <div class=tip>索引号的使用（编号从0开始）</div> 
             <div class=code>
                 菜单：
+<<<<<<< HEAD
+                <for cond={{foods}}>
+                    编号：{{$index}}，菜名：{{name}}，价格：{{price}}
+                </for>
+            </div>
+            
+=======
                 <div x-repeat={{foods}}>
                     编号：{{$index}}，菜名：{{name}}，价格：{{price}}
                 </div>
             </div>
+>>>>>>> 336098f0c5db8ff4d25308a1963f72a1fac84a0f
             <div class=tip>自定义过滤数组</div>
             <div class="code">
                 菜单：
@@ -39,6 +54,90 @@ export class MRepeat extends Module{
                     return 1;return -1;})}}>
                     编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
                 </div>
+<<<<<<< HEAD
+            </div> -->
+        </div>
+        `;
+	}
+	data = {
+		show: 0,
+		date1: new Date().getTime(),
+		discount: { data: 0.9 },
+		xxx: true,
+		foods: [
+			{
+				name: "夫妻肺片",
+				price: 25,
+			},
+			{
+				name: "京酱肉丝",
+				price: 22,
+			},
+			{
+				name: "糖醋里脊",
+				price: 20,
+			},
+			{
+				name: "红烧茄子",
+				price: 12,
+			},
+			{
+				name: "口水鸡",
+				price: 18,
+			},
+			{
+				name: "水煮肉片",
+				price: 24,
+			},
+		],
+	};
+	methods = {
+		top(arr) {
+			var a = [];
+			for (let i = 0; i < 3; i++) {
+				a.push(arr[i]);
+			}
+
+			return a;
+		},
+		getOdd(arr) {
+			let a1 = [];
+			for (let i = 0; i < arr.length; i++) {
+				if (i % 2) {
+					a1.push(arr[i]);
+				}
+			}
+			return a1;
+		},
+		desc() {
+			this.foods.sort((a, b) => {
+				if (a.price > b.price) return -1;
+				return 1;
+			});
+		},
+		pop() {
+			this.foods.pop();
+		},
+		push() {
+			this.foods.push({ name: "push菜单", price: 50 });
+		},
+		addFood() {
+			this.foods.splice(
+				2,
+				0,
+				{
+					name: "新增1",
+					price: 20,
+				},
+				{
+					name: "新增2",
+					price: 30,
+				}
+			);
+		},
+	};
+}
+=======
             </div>-->
         </div>
         `
@@ -110,3 +209,4 @@ export class MRepeat extends Module{
         }
     }
 }
+>>>>>>> 336098f0c5db8ff4d25308a1963f72a1fac84a0f
