@@ -6,5 +6,5 @@ export class MdlMod6 extends Module {
     template() {
         return '<span>路由r2加载的模块</span>'
     }
-    
+    data={}
 }

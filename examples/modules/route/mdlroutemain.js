@@ -9,7 +9,7 @@ export class MdlRouteMain extends Module {
         </div>
         `;
     }
-    model={
+    data={
         page1: true,
         page2: false,
         date1: (new Date()).getTime()

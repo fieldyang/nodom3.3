@@ -5,22 +5,37 @@ export class ModuleMain extends Module {
 		return `
             <div>
                 <button e-click='change'>change</button>
-                <div>hello world!</div>
+                <div>y is {{y}}</div>
                 <div>x.y is {{x.y}}</div>
-                <div>x2:{{y}}</div>
                 <h2>默认plug</h2>
+                <p>第一个子模块</p>
                 <ModuleA x-data={{getData()}} xxx='111'>
-                    <swap name='s1'>
+                    <slot>
                         <h3 style='color:blue'> hello change plug 1</h3>    
-                    </swap>
-                    <swap name='s2'>替换的第二个swap  {{name}}</swap>
+                    </slot>
+                    <slot name='s2'>替换的第二个slot  {{name}}</slot>
                 </ModuleA>
-                <p>hello</p>
+                <hr/>
+                <p>第二个子模块</p>
                 <h2>替换plug</h2>
-                <ModuleA x-data={{getData()}} xxx='222'>
-                    <swap name='s1'>
+                <ModuleA x-data={{{n:'name',x1:'x.y',x2:['y',true]}}} xxx='222'>
+                    <slot>
                         <h3 style='color:red'> hello change plug 2</h3>    
-                    </swap>
+                    </slot>
+                    
+                </ModuleA>
+
+                <p>第三个子模块</p>
+                <h2>默认子节点自动转换为slot节点</h2>
+                <ModuleA xxx='333'>
+                    
+                    <p style='color:gold'>
+                        我自动作为solot节点
+                    </p>
+                    <slot name='s2'>hahaha</slot>
+                    <h3 style='color:gold'>
+                        我自动作为solot节点
+                    </h3>
                 </ModuleA>
            </div>
         `;
@@ -30,7 +45,7 @@ export class ModuleMain extends Module {
 		x: {
 			y: 123,
 		},
-		y: "hello",
+		y: "hello world!",
 		name: "yanglei",
 		rows: [{ name: "yang" }, { name: "lei" }],
 	};

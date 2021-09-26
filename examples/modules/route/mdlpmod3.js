@@ -9,5 +9,6 @@ export class MdlPMod3 extends Module {
             <div x-router test='3'></div>
         </div>
         `
-    } 
+    }
+    data = {} 
 }

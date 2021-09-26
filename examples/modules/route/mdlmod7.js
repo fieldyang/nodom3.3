@@ -6,4 +6,5 @@ export class MdlMod7 extends Module {
     template(){
         return '<span>这是商品详情页</span>';
     }
+    data={}
 }

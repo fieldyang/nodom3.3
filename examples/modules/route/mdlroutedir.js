@@ -13,7 +13,7 @@ export class MdlRouteDir extends Module {
         </div>
         `;
     } 
-    model = {
+    data = {
         routes: [{
                 title: '路由用法1-基本用法',
                 path: '/router/route1',
