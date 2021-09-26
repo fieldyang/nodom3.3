@@ -1,20 +1,7 @@
-#### 从命令行创建一个新的仓库
+# nodom
 
-```bash
-touch README.md
-git init
-git add README.md
-git commit -m "first commit"
-git remote add origin https://git.trustie.net/leslieder/nodom.git
-git push -u origin master
+nodom是一款基于数据驱动的web mvvm框架。
+用于搭建单页应用(SPA)，目前发展到3.1版本。
+插件也在同步更新中。
 
-```
-
-#### 从命令行推送已经创建的仓库
-
-```bash
-git remote add origin https://git.trustie.net/leslieder/nodom.git
-git push -u origin master
-
-```
-
+详情请点击官网[nodom](http://www.nodom.cn/webroute/home)

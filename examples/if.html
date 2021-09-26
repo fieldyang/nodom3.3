@@ -4,26 +4,7 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<title>if_else</title>
-		<style>
-			/*.introduce {
-				color: #666666;
-			}
-
-			.tip {
-				color: darkorange;
-			}
-
-			.code {
-				margin: 20px;
-			}
-
-			.red{
-				color:red;
-			}
-*/
-		</style>
-
-	</head>
+		</head>
 
 	<body>
 		<div class="view"></div> 
@@ -58,11 +39,12 @@
 							<elseif tag='span' cond={{grade>70&&grade<80}}> 中等 </elseif>
 							<elseif tag='span' cond={{grade>80&&grade<90}}> 良好 </elseif>
 							<else tag='span'> 优秀 </else>
+							<endif></endif>
 						</div>
 					</div>
 				`
 			}
-			model={
+			data={
 				discount: 0.7,
 				price: 200,
 				age: 20,

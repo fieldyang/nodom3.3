@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+</body>
+<script>
+
+    let r;
+    
+    let reg = /('.*')|(".*")|(`.*`)|(\{\{.*?\}\})/g;
+    let s = `div x-repeat={{arr.sort((a,b)=>{if(a.price>b.price)return 1;return -1;})}}
+         class='a b c d' value=12 yyy ccc="{{abc}}"
+    `;
+
+    reg = /((?<=^')(.*?)(?='$))|((?<=^")(.*?)(?="$)|((?<=^`)(.*?)(?=`$)))/;
+    console.log(reg.exec("'xxx'"));
+    
+    // s = `
+    //     <div x-repeat={{arr.sort((a,b)=>{if(a.price>b.price)return 1;return -1;})}} 
+    //         class='a b c d' value=12 yyy ccc="{{abc}}><span></span></div>
+    // `;
+    // let regExp = /(?<!\{\{[^<}}]*)(<(\/?)(\s*?[a-zA-Z][a-zA-Z0-9-_]*)(.*?)(\/?>))(?![^>{{]*?\}\})/g;
+    // regExp = /(?<!{{[^<}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^<{]*}})/g;
+    // while((r=regExp.exec(s)) !== null){
+    //     console.log(r)
+    // }
+    // // let s = `$date(date1,'yyyy-MM-dd HH:mm:ss')`;
+    // let tagName;
+    // let pName;
+    // let startValue;
+    // let prop={};
+    // let st=0;
+    // while((r=reg.exec(s))!==null){
+    //     if(r.index>st){
+    //         let tmp = s.substring(st,r.index).trim();
+    //         if(tmp === ''){
+    //             continue;
+    //         }
+    //         handle(tmp);
+    //         if(startValue){
+    //             prop[pName] = r[0];
+    //             pName=undefined;
+    //             startValue=false;
+    //         }
+            
+    //         st = reg.lastIndex;
+    //     }
+    //     st = reg.lastIndex;
+    // }
+    // console.log(prop);
+    
+    // function handle(s){
+    //     // let arr = s.split(/\s+/);
+    //     let reg = /([^ \f\n\r\t\v=]+)|(\=)/g;
+    //     let r;
+    //     let st = 0;
+    //     while((r=reg.exec(s))!== null){
+    //         if(!tagName){
+    //             tagName = r[0];
+    //         }else if(!pName){
+    //             pName = r[0];
+    //         }else if(startValue){
+    //             prop[pName] = r[0];
+    //             startValue=false;
+    //             pName=undefined;
+    //         }else if(pName && r[0] === '='){
+    //             startValue = true;
+    //         }else if(pName && !startValue){ //无值属性
+    //             prop[pName] = undefined;
+    //             pName=r[0];
+    //         }
+    //     }
+    // }
+
+
+    // function handleFunc(s){
+    //     let mName = s.substring(0,s.length-1).trim();
+    //     if(mName.indexOf('.') === -1){
+    //         // return '(' + mName +  '|| $module.getMethod("' + mName + '"))' + '(';
+    //         // return '(foo||' + mName + ')' + '(';
+    //         // return '(foo?foo:' + mName + ')(';
+    //         return " ($module.getMethod('" + mName +  "')||" + mName + ')(';
+            
+    //     }
+    //     return mName + '('
+    // }
+
+    // function foo1(s){
+    //     return s;
+    // }
+
+    // function $foo2(a,b){
+    //     return a + '_' + b;
+    // }
+</script>
+</html>

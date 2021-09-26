@@ -1,27 +1,36 @@
 import { DefineElementManager } from "./defineelementmanager";
 import { Directive } from "./directive";
 import { Element } from "./element";
+import { NError } from "./error";
 import { NEvent } from "./event";
 import { Expression } from "./expression";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
-import { ASTObj } from "./types";
 
 export class Compiler {
 
     /**
-    * 编译
-    * @param elementStr     待编译html串
-    * @param module         模块 
-    * @returns              虚拟dom
+    * 当前id
     */
-    public static compile(elementStr: string,module:Module): Element {
+    private currentId: number;
+    /**
+     * 模块
+     */
+    private module: Module;
+
+    constructor(module: Module) {
+        this.currentId = 0;
+        this.module = module;
+    }
+
+    /**
+    * 编译
+    * @param elementStr    待编译html串
+    * @returns             虚拟dom
+    */
+    public compile(elementStr: string): Element {
         // 这里是把模板串通过正则表达式匹配 生成AST
-        let ast = this.compileTemplateToAst(elementStr);
-        let oe = new Element('div');
-        // 将AST编译成抽象语法树
-        this.compileAST(oe, ast,module);
-        return oe;
+        return this.compileTemplate(elementStr);
     }
 
     /**
@@ -29,11 +38,13 @@ export class Compiler {
      * @param srcStr    源串
      * @returns         
      */
-    public static compileTemplateToAst(srcStr:string):ASTObj{
+    private compileTemplate(srcStr:string):Element{
         const me = this;
         // 清理comment
         let regExp = /\<\!\-\-[\s\S]*?\-\-\>/g;
         srcStr = srcStr.replace(regExp,'');
+        //不可见字符正则式
+        const regSpace = /^[\s\n\r\t\v]+$/;
         // 1 识别标签
         regExp = /(?<!\{\{[^<}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^>{{]*?\}\})/g;
         let st = 0;
@@ -45,11 +56,15 @@ export class Compiler {
         while((r = regExp.exec(srcStr)) !== null){
             tagStack.push(r[0]);
             //处理标签之间的文本
+            let tmp='';
             if(st < r.index-1){
-                textStack.push(srcStr.substring(st,r.index));
-            }else{
-                textStack.push('');
+                tmp = srcStr.substring(st,r.index);
+                //全为不可见字符，则保存空字符串
+                if(regSpace.test(tmp)){ 
+                    tmp = '';
+                }
             }
+            textStack.push(tmp);
             st = regExp.lastIndex;
         }
 
@@ -58,7 +73,7 @@ export class Compiler {
         // 标签对象数组
         let tagObjs = [];
         // 根节点
-        let root:ASTObj;
+        let root:Element;
         tagStack.forEach((tag,ii)=>{
             //开始标签名
             let stg;
@@ -69,20 +84,16 @@ export class Compiler {
                 for(let i=ii;tagNames.length>0;i--){
                     // 结束标签前面的非空文本节点作为孩子
                     if(i>=0 && textStack[i] !== ''){
-                        chds.push({textContent:textStack[i]});
+                        chds.push(this.handleText(textStack[i]));
                         // 文本已使用，置为空
                         textStack[i] = '';
                     }
                     if((stg = tagNames.pop())===etg){
                         break;
                     }
-                    // 标签节点作为孩子
+                    //当前节点及其子节点同时作为孩子节点
                     let tobj = tagObjs.pop();
-                    //把孩子节点改为兄弟节点
-                    for(;tobj.children.length>0;){
-                        let o = tobj.children.pop();
-                        chds.unshift(o);
-                    }
+                    chds = tobj.children.concat(chds);
                     chds.unshift(tobj);
                 }
                 //找到节点
@@ -99,29 +110,30 @@ export class Compiler {
             }else { //标签头
                 //去掉标签前后< >
                 let tmpS = tag.endsWith('\/>')?tag.substring(1,tag.length-2):tag.substring(1,tag.length-1);
-                let obj = this.handleTagAttr(tmpS.trim());
+                //处理标签头，返回dom节点和原始标签名
+                const[dom,tagName] = this.handleTag(tmpS.trim());
+
                 //前一个文本节点存在，则作为前一个节点的孩子
                 if(ii>0 && textStack[ii] !== ''){
-                    tagObjs[tagObjs.length-1].children.push({
-                        textContent:textStack[ii]
-                    });
+                    tagObjs[tagObjs.length-1].children.push(this.handleText(textStack[ii]));
                     textStack[ii] = '';
                 }
                 if(!tag.endsWith('\/>')){ // 非自闭合
                     //标签头入栈
-                    tagNames.push(obj.tagName);
-                    tagObjs.push(obj);
+                    tagNames.push(tagName);
+                    tagObjs.push(dom);
                 }else{ //自闭合，直接作为前一个的孩子节点
                     if(tagObjs.length>0){
-                        tagObjs[tagObjs.length-1].children.push(obj);
+                        tagObjs[tagObjs.length-1].children.push(dom);
                     }
                 }
                 //设置根节点
                 if(!root){
-                    root = obj;
+                    root = dom;
                 }
             }
         });
+        
         if(tagNames.length>0){
             throw '模版定义错误';
         }
@@ -131,15 +143,16 @@ export class Compiler {
     /**
      * 处理标签属性
      * @param tagStr    标签串
-     * @returns 
+     * @returns         [虚拟dom节点,原始标签名]
      */
-    private static handleTagAttr(tagStr:string):ASTObj{
+    private handleTag(tagStr:string):any{
         const me = this;
+        let ele:Element;
         //字符串和表达式替换
         let reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|({{[\S\s]*?\}{0,2}\s*}})/g;
-        let tagName:string;
-        let attrs = new Map;
         let pName:string;
+        //标签原始名
+        let tagName:string;
         let startValue:boolean;
         let finded:boolean = false; //是否匹配了有效的reg
         let st = 0;
@@ -162,12 +175,16 @@ export class Compiler {
         if(!finded){
             handle(tagStr);
         }
-
-        return{
-            tagName:tagName,
-            attrs:attrs,
-            children:[]
+        //后置处理
+        this.postHandleNode(ele);
+        //指令排序
+        if(ele.directives && ele.directives.length>1){
+            ele.directives.sort((a, b) => {
+                return a.type.prio - b.type.prio;
+            });
         }
+        
+        return [ele,tagName];
 
         /**
          * 处理串（非字符串和表达式）
@@ -179,6 +196,7 @@ export class Compiler {
             while((r=reg.exec(s))!== null){
                 if(!tagName){
                     tagName = r[0];
+                    ele = new Element(tagName,me.genKey());
                 }else if(!pName){
                     pName = r[0];
                 }else if(startValue){
@@ -217,100 +235,196 @@ export class Compiler {
                     value = me.compileExpression(value)[0];
                 }
             }
-            attrs.set(pName,value);
+            
+            //指令
+            if (pName.startsWith("x-")) {
+                //不排序
+                new Directive(pName.substr(2), value, ele,me.module, true);
+            } else if (pName.startsWith("e-")) { //事件
+                ele.addEvent(new NEvent(pName.substr(2), value,null,me.currentId++));
+            } else { //普通属性
+                ele.setProp(pName, value);
+            }
             pName=undefined;
             startValue=false;
         }
     }
+
     /**
-     * 把AST编译成虚拟dom
-     * @param oe 虚拟dom的根容器
-     * @param ast 抽象语法树也就是JSON对象
-     * @returns oe 虚拟dom的根容器
+     * 编译txt为文本节点
+     * @param txt 文本串
      */
-    public static compileAST(oe: Element, ast: ASTObj,module:Module): Element {
-        if (!ast) return;
-        ast.tagName?this.handleAstNode(oe, ast,module):this.handleAstText(oe, ast);
-        return oe;
+    private handleText(txt:string) {
+        let ele = new Element(null,this.genKey());
+        if(/\{\{[\s\S]+\}\}/.test(txt)){  //检查是否含有表达式
+            ele.expressions = <any[]>this.compileExpression(txt);
+        }else{
+            ele.textContent = txt;
+        }
+        return ele;
+    }
+    /**
+     * 处理属性字符串
+     * @param attrString 属性字符串
+     * @returns attrs数组 
+     */
+    private parseAttrString(attrString: string | undefined): Map<string, any> {
+        if (attrString == undefined) {
+            return new Map();
+        } else {
+            attrString += ' ';
+        }
+        const attrReg = /([a-zA-Z][a-zA-Z0-9-_]*)=?((?<==)(?:[^'"{}]*?(?=\s)|'.*?'|".*?"|\{\{[\s\S]*?\}{0,2}\s*\}\}))?/;
+        let index = 0;
+        let attrs = new Map();
+        while (index < attrString.length - 1) {
+            attrString = attrString.substring(index);
+            index = 0;
+            const attr = attrString.match(attrReg)
+            if (attr) {
+                let [attrStr, attrName, attrValue]: any = attr;
+                if (attrValue?.startsWith("'") || attrValue?.startsWith('"')) {
+                    attrValue = attrValue.substring(1, attrValue.length - 1).trim();
+                }
+                if (attrValue?.startsWith('{{')) {
+                    attrValue = new Expression(attrValue.substring(2, attrValue.length - 2));
+                }
+                if (attrName != undefined) {
+                    attrs.set(attrName, attrValue ? attrValue : '');
+                }
+                index += attrStr.length + attr.index;
+            } else {
+                return attrs
+            }
+        }
+        return attrs;
     }
 
     /**
-     * 编译text类型的ast到虚拟dom
-     * @param parent 父虚拟dom节点
-     * @param ast 虚拟dom树
+     * 将模板字符串转换成AST抽象语法树结构
+     * @param elementStr 模板字符串
+     * @returns AST对象数组
      */
-    private static handleAstText(parent: Element, astObj: ASTObj) {
-        let text = new Element();
-        parent.children.push(text);
-        if(/\{\{[\s\S]+\}\}/.test(astObj.textContent)){
-            text.expressions = <any[]>this.compileExpression(astObj.textContent);
-        }else{
-            text.textContent = astObj.textContent;
-        }
-    }
-    /**
-     * 
-     * @param oe 虚拟dom   
-     * @param astObj 
-     */
-    public static handleAstNode(parent: Element, astObj: ASTObj,module:Module) {
-        //前置处理
-        this.preHandleNode(astObj);
-        let child = new Element(astObj.tagName);
-        parent.add(child);
-        this.handleAstAttrs(child, astObj.attrs,module, parent);
-        for(let a of astObj.children){
-            this.compileAST(child, a,module);
-        }
-    }
-    
-    /**
-     * 编译ast 到虚拟dom
-     * @param oe        虚拟dom
-     * @param attrs     需要编译成虚拟dom的attrs
-     * @param parent    父虚拟dom节点
-     */
-    public static handleAstAttrs(oe: Element, attrs: Map<string,any>,module:Module, parent: Element) {
-        //指令数组 先处理普通属性在处理指令
-        let directives = [];
-        if (!attrs) { return }
-        for(const attr of attrs){
-            if (attr[0].startsWith("x-")) {
-                //指令
-                let o = {
-                    name:attr[0].substr(2),
-                    value:attr[1]
+    private compileTemplateToAst(elementStr: string): Element {
+        let templateStr = elementStr.trim();
+        // 准备栈空间
+        let stack1 = []; //{ tagName: undefined, children: [], attrs: new Map() ,isClosed:false }
+        let index = -2;
+        // 开始标签的正则表达式 
+        const tagReg =
+            /(?<!\{\{[^<}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^>{{]*?\}\})/g;
+        // 匹配注释
+        const commentRegExp = /\s*\<!--[\s\S]+?--\>/g;
+        // 不需要注释节点
+        let rest = templateStr.replace(commentRegExp, '');
+        // 匹配到字符串末尾
+        let root: Element;
+        let tag;
+        let preFlag = false;
+        while ((tag = tagReg.exec(rest)) != null) {
+            if (index <= tag.index) {
+                let word = rest.substring(index, tag.index);
+                if (!/^\s*$/.test(word) || preFlag) {
+                    // stack1[stack1.length - 1].children.push({ textContent: word });
+                    let text = new Element(null, this.genKey())
+                    const compiledStr = this.compileExpression(word);
+                    if (typeof compiledStr == 'string') {
+                        text.textContent = compiledStr;
+                    } else {
+                        text.expressions = compiledStr;
+                    }
+                    stack1[stack1.length - 1].children.push(text);
                 }
-                directives.push(o);
-            } else if (attr[0].startsWith("e-")) {
-                // 事件
-                let e = attr[0].substr(2);
-                oe.addEvent(new NEvent(e, attr[1]));
-            } else if (attr[0].startsWith("d-")) {
-                // 数据
-                let tempArr = attr[0].split(':');
-                let bindFlag: boolean = false;
-                if (tempArr.length === 2) {
-                    bindFlag = tempArr[1] == 'true' ? true : false;
+                if (tag[1] && tag[1] == '/') {
+                    root = this.compilerEndTagToAST(tag, stack1);
+                    if (tag[2] == 'pre') {
+                        preFlag = false;
+                    }
+                } else {
+                    this.compilerStartTagToAST(tag, stack1);
+                    if (tag[2] == 'pre') {
+                        preFlag = true;
+                    }
                 }
-                let name = tempArr[0].substr(2);
-                let value = tempArr[0];
-                // 变量别名，变量名（原对象.变量名)，双向绑定标志
-                let data = [value, bindFlag];
-                oe.moduleDatas[name] = data;
-            } else {
-                oe.setProp(attr[0], attr[1],attr[1] instanceof Expression);
+                index = tagReg.lastIndex;
             }
         }
-        //处理属性
-        for (let attr of directives) {
-            new Directive(attr.name, attr.value, oe,module, parent, true);
+        if (stack1.length != 0) {
+            throw new NError('compile1', `${stack1[0]}`)
         }
-        if (directives.length > 1) {
-            //指令排序
-            oe.directives.sort((a, b) => {
+        return root;
+    }
+
+    /**
+     * 编译开始标签到AST
+     * @param startTag 开始标签的匹配结果
+     * @param index 开始标签在原串中的位置
+     * @param stack1 辅助栈1
+     * @param stack2 辅助栈2
+     * @param preFlag pre标签Flag
+     * @returns 截断原串的位置
+     */
+    private compilerStartTagToAST(startTag, stack1) {
+        let [, , tagName, attrString, selfCloseStr] = startTag;
+        let newEl = new Element(tagName, this.genKey());
+        this.handleAstAttrs(newEl, this.parseAttrString(attrString), this.module);
+        this.preHandleNode(newEl);
+        //指令排序
+        if (newEl.directives && newEl.directives.length > 1) {
+            newEl.directives.sort((a, b) => {
                 return a.type.prio - b.type.prio;
             });
+        }
+        if (selfCloseStr == '/') {
+            // 这个标签是自闭合标签
+            if (stack1.length > 0) {
+                stack1[stack1.length - 1].children.push(newEl)
+            }
+
+        } else {
+            // AST入栈
+            stack1.push(newEl);
+        }
+    }
+
+    /**
+     * 编译结束标签到AST
+     * @param endTag 结束标签的匹配串
+     * @param index 结束标签在原串中的位置
+     * @param stack1 辅助栈1
+     * @param stack2 辅助栈2
+     * @returns index
+     */
+    private compilerEndTagToAST(endTag, stack1): Element {
+        // 识别结束标记
+        let [, , tagName] = endTag;
+        // tagName = tagName.trim();
+        let ind: number = -1;
+        // 逆序找到stack2 里面应该闭合的节点位置
+        for (let i = stack1.length - 1; i >= 0; i--) {
+            // && stack1[i].isClosed == false
+            if (stack1[i].tagName == tagName) {
+                ind = i;
+                break;
+            }
+        }
+        if (ind == -1) {
+            throw new NError(`compile2`, `${endTag[0]}`);
+        }
+        let children = stack1.splice(ind + 1);
+        let chd = [];
+        for (const c of children) {
+            // 子节点展开成为兄弟节点
+            chd.push(c);
+            chd = chd.concat(c.children);
+            c.children = [];
+        }
+        stack1[ind].children = stack1[ind].children.concat(chd);
+        let pop = stack1.pop();
+        if (stack1.length != 0) {
+            stack1[stack1.length - 1].children.push(pop);
+        } else {
+            return pop;
         }
     }
 
@@ -319,11 +433,11 @@ export class Compiler {
      * @param exprStr   含表达式的串
      * @return          处理后的字符串和表达式数组
      */
-    public static compileExpression(exprStr: string):string|any[]{
-        if(!exprStr){
-            return;
+    public compileExpression(exprStr: string) {
+        if (/\{.+?\}/.test(exprStr) === false) {
+            return exprStr;
         }
-        let reg: RegExp = /\{\{[\s\S]+?\}?\s*\}\}/g;
+        let reg: RegExp = /\{\{.+?\}?\s*\}\}/g;
         let retA = new Array();
         let re: RegExpExecArray;
         let oIndex: number = 0;
@@ -348,18 +462,27 @@ export class Compiler {
     }
 
     /**
-     * 前置处理
+     * 后置处理
      * 包括：模块类元素、自定义元素
-     * @param node  ast node
+     * @param node  虚拟dom节点
      */
-    private static preHandleNode(node:ASTObj){
+    private postHandleNode(node:Element){
         // 模块类判断
-        if (ModuleFactory.has(node.tagName)) {
-            node.attrs.set('x-module',node.tagName);
+        if (ModuleFactory.hasClass(node.tagName)) {
+            new Directive('module',node.tagName,node,this.module);
             node.tagName = 'div';
         }else if(DefineElementManager.has(node.tagName)){ //自定义元素
             let clazz = DefineElementManager.get(node.tagName);
-            Reflect.construct(clazz,[node]);
+            Reflect.construct(clazz,[node,this.module]);
         }
+    }
+
+    /**
+     * 产生可以
+     * @returns     key
+     */
+    private genKey():string{
+        // return this.module.id + '_' + this.currentId++;
+        return this.currentId++ + '';
     }
 }

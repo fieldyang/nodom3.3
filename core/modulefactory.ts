@@ -1,6 +1,4 @@
 import { Module } from "./module";
-import { Element } from "./Element";
-import { Compiler } from "./compiler";
 
 /**
  * 过滤器工厂，存储模块过滤器
@@ -12,9 +10,9 @@ export class ModuleFactory {
     private static modules: Map<number, Module> = new Map();
 
     /**
-     * 模块类集合 {className:instance}
+     * 模块类集合 {className:class}
      */
-    public static classes: Map<string, Module> = new Map();
+    public static classes: Map<string, any> = new Map();
 
     /**
      * 主模块
@@ -22,32 +20,28 @@ export class ModuleFactory {
     private static mainModule: Module;
     /**
      * 添加模块到工厂
-     * @param id    模块id
-     * @param item  模块存储对象
+     * @param item  模块对象
      */
-    public static add(item: Module) {
-        //第一个为主模块
+    public static add(item:Module) {
+        // //第一个为主模块
         if(this.modules.size === 0){
             this.mainModule = item;
         }
         this.modules.set(item.id, item);
 
-        //加入模块类map
-        if(!this.classes.has(item.constructor.name)){
-            this.classes.set(item.constructor.name,item);
-        }
+        //添加模块类
+        this.addClass(item.constructor);
     }
 
     /**
      * 获得模块
      * @param name  类、类名或实例id
-     * @param props 传递给子模块的外部属性(用于产生模版)
      */
-    public static get(name:any,props?:any): Module {
+    public static get(name:any): Module {
         if(typeof name === 'number'){
             return this.modules.get(name);
         }else{
-            return this.getInstance(name,props);
+            return this.getInstance(name);
         }
     }
 
@@ -56,53 +50,43 @@ export class ModuleFactory {
      * @param clazzName     模块类名
      * @returns     true/false
      */
-    public static has(clazzName:string):boolean{
+    public static hasClass(clazzName:string):boolean{
         return this.classes.has(clazzName);
     }
 
     /**
-     * 获取模块实例（通过类名）
-     * @param className     模块类名
-     * @param props         模块外部属性
+     * 添加模块类
+     * @param clazz     模块类
      */
-    private static getInstance(clazz:any,props?:any): Module {
-        let className = (typeof clazz === 'string')?clazz:clazz.name;
-        // 初始化模块
-        if(!this.classes.has(className) && typeof clazz === 'function'){
-            Reflect.construct(clazz,[]);
-        }
-        let src = this.classes.get(className);
-        if(!src){
+    public static addClass(clazz:any){
+        if(this.classes.has(clazz.name)){
             return;
         }
-        
-        // 模块实例
-        let instance;
-        //未初始化
-        if(src.state === 0){
-            src.init();
-            instance = src;
+        this.classes.set(clazz.name,clazz);
+    }
+
+    /**
+     * 获取模块实例（通过类名）
+     * @param className     模块类或类名
+     * @param props         模块外部属性
+     */
+    private static getInstance(clazz:any): Module {
+        let className = (typeof clazz === 'string')?clazz:clazz.name;
+        let cls;
+        // 初始化模块
+        if(!this.classes.has(className) && typeof clazz === 'function'){
+            cls = clazz;
         }else{
-            instance = src.clone();
-            console.log(instance.virtualDom);
-        }
-        if(src.template){
-            let tp = src.template.apply(src.model,[props]);
-            let root:Element;
-            //当返回为数组时，如果第二个参数为true，则表示不再保留模版函数
-            if(Array.isArray(tp)){
-                root = Compiler.compile(tp[0],src);
-                if(tp.length>1 && tp[1]){
-                    src.virtualDom = root;
-                    delete src.template;
-                }
-            }else{ //只返回编译串
-                root = Compiler.compile(tp,src);
-            }
-            instance.virtualDom = root;
+            cls = this.classes.get(className);
         }
         
-        return instance;
+        if(!cls){
+            return;
+        }
+
+        let m:Module = Reflect.construct(cls, []);
+        m.init();
+        return m;
     }
     /**
      * 从工厂移除模块

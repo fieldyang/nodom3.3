@@ -51,12 +51,12 @@ export class NEvent {
     /**
      * 模块id
      */
-    public moduleId: number;
+    private module: Module;
 
     /**
-     * 事件所属虚拟dom的key
+     * 事件所属虚拟dom
      */
-    private domKey: string;
+    public dom: Element;
 
     /**
      * 事件监听器
@@ -68,18 +68,14 @@ export class NEvent {
     public touchListeners: Map<string, NEvent>;
 
     /**
-     * 附加参数map
-     */
-    private extraParamMap: Map<string, any>;
-
-    /**
      * @param eventName     事件名
      * @param eventStr      事件串或事件处理函数,以“:”分割,中间不能有空格,结构为: 方法名[:delg(代理到父对象):nopopo(禁止冒泡):once(只执行一次):capture(useCapture)]
      *                      如果为函数，则替代第三个参数
      * @param handler       事件执行函数，如果方法不在module methods中定义，则可以直接申明，eventStr第一个参数失效，即eventStr可以是":delg:nopopo..."
+     * @param id            事件id
      */
-    constructor(eventName: string, eventStr?: string | Function, handler?: Function) {
-        this.id = Util.genId();
+    constructor(eventName: string, eventStr?: string | Function, handler?: Function, id?:number) {
+        this.id = id || Util.genId();
         this.name = eventName;
         //如果事件串不为空，则不需要处理
         if (eventStr) {
@@ -160,11 +156,11 @@ export class NEvent {
      * @param el    html element
      */
     public fire(e: Event, el?: HTMLElement) {
-        const module: Module = ModuleFactory.get(this.moduleId);
+        const module: Module = this.module;
         if (!module.getContainer()) {
             return;
         }
-        let dom: Element = module.getElement(this.domKey);
+        let dom: Element = this.dom;
         const model = dom.model;
         //如果capture为true，则先执行自有事件，再执行代理事件，否则反之
         if (this.capture) {
@@ -181,7 +177,7 @@ export class NEvent {
             this.events.get(this.name).length === 0 &&
             this.handler === undefined) {
             if (!el) {
-                el = module.getNode(this.domKey);
+                el = this.getEl();
             }
 
             if (ExternalNEvent.touches[this.name]) {
@@ -211,7 +207,7 @@ export class NEvent {
             if (Util.isArray(arr)) {
                 if (arr.length > 0) {
                     for (let i = 0; i < arr.length; i++) {
-                        let sdom: Element = dom.query(arr[i].domKey);
+                        let sdom: Element = dom.query(arr[i].dom.key);
                         if (!sdom) {
                             continue;
                         }
@@ -267,25 +263,22 @@ export class NEvent {
      * 绑定事件
      * @param module    模块
      * @param dom       虚拟dom
-     * @param el        html element
-     * @param parent    父dom
-     * @param parentEl  对应htmlelement的父html element
      */
-    public bind(module: Module, dom: Element, el: HTMLElement, parent: Element, parentEl?: Node) {
-        this.moduleId = module.id;
-        this.domKey = dom.key;
+    public bind(module: Module, dom: Element,parentEl?:Node) {
+        this.module = module;
+        this.dom = dom;
         if (this.delg && parent) { //代理到父对象
-            this.delegateTo(module, dom, <HTMLElement>el, parent, <HTMLElement>parentEl);
+            this.delegateTo(parentEl);
         } else {
-            this.bindTo(el);
+            this.bindTo();
         }
     }
 
     /**
      * 绑定到el
-     * @param el    目标html element 
      */
-    private bindTo(el: HTMLElement) {
+    private bindTo() {
+        let el:HTMLElement = this.getEl();
         //触屏事件
         if (ExternalNEvent.touches[this.name]) {
             ExternalNEvent.regist(this, el);
@@ -297,41 +290,23 @@ export class NEvent {
         }
     }
     /**
-     * 
      * 事件代理到父对象
-     * @param module    模块
-     * @param vdom      虚拟dom
-     * @param el        事件作用的html element 
-     * @param parent    父虚拟dom
-     * @param parentEl  父element
      */
-    private delegateTo(module: Module, vdom: Element, el: HTMLElement, parent?: Element, parentEl?: HTMLElement) {
-        this.domKey = vdom.key;
-        this.moduleId = module.id;
-
-        //如果不存在父对象，则用body
-        if (!parentEl) {
-            parentEl = document.body;
-        }
-
+    private delegateTo(parentEl?:Node) {
+        const parent = this.dom.parent;
+        parentEl = parentEl || this.module.getNode(this.dom.parent.key) || document.body;
+        
         //父节点如果没有这个事件，则新建，否则直接指向父节点相应事件
         if (!parent.events.has(this.name)) {
             let ev = new NEvent(this.name);
-            ev.bindTo(parentEl);
-            parent.events.set(this.name, ev);
+            ev.bindTo();
+            parent.events.set(this.name, [ev]);
         }
 
         //为父对象事件添加子事件
         let evt = parent.events.get(this.name);
-        let ev: NEvent;
-        if (Util.isArray(evt) && (<NEvent[]>evt).length > 0) {
-            ev = evt[0];
-        } else {
-            ev = <NEvent>evt;
-        }
-        if (ev) {
-            ev.addChild(this);
-        }
+        evt[0]?.addChild(this);
+        
     }
 
     /**
@@ -376,17 +351,8 @@ export class NEvent {
         arr.forEach((item) => {
             evt[item] = this[item];
         });
-        if(this.extraParamMap){
-            evt.extraParamMap = Util.clone(this.extraParamMap);
-        }
+        
         return evt;
-    }
-
-    /**
-     * 获取event 的domkey
-     */
-    public getDomKey() {
-        return this.domKey;
     }
 
     /**
@@ -394,11 +360,11 @@ export class NEvent {
      * @param key       参数名
      * @param value     参数值
      */
-    public setExtraParam(key: string, value: any) {
-        if (!this.extraParamMap) {
-            this.extraParamMap = new Map();
+    public setParam(key: string, value: any) {
+        if(!this.module){
+            return;
         }
-        this.extraParamMap.set(key, value);
+        this.module.saveCache(`${this.dom.key}.events.${this.id}.${key}`,value);
     }
 
     /**
@@ -406,8 +372,29 @@ export class NEvent {
      * @param key   参数名
      * @returns     参数值
      */
-    public getExtraParam(key: string) {
-        return this.extraParamMap?this.extraParamMap.get(key):undefined;
+    public getParam(key: string) {
+        if(!this.module){
+            return;
+        }
+        return this.module.readCache(`${this.dom.key}.events.${this.id}.${key}`);
+    }
+
+    /**
+     * 获取事件对象target
+     * @returns     target
+     */
+    public getEl():HTMLElement{
+        return <HTMLElement>this.module.getNode(this.dom.key);
+    }
+
+    /**
+     * 判断事件对象是否相等
+     * @param dst   目标事件
+     * @returns     相同返回true，否则返回false
+     */
+    public equal(dst:NEvent):boolean{
+        // 事件名相同、dom相同且处理方法相同，则表示同一个事件
+        return this.name === this.name && this.handler===this.handler && this.dom === dst.dom;
     }
 }
 
@@ -433,8 +420,7 @@ export class ExternalNEvent {
 
         // el不存在
         if (!el) {
-            const module = ModuleFactory.get(evtObj.moduleId);
-            el = module.getNode(evtObj.getDomKey());
+            el = <HTMLElement>evtObj.getEl();
         }
 
         evtObj.touchListeners = new Map();
@@ -458,8 +444,7 @@ export class ExternalNEvent {
     static unregist(evtObj: NEvent, el?: HTMLElement) {
         const evt = ExternalNEvent.touches[evtObj.name];
         if (!el) {
-            const module = ModuleFactory.get(evtObj.moduleId);
-            el = module.getNode(evtObj.getDomKey());
+            el = evtObj.getEl();
         }
         if (evt) {
             // 解绑事件
@@ -471,6 +456,7 @@ export class ExternalNEvent {
         }
     }
 
+
 }
 
 /**
@@ -480,10 +466,10 @@ ExternalNEvent.touches = {
     tap: {
         touchstart: function (e: TouchEvent, evtObj: NEvent) {
             let tch = e.touches[0];
-            evtObj.setExtraParam('pos', { sx: tch.pageX, sy: tch.pageY, t: Date.now() });
+            evtObj.setParam('pos', { sx: tch.pageX, sy: tch.pageY, t: Date.now() });
         },
         touchmove: function (e: TouchEvent, evtObj: NEvent) {
-            let pos = evtObj.getExtraParam('pos');
+            let pos = evtObj.getParam('pos');
             let tch = e.touches[0];
             let dx = tch.pageX - pos.sx;
             let dy = tch.pageY - pos.sy;
@@ -493,7 +479,7 @@ ExternalNEvent.touches = {
             }
         },
         touchend: function (e: TouchEvent, evtObj: NEvent) {
-            let pos = evtObj.getExtraParam('pos');
+            let pos = evtObj.getParam('pos');
             let dt = Date.now() - pos.t;
             //点下时间不超过200ms
             if (pos.move === true || dt > 200) {
@@ -506,7 +492,7 @@ ExternalNEvent.touches = {
         touchstart: function (e: TouchEvent, evtObj: NEvent) {
             let tch = e.touches[0];
             let t = Date.now();
-            evtObj.setExtraParam('swipe', {
+            evtObj.setParam('swipe', {
                 oldTime: [t, t],
                 speedLoc: [{ x: tch.pageX, y: tch.pageY }, { x: tch.pageX, y: tch.pageY }],
                 oldLoc: { x: tch.pageX, y: tch.pageY }
@@ -515,9 +501,9 @@ ExternalNEvent.touches = {
         touchmove: function (e: TouchEvent, evtObj: NEvent) {
             let nt = Date.now();
             let tch = e.touches[0];
-            let mv = evtObj.getExtraParam('swipe');
+            let mv = evtObj.getParam('swipe');
             //50ms记录一次
-            if (nt - mv.oldTime > 50) {
+            if (nt - mv.oldTime[1] > 50) {
                 mv.speedLoc[0] = { x: mv.speedLoc[1].x, y: mv.speedLoc[1].y };
                 mv.speedLoc[1] = { x: tch.pageX, y: tch.pageY };
                 mv.oldTime[0] = mv.oldTime[1];
@@ -526,7 +512,7 @@ ExternalNEvent.touches = {
             mv.oldLoc = { x: tch.pageX, y: tch.pageY };
         },
         touchend: function (e: any, evtObj: NEvent) {
-            let mv = evtObj.getExtraParam('swipe');
+            let mv = evtObj.getParam('swipe');
             let nt = Date.now();
 
             //取值序号 0 或 1，默认1，如果释放时间与上次事件太短，则取0

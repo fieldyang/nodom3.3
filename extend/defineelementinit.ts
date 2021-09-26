@@ -2,25 +2,23 @@ import { DefineElement } from "../core/defineelement";
 import { DefineElementManager } from "../core/defineelementmanager";
 import { NError } from "../core/error";
 import { NodomMessage } from "../core/nodom";
-import { ASTObj } from "../core/types";
+import { Element } from "../core/element";
+import { Directive } from "../core/directive";
+import { Module } from "../core/module";
 
 /**
  * module 元素
  */
 class MODULE extends DefineElement{
-    constructor(node: ASTObj){
-        super(node);
+    constructor(node: Element,module:Module){
+        super(node,module);
         //类名
-        let clazz = node.attrs.get('className');
+        let clazz = node.getProp('name');
         if (!clazz) {
             throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'MODULE', 'className');
         }
-        //模块名
-        let moduleName = node.attrs.get('name');
-        if (moduleName) {
-            clazz += '|' + moduleName;
-        }
-        node.attrs.set('x-module',clazz);
+        node.delProp('name');
+        new Directive('module',clazz,node);
     }
 }
 
@@ -28,95 +26,71 @@ class MODULE extends DefineElement{
  * for 元素
  */
 class FOR extends DefineElement{
-    constructor(node: ASTObj){
-        super(node);
+    constructor(node: Element,module:Module){
+        super(node,module);
         //条件
-        let cond = node.attrs.get('cond');
+        let cond = node.getProp('cond');
         if (!cond) {
             throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'FOR', 'cond');
         }
-        node.attrs.set('x-repeat',cond);
+        node.delProp('cond');
+        new Directive('repeat',cond,node,module);
     }
 }
 
-class RECUR extends DefineElement{
-    constructor(node: ASTObj){
-        super(node);
-        //条件
-        let cond = node.attrs.get('cond');
-        if (!cond) {
-            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'RECUR', 'cond');
-        }
-        node.attrs.set('x-recur',cond);
-    }
-}
 
 class IF extends DefineElement{
-    constructor(node: ASTObj){
-        super(node);
+    constructor(node: Element,module:Module){
+        super(node,module);
         //条件
-        let cond = node.attrs.get('cond');
+        let cond = node.getProp('cond');
         if (!cond) {
             throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'IF', 'cond');
         }
-        node.attrs.set('x-if',cond);
+        node.delProp('cond');
+        new Directive('if',cond,node,module);
     }
 }
 
 class ELSE extends DefineElement{
-    constructor(node: ASTObj){
-        super(node);
-        node.attrs.set('x-else',undefined);
+    constructor(node: Element,module:Module){
+        super(node,module);
+        new Directive('else','',node,module);
     }
 }
 
 class ELSEIF extends DefineElement{
-    constructor(node: ASTObj){
-        super(node);
+    constructor(node: Element,module:Module){
+        super(node,module);
         //条件
-        let cond = node.attrs.get('cond');
+        let cond = node.getProp('cond');
         if (!cond) {
             throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'ELSEIF', 'cond');
         }
-        node.attrs.set('x-elseif',cond);
+        node.delProp('cond');
+        new Directive('elseif',cond,node,module);
     }
 }
 
-
-class SWITCH extends DefineElement{
-    constructor(node: ASTObj){
-        super(node);
-        //条件
-        let cond = node.attrs.get('cond');
-        if (!cond) {
-            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'SWITCH', 'cond');
-        }
-        node.attrs.set('x-switch',cond);
+class ENDIF extends DefineElement{
+    constructor(node: Element,module:Module){
+        super(node,module);
+        new Directive('endif','',node,module);
     }
 }
 
-class CASE extends DefineElement{
-    constructor(node: ASTObj){
-        super(node);
-        //条件
-        let cond = node.attrs.get('cond');
-        if (!cond) {
-            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'CASE', 'cond');
-        }
-        node.attrs.set('x-case',cond);
-    }
-}
 
 /**
- * 替换器
+ * 替代器
  */
 class SWAP extends DefineElement{
-    constructor(node: ASTObj){
-        super(node);
+    constructor(node: Element,module:Module){
+        super(node,module);
         //条件
-        let cond = node.attrs.get('name') || 'default';
-        node.attrs.set('x-swap',cond);
+        let cond = node.getProp('name') || 'default';
+        node.delProp('name');
+        new Directive('swap',cond,node,module);
     }
 }
 
-DefineElementManager.add([MODULE,FOR,RECUR,IF,ELSE,ELSEIF,SWITCH,CASE,SWAP]);
+DefineElementManager.add([MODULE,FOR,IF,ELSE,ELSEIF,ENDIF,SWAP]);

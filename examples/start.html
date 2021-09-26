@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<title>if_else</title>
+		</head>
+
+	<body>
+		<div class="view"></div> 
+	</body>
+	<script type='module'>
+		import{nodom,Module} from '../dist/nodom.js'
+		class Module1 extends Module{
+			template(){
+				return `
+                    <div>
+					    <p>hello <span class='name'>{{name}}</span></p>
+                        <p>age is:<span class='age'>{{age}}</span></p>
+                        <button e-click='change'>change</button>
+                    </div>
+				`
+			}
+			data={
+				name:'nodom',
+                age:3
+			}
+
+            methods = {
+                change(){
+                    this.name='nodom3';
+                    this.age = 1;
+                }
+            } 
+            css = [{
+                '.name':{
+                    'font-size':'16px',
+                    color:'red'
+                },
+                '.age':{
+                    'font-size':'16px',
+                    color:'blue'
+                }
+            }]
+		}
+    	nodom(Module1,'div');
+	</script>
+</html>

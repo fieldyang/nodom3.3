@@ -53,6 +53,7 @@ export class Util {
                 return src;
             }
             let dst;
+
             //带有clone方法，则直接返回clone值
             if (src.clone && Util.isFunction(src.clone)) {
                 return src.clone(extra);
@@ -101,6 +102,7 @@ export class Util {
          * @param extra     附加参数
          */
         function getCloneObj(value, expKey, extra) {
+
             if (typeof value === 'object' && !Util.isFunction(value)) {
                 let co = null;
                 if (!map.has(value)) {  //clone新对象
@@ -152,6 +154,39 @@ export class Util {
         return obj1;
     }
 
+    /**
+     * 比较两个对象值是否相同(只比较object和array)
+     * @param src   源对象
+     * @param dst   目标对象 
+     * @returns     值相同则返回true，否则返回false 
+     */
+    public static compare(src:any,dst:any,deep?:boolean):boolean{
+        if(!src && !dst){
+            return true;
+        }
+        if (typeof src !== 'object' || typeof dst !== 'object') {
+            return false;
+        }
+        const keys = Object.getOwnPropertyNames(src);
+        if(keys.length !== Object.getOwnPropertyNames(dst).length){
+            return false;
+        }
+        for(let k of keys){
+            if(src[k] !== dst[k]){
+                return false;
+            }
+        }
+        //深度比较
+        if(deep){
+            for(let k of keys){
+                let r = this.compare(src[k],dst[k]);
+                if(!r){
+                    return false;
+                }
+            }   
+        }
+        return true;
+    }
     /**
      * 获取对象自有属性
      */
@@ -605,81 +640,5 @@ export class Util {
      */
     public static eval(evalStr: string): any {
         return new Function(`return(${evalStr})`)();
-    }
-
-    /**
-     * 
-     * @param vDom element元素
-     * @param module 模块   
-     * @param parent 父element  
-     * @param parentEl 父真实dom
-     * @returns 新建一个dom元素
-     */
-     public static newEls(vDom,module,parent,parentEl){
-        let el1;
-        if (vDom.tagName) {
-            el1 = newEl(vDom,parent,parentEl);
-            genSub(el1, vDom);
-        } else {
-            el1 = newText(vDom.textContent);
-        }
-        return el1;
-            /**
-         * 新建element节点
-         * @param vdom 		虚拟dom
-         * @param parent 	父虚拟dom
-         * @param parentEl 	父element
-         * @returns 		新的html element
-         */
-        function newEl(vdom: Element, parent: Element, parentEl?: Node): any {
-        //创建element
-            let el;
-            if (vdom.getTmpParam('isSvgNode')) {  //如果为svg node，则创建svg element
-                el = Util.newSvgEl(vdom.tagName);
-            } else {
-                el = Util.newEl(vdom.tagName);
-            }
-            //设置属性
-            Util.getOwnProps(vdom.props).forEach((k) => {
-                if (typeof vdom.props[k] != 'function')
-                    el.setAttribute(k, vdom.props[k]);
-            });
-
-            el.setAttribute('key', vdom.key);
-            vdom.handleNEvents(module, el, parent, parentEl);
-            vdom.handleAssets(el);
-            return el;
-        }
-
-        /**
-         * 新建文本节点
-         */
-        function newText(text: string | HTMLElement | DocumentFragment, dom?: Element): any {
-            if (!text) {
-                text = '';
-                dom = null;
-            }
-            return document.createTextNode(<string>text);
-        }
-
-        /**
-         * 生成子节点
-         * @param pEl 	父节点
-         * @param vNode 虚拟dom父节点	
-         */
-        function genSub(pEl: Node, vNode: Element) {
-            if (vNode.children && vNode.children.length > 0) {
-                vNode.children.forEach((item) => {
-                    let el1;
-                    if (item.tagName) {
-                        el1 = newEl(item, vNode, pEl);
-                        genSub(el1, item);
-                    } else {
-                        el1 = newText(item.textContent, item);
-                    }
-                    pEl.appendChild(el1);
-                });
-            }
-        }
     }
 }

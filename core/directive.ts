@@ -28,17 +28,17 @@ export  class Directive {
      * 表达式
      */
     public expression:Expression;
+
+    /**
+     * 模块
+     */
+    public module:Module;
+
+    /**
+     * 指令所属dom
+     */
+    public dom:Element;
     
-    /**
-     * 附加参数
-     */
-    public params:any;
-
-    /**
-     * 附加操作
-     */
-    public extra:any;
-
     /**
      * 构造方法
      * @param type  	类型名
@@ -47,8 +47,10 @@ export  class Directive {
      * @param module    模块  
      * @param notSort   不排序
      */
-    constructor(type:string, value:string|Expression,dom?:Element,module?:Module, parent?:Element,notSort?:boolean) {
+    constructor(type:string, value:string|Expression,dom:Element,module?:Module, notSort?:boolean) {
         this.id = Util.genId();
+        this.dom = dom;
+        this.module = module;
         this.type = DirectiveManager.getType(type);
         if (Util.isString(value)) {
             this.value = (<string>value).trim();
@@ -59,39 +61,71 @@ export  class Directive {
         }
         
         if (type !== undefined && dom) {
-            DirectiveManager.init(this,dom,module,parent);
             dom.addDirective(this,!notSort);
         }
+        
+        this.module= module;
     }
 
     /**
      * 执行指令
-     * @param module    模块 
-     * @param dom       指令执行时dom
-     * @param parent    父虚拟dom
      */
-    public async exec(module:Module,dom:Element,parent?:Element) {
-        return DirectiveManager.exec(this,dom,module,parent);
+    public exec() {
+        //设置存储的props
+        let props = this.getParam('props');
+        if(props){
+            Util.getOwnProps(props).forEach(o=>{
+                let p;
+                if(Array.isArray(typeof props[o])){ //是数组（表达式属性）
+                    p = [o].concat(props[o]);
+                }else{ //非数组
+                    p = [o,props[o]]
+                }
+                this.dom.setProp.apply(this.dom,p);
+            });
+            console.log(this.dom.props);
+        }
+        this.type.handle.apply(this);
+    }
+
+    /**
+     * 设置参数
+     * @param name      参数名
+     * @param value     参数值
+     */
+    public setParam(name:string,value:any){
+        this.dom.saveCache(this.module,`$directives.${this.type.name}.${name}`,value);
+    }
+
+    /**
+     * 获取参数值
+     * @param name      参数名
+     * @returns         参数值
+     */
+    public getParam(name:string){
+        return this.dom.readCache(this.module,`$directives.${this.type.name}.${name}`);
+    }
+
+    /**
+     * 移除参数
+     * @param module    模块
+     * @param dom       dom
+     * @param name      参数名
+     * @returns         参数值
+     */
+    public removeParam(module:Module,dom:Element,name:string){
+        this.dom.removeCache(module,`$directives.${this.type.name}.${name}`);
     }
 
     /**
      * 克隆
-     * @param dst   目标dom
-     * @returns     新指令
+     * @param dst       目标dom
+     * @param module    模块
+     * @returns         指令对象
      */
-    public clone(dst:Element):Directive{
-        let dir = new Directive(this.type.name,this.value);
-        if(this.params){
-            dir.params = Util.clone(this.params);
-        }
-        if(this.extra){
-            dir.extra = Util.clone(this.extra);
-        }
-        if(this.expression){
-            dir.expression = this.expression;
-        }
-
-        DirectiveManager.init(dir,dst);
-        return dir;
+    public clone(dst:Element,module?:Module):Directive{
+        let d = new Directive(this.type.name,this.value,dst,module||this.module);
+        d.expression = this.expression;
+        return d;
     }
 }
