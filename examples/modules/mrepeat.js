@@ -34,8 +34,7 @@ export class MRepeat extends Module{
             <div class=tip>价格升序排序（编号从1开始）</div>
             <div class=code>
                 菜单：
-                <div x-repeat={{foods.sort((a,b)=>{if(a.price>b.price) 
-                    return 1;return -1;})}}>
+                <div x-repeat={{foods.sort((a,b)=>{if(a.price>b.price)  return 1;return -1;})}}>
                     编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
                 </div>
             </div>
