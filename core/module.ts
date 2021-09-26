@@ -457,8 +457,6 @@ export class Module {
     public getContainer(): HTMLElement {
         if(!this.container){
             if(this.containerKey){
-                // let pc = this.getParent().getContainer();
-                // this.container = pc.querySelector("[key='"+ this.containerKey +"']");
                 this.container = <HTMLElement>this.getParent().objectManager.getNode(this.containerKey);
             }
         }

@@ -1,4 +1,4 @@
-import { DefineElementManager } from "./defineelementmanager";
+import { DirectiveElementManager } from "./directiveelementmanager";
 import { Directive } from "./directive";
 import { Element } from "./element";
 import { NError } from "./error";
@@ -326,8 +326,8 @@ export class Compiler {
         if (ModuleFactory.hasClass(node.tagName)) {
             node.addDirective(new Directive(this.module,'module',node.tagName));
             node.tagName = 'div';
-        }else if(DefineElementManager.has(node.tagName)){ //自定义元素
-            let clazz = DefineElementManager.get(node.tagName);
+        }else if(DirectiveElementManager.has(node.tagName)){ //自定义元素
+            let clazz = DirectiveElementManager.get(node.tagName);
             Reflect.construct(clazz,[node,this.module]);
         }
     }

@@ -1,13 +1,13 @@
-import { DefineElement } from "./defineelement";
+import { DirectiveElement } from "./directiveelement";
 
 /**
  * 自定义元素管理器
  */
-export class DefineElementManager {
+export class DirectiveElementManager {
     /**
      * 自定义element
      */
-    private static elements: Map<string, DefineElement> = new Map();
+    private static elements: Map<string, DirectiveElement> = new Map();
     /**
      * 添加自定义元素类
      * @param clazz  自定义元素类或类数组

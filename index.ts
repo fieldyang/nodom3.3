@@ -2,6 +2,8 @@ export { Compiler } from "./core/compiler";
 export { Directive } from "./core/directive";
 export { DirectiveManager } from "./core/directivemanager";
 export { DirectiveType } from "./core/directivetype";
+export { DirectiveElement } from "./core/directiveelement";
+export { DirectiveElementManager } from "./core/directiveelementmanager";
 export { Element } from "./core/element";
 export { NError } from "./core/error";
 export { NEvent } from "./core/event";
@@ -26,7 +28,7 @@ export * from "./core/types";
 export * from "./core/nodom";
 
 export { Util } from './core/util';
-export * from "./extend/defineelementinit";
+export * from "./extend/elementinit";
 export * from "./extend/directiveinit";
 export * from "./extend/eventinit";
 

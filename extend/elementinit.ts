@@ -1,15 +1,16 @@
-import { DefineElement } from "../core/defineelement";
-import { DefineElementManager } from "../core/defineelementmanager";
+import { DirectiveElement } from "../core/directiveelement";
+import { DirectiveElementManager } from "../core/directiveelementmanager";
 import { NError } from "../core/error";
 import { NodomMessage } from "../core/nodom";
 import { Element } from "../core/element";
 import { Directive } from "../core/directive";
 import { Module } from "../core/module";
+import { GlobalCache } from "../core/globalcache";
 
 /**
  * module 元素
  */
-class MODULE extends DefineElement{
+class MODULE extends DirectiveElement{
     constructor(node: Element,module:Module){
         super(node,module);
         //类名
@@ -25,7 +26,7 @@ class MODULE extends DefineElement{
 /**
  * for 元素
  */
-class FOR extends DefineElement{
+class FOR extends DirectiveElement{
     constructor(node: Element,module:Module){
         super(node,module);
         //条件
@@ -34,6 +35,11 @@ class FOR extends DefineElement{
             throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'FOR', 'cond');
         }
         node.delProp('cond');
+        if(typeof cond === 'number'){ //表达式
+            console.log(cond);
+            cond = GlobalCache.getExpression(cond);
+        }
+        
         node.addDirective(new Directive(module,'repeat',cond));
     }
 }
@@ -41,7 +47,7 @@ class FOR extends DefineElement{
 /**
  * IF 元素
  */
-class IF extends DefineElement{
+class IF extends DirectiveElement{
     constructor(node: Element,module:Module){
         super(node,module);
         //条件
@@ -50,11 +56,14 @@ class IF extends DefineElement{
             throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'IF', 'cond');
         }
         node.delProp('cond');
+        if(typeof cond === 'number'){ //表达式
+            cond = GlobalCache.getExpression(cond);
+        }
         node.addDirective(new Directive(module,'if',cond));
     }
 }
 
-class ELSE extends DefineElement{
+class ELSE extends DirectiveElement{
     constructor(node: Element,module:Module){
         super(node,module);
         node.addDirective(new Directive(module,'else',null));
@@ -63,7 +72,7 @@ class ELSE extends DefineElement{
 /**
  * ELSEIF 元素
  */
-class ELSEIF extends DefineElement{
+class ELSEIF extends DirectiveElement{
     constructor(node: Element,module:Module){
         super(node,module);
         //条件
@@ -72,13 +81,16 @@ class ELSEIF extends DefineElement{
             throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'ELSEIF', 'cond');
         }
         node.delProp('cond');
+        if(typeof cond === 'number'){ //表达式
+            cond = GlobalCache.getExpression(cond);
+        }
         node.addDirective(new Directive(module,'elseif',cond));
     }
 }
 /**
  * ENDIF 元素
  */
-class ENDIF extends DefineElement{
+class ENDIF extends DirectiveElement{
     constructor(node: Element,module:Module){
         super(node,module);
         node.addDirective(new Directive(module,'endif',null));
@@ -88,7 +100,7 @@ class ENDIF extends DefineElement{
 /**
  * 替代器
  */
-class SLOT extends DefineElement{
+class SLOT extends DirectiveElement{
     constructor(node: Element,module:Module){
         super(node,module);
         //条件
@@ -98,4 +110,4 @@ class SLOT extends DefineElement{
     }
 }
 
-DefineElementManager.add([MODULE,FOR,IF,ELSE,ELSEIF,ENDIF,SLOT]);
+DirectiveElementManager.add([MODULE,FOR,IF,ELSE,ELSEIF,ENDIF,SLOT]);
