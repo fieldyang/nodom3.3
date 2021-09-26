@@ -57,6 +57,15 @@ export function createDirective(name: string, handler: Function,priority?: numbe
 }
 
 /**
+ * 注册模块
+ * @param clazz     模块类
+ * @param name      注册名，如果没有，则为类名
+ */
+export function registModule(clazz:any,name?:string){
+    ModuleFactory.addClass(clazz,name);
+}
+
+/**
  * ajax 请求
  * @param config    object 或 string
  *                  如果为string，则直接以get方式获取资源

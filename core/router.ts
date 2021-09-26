@@ -205,7 +205,6 @@ export class Router {
         if(typeof module === 'function'){ 
             module = ModuleFactory.get(module);
         }
-        console.log(module);
         route.module = module;
         return module;
     }
@@ -331,11 +330,11 @@ export class Router {
         module.model['$route'] = o;
         if(pm){
             if(pm.state === 4){  //被依赖模块处于渲染后状态
-                module.setContainer(<HTMLElement>pm.getNode(this.routerKeyMap.get(pm.id)));
+                module.setContainer(<HTMLElement>pm.objectManager.getNode(this.routerKeyMap.get(pm.id)));
                 this.setDomActive(pm,route.fullPath);
             }else{ //被依赖模块不处于被渲染后状态
                 pm.addRenderOps(function(m,p){
-                    module.setContainer(m.getNode(Router.routerKeyMap.get(m.id)));
+                    module.setContainer(<HTMLElement>m.objectManager.getNode(Router.routerKeyMap.get(m.id)));
                     me.setDomActive(m,p);
                 },1,[pm,route.fullPath],true);
             }
@@ -492,7 +491,6 @@ export class Router {
             node.fullPath = fullPath;
             retArr.push(node);
         }
-
         return retArr;
     }
 }
