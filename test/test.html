@@ -21,16 +21,18 @@
     <title>Document</title>
 </head>
 <body>
-    <span></span>
+    <div></div>
 </body>
 <script>
-    
-    let s = '<span>text</span>   <span>hallo</span>';
-    let txt = document.createTextNode('');
-    txt.textContent = s;
-    document.querySelector('span').appendChild(txt);
-    
+    let p1 = document.querySelector('div');
+    let div1 = document.createElement('div');
+    div1.innerHTML = 'this is div1';
+    p1.appendChild(div1);
 
+    let div2 = document.createElement('div');
+    div2.innerHTML = 'this is div2';
+    div1.appendChild(div2);
+    console.log(div2,div1);
     
 </script>
 

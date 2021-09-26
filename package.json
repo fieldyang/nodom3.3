@@ -1,24 +1,33 @@
 {
-    "name": "nodom3.1",
-    "version": "0.0.1",
-    "description": "",
-    "private": true,
-    "main": "index.ts",
-    "directories": {
-        "example": "examples"
-    },
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "build": "rollup -c"
-    },
-    "author": "",
-    "license": "MIT",
-    "browser": "dist/nodom.js",
-    "devDependencies": {
-        "@rollup/plugin-commonjs": "^18.1.0",
-        "@rollup/plugin-node-resolve": "^13.0.0",
-        "rollup": "^2.47.0",
-        "rollup-plugin-typescript2": "^0.30.0",
-        "typescript": "^4.2.4"
-    }
+  "name": "nodom3.2",
+  "version": "0.0.1",
+  "private": true,
+  "main": "index.ts",
+  "directories": {
+    "example": "examples",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c"
+  },
+  "author": "",
+  "license": "MIT",
+  "browser": "dist/nodom.js",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^18.1.0",
+    "@rollup/plugin-node-resolve": "^13.0.0",
+    "rollup": "^2.47.0",
+    "rollup-plugin-typescript2": "^0.30.0",
+    "typescript": "^4.2.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fieldyang/nodom3.2.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fieldyang/nodom3.2/issues"
+  },
+  "homepage": "https://github.com/fieldyang/nodom3.2#readme",
+  "description": ""
 }

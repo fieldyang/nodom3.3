@@ -15,9 +15,19 @@
 			template(){
 				return `
                     <div>
-					    <p>hello <span class='name'>{{name}}</span></p>
+					    <p>hello <span class='name'>hello:{{name}} hahaha</span></p>
                         <p>age is:<span class='age'>{{age}}</span></p>
                         <button e-click='change'>change</button>
+						<style>
+							@import url(css/a.css);
+							.name{ 
+								color:green
+							}
+							.age{
+								font-size:16px;
+								color:blue
+							}
+						</style>
                     </div>
 				`
 			}
@@ -28,6 +38,7 @@
 
             methods = {
                 change(){
+					console.log('ddd');
                     this.name='nodom3';
                     this.age = 1;
                 }
@@ -45,4 +56,10 @@
 		}
     	nodom(Module1,'div');
 	</script>
+<<<<<<< HEAD
+
+
 </html>
+=======
+</html>
+>>>>>>> 82f8a2ab4af1ad276a3753f5ac6128cd0aa51fc0

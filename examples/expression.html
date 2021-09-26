@@ -35,7 +35,7 @@
 			<div>判断数组中有没有‘num’: <span x-if="new Set(arr).has(num)">true</span></div>
 			<div>价格求和: {{$sum(1,2)+price}}</div>
 			<div>
-				{{(new Date().getTime())|date:'yyyy-MM-dd'}} 是否为工作日：<span x-if="new Date().getDay()<6"
+				{{(new Date().getTime())|date:'yyyy-MM-dd'}} 是否是工作日：<span x-if="new Date().getDay()<6"
 					>true</span
 				>
 			</div>

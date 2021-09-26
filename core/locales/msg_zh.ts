@@ -54,7 +54,9 @@ export const NodomMessage_zh = {
         itemincorrect: "{0} '{1}' 配置项 '{2}' 错误",
         compile1: "{0}标签未闭合",
         compile2: "结束标签{0}未找到与之匹配的开始标签",
-        compile3: "请检查模板标签闭合情况，模板需要有一个闭合的根节点"
+        compile3: "请检查模板标签闭合情况，模板需要有一个闭合的根节点",
+        wrongTemplate:"模版格式错误"
+
     },
 
     /**

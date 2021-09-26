@@ -3,9 +3,8 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-	<title>field</title>
-    <script type="text/javascript" src="../dist/nodom.js"></script>
-	
+	<title>event</title>
+    
 	<style>
 		.cls1{
 			color:red;
@@ -17,54 +16,62 @@
 </head>
 <body>
 	<div>
-		<button e-click='show'>show</button>
-		<button e-click='change'>change</button>
-		<button e-click='change1'>change1</button>
-		<ul x-show='show' e-click='clickP:capture:once'>
-			<li x-repeat='edus' e-click='clickItem:delg'>{{eduName}}</li>
-		</ul>
+		
 	</div>
 </body>
-	<script>
-		nodom.app({
-			module:{
-				el:'div',
-				
-				data:{
-					show:0,
-					edus:[
-						{eduId:1,eduName:'高中'},
-						{eduId:2,eduName:'本科'},
-						{eduId:3,eduName:'硕士研究生'},
-						{eduId:4,eduName:'博士研究生'}
-					],
-					sum:function(){
-						console.log(this);
-					}
-				},
-				methods:{
-					clickP:function(d,module){
-						console.log(this);
-					},
-					clickItem:function(d,m,module){
-						console.log(this);
-					},
-					show:function(dom,module,e,el){
-						this.show = !this.show;
-						this.sum();
-					},
-					change:function(dom,module){
-						this.edus.push({
-							eduId:5,eduName:'博士后'
-						})
-					},
-					change1:function(dom,module){
-						this.edus[0].eduName = '幼儿园';
-						
-					},
+	<script type='module'>
+		import{nodom,Module} from '../dist/nodom.js'
+		class Module1 extends Module{
+			template(){
+				return `
+				<div>
+					<div>hello</div>
+					<ul x-show='show' e-click='clickP' e-swipedown='swipedown'>
+						<li x-repeat={{edus}} e-tap='clickItem:delg:once' e-mousewheel='clickItem:delg:once'><span>{{eduName}}</span></li>
+					</ul>
+				</div>
+				`
+			}
+			data = {
+				show:0,
+				edus:[
+					{eduId:1,eduName:'高中'},
+					{eduId:2,eduName:'本科'},
+					{eduId:3,eduName:'硕士研究生'},
+					{eduId:4,eduName:'博士研究生'}
+				],
+				sum:function(){
+					console.log(this);
 				}
 			}
-		});
-		
+			methods = {
+				clickP:function(d,module,evo,e){
+					console.log('parent',this);
+				},
+				swipedown:function(d,module,evo,e){
+					console.log(e.v0);
+				},
+				outP:function(dom,module,evo,e){
+					console.log('out parent',this);
+				},
+				clickItem:function(d,module,evo,e){
+					console.log('child',this);
+				},
+				show:function(dom,module,evo,e){
+					this.show = !this.show;
+					this.sum();
+				},
+				change:function(dom,module,evo,e){
+					this.edus.push({
+						eduId:5,eduName:'博士后'
+					})
+				},
+				change1:function(dom,module,evo,e){
+					this.edus[0].eduName = '幼儿园';
+					
+				}
+			}
+		}
+		nodom(Module1,'div');
 	</script>
 </html>
