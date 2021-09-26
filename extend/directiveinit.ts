@@ -155,31 +155,29 @@ export default (function () {
     createDirective(
         'recur',
         function(module:Module,dom:Element){
-            let model = dom.model;
-            if (!model) {
+            let data = this.value;
+            //处理内部递归节点
+            if (!data || typeof data !== 'object') {
                 return;
             }
-            let data = model[this.value];
             // 渲染时，去掉model指令，避免被递归节点使用
             dom.removeDirectives('model');
-
-            //处理内部递归节点
-            if (data) {
-                if (Array.isArray(data)) { //为数组，则遍历生成多个节点
-                    // 先克隆一个用作基本节点，避免在循环中为基本节点增加子节点
-                    let node: Element = dom.clone();
-                    for (let d of data) {
-                        let nod: Element = node.clone();
-                        nod.model = d;
-                        //作为当前节点子节点
-                        dom.add(nod);
-                    }
-                } else {
-                    let node: Element = dom.clone();
-                    node.model = data;
+            
+            if (Array.isArray(data)) { //为数组，则遍历生成多个节点
+                // 先克隆一个用作基本节点，避免在循环中为基本节点增加子节点
+                let node: Element = dom.clone();
+                for (let d of data) {
+                    let nod: Element = node.clone();
+                    nod.model = d;
+                    console.log(d);
                     //作为当前节点子节点
-                    dom.add(node);
+                    dom.add(nod);
                 }
+            } else {
+                let node: Element = dom.clone();
+                node.model = data;
+                //作为当前节点子节点
+                dom.add(node);
             }
         },
         3

@@ -36,11 +36,29 @@ class FOR extends DirectiveElement{
         }
         node.delProp('cond');
         if(typeof cond === 'number'){ //表达式
-            console.log(cond);
             cond = GlobalCache.getExpression(cond);
         }
         
         node.addDirective(new Directive(module,'repeat',cond));
+    }
+}
+
+/**
+ * 递归元素
+ */
+class RECUR extends DirectiveElement{
+    constructor(node: Element,module:Module){
+        super(node,module);
+        //条件
+        let cond = node.getProp('cond');
+        if (!cond) {
+            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'recur', 'cond');
+        }
+        node.delProp('cond');
+        if(typeof cond === 'number'){ //表达式
+            cond = GlobalCache.getExpression(cond);
+        }
+        node.addDirective(new Directive(module,'recur',cond));
     }
 }
 
@@ -110,4 +128,4 @@ class SLOT extends DirectiveElement{
     }
 }
 
-DirectiveElementManager.add([MODULE,FOR,IF,ELSE,ELSEIF,ENDIF,SLOT]);
+DirectiveElementManager.add([MODULE,FOR,IF,RECUR,ELSE,ELSEIF,ENDIF,SLOT]);

@@ -177,7 +177,6 @@ export class Compiler {
         //后置处理
         this.postHandleNode(ele);
         ele.sortDirective();
-        
         return [ele,tagName];
 
         /**
