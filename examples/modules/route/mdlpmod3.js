@@ -9,10 +9,6 @@ export class MdlPMod3 extends Module {
             <div x-router test='3'></div>
         </div>
         `
-<<<<<<< HEAD
     }
     data = {} 
-=======
-    } 
->>>>>>> 336098f0c5db8ff4d25308a1963f72a1fac84a0f
 }

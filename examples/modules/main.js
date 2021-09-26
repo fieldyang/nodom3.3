@@ -5,7 +5,6 @@ export class ModuleMain extends Module {
 		return `
             <div>
                 <button e-click='change'>change</button>
-<<<<<<< HEAD
                 <div>y is {{y}}</div>
                 <div>x.y is {{x.y}}</div>
                 <h2>默认plug</h2>
@@ -37,24 +36,6 @@ export class ModuleMain extends Module {
                     <h3 style='color:gold'>
                         我自动作为solot节点
                     </h3>
-=======
-                <div>hello world!</div>
-                <div>x.y is {{x.y}}</div>
-                <div>x2:{{y}}</div>
-                <h2>默认plug</h2>
-                <ModuleA x-data={{getData()}} xxx='111'>
-                    <swap name='s1'>
-                        <h3 style='color:blue'> hello change plug 1</h3>    
-                    </swap>
-                    <swap name='s2'>替换的第二个swap  {{name}}</swap>
-                </ModuleA>
-                <p>hello</p>
-                <h2>替换plug</h2>
-                <ModuleA x-data={{getData()}} xxx='222'>
-                    <swap name='s1'>
-                        <h3 style='color:red'> hello change plug 2</h3>    
-                    </swap>
->>>>>>> 336098f0c5db8ff4d25308a1963f72a1fac84a0f
                 </ModuleA>
            </div>
         `;
@@ -64,11 +45,7 @@ export class ModuleMain extends Module {
 		x: {
 			y: 123,
 		},
-<<<<<<< HEAD
 		y: "hello world!",
-=======
-		y: "hello",
->>>>>>> 336098f0c5db8ff4d25308a1963f72a1fac84a0f
 		name: "yanglei",
 		rows: [{ name: "yang" }, { name: "lei" }],
 	};
