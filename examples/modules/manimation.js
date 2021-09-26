@@ -54,11 +54,6 @@ export class MAnimation extends Module {
                 <div class="container">
                     <div class='div2' x-animation={{transition7}}></div>
                 </div> 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 336098f0c5db8ff4d25308a1963f72a1fac84a0f
                 <p>对于进入离开过渡，你可以分别配置，你也可以控制延时时间和播放时间以及timingFunction</p>
                 <button e-click='tigger6'>点我触发过渡</button>
                 <h2>进入/离开分开配置</h2>
@@ -66,16 +61,6 @@ export class MAnimation extends Module {
                     <div class='div2' x-animation={{transition8}}></div>
                 </div> 
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 336098f0c5db8ff4d25308a1963f72a1fac84a0f
-                <h1>动画</h1>
-                <p>我们将fade效果从transiton改为animation</p>
-                <pre>
-                    .myfade-enter-active {
-                        animation-name: myfade;
                         animation-duration: 1s;
                     }
                     .myfade-leave-active {
@@ -91,21 +76,13 @@ export class MAnimation extends Module {
                             opacity: 1;
                         }
                     }
-<<<<<<< HEAD
-                </pre> 
-=======
                 </pre>
->>>>>>> 336098f0c5db8ff4d25308a1963f72a1fac84a0f
                   <button e-click='tigger5'>点我触发动画</button>
                 <h2>fade动画</h2>
                 <div class="container">
                     <div class='div2' x-animation={{animaiton}}></div>
-<<<<<<< HEAD
-                </div>  
-=======
                 </div> -->
 
->>>>>>> 336098f0c5db8ff4d25308a1963f72a1fac84a0f
             </div> 
 	`;
 	}
