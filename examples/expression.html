@@ -40,7 +40,7 @@
 				>
 			</div>
 			<div>货币过滤器：{{(price*discount)|currency:¥}}</div>
-			<div x-if="price>30 && discount !== undefined">是否是低价商品并且还有折扣</div>
+			<div x-if="price>30 && discount !== undefined">是否是低价商品并且有折扣</div>
 			<div>计算：{{$cac(1,2)+ (Math.round((price * discount)))|number:1 + 1}}</div>
 			<div>instanceof用法:{{arr instanceof Array}}</div>
 			<div>{{num+1}}</div>
