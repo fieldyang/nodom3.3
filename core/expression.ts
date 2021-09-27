@@ -26,15 +26,41 @@ export class Expression {
         if (!module || !exprStr) {
             return;
         }
-
-        this.execFunc = new Function('$model','$methods',`
-            with($model){
-                with($methods){
-                    return ${exprStr.trim()};
-                }
-            }
-        `);
+        const funStr = this.compile(exprStr);
+        this.execFunc = new Function('$model','$methods',`return ` + funStr);
         GlobalCache.saveExpression(this);
+    }
+
+    /**
+     * 编译表达式串，替换字段和方法
+     * @param exprStr   表达式串
+     * @returns         编译后的表达式串
+     */
+    private compile(exprStr:string){
+        const reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|([a-zA-Z$_][\w$]*(\.[a-zA-Z$_][\w$]*)?(\s*[\[\(])?)/g;
+        let r;
+        let retS = '';
+        let index = 0;  //当前位置
+
+        while((r=reg.exec(exprStr)) !== null){
+            let s = r[0];
+            if(index < r.index){
+                retS += exprStr.substring(index,r.index);
+            }
+            if(s[0] === "'" || s[0] === '"' || s[0] === '`'){ //字符串
+                retS += s;
+            }else if(s.endsWith('(')){ //函数，非内部函数
+                retS += s.indexOf('.') === -1?'$methods.' + s:s;
+            }else { //字段
+                retS += '$model.' + s;
+            }
+            index = reg.lastIndex;
+        }
+        if(index < exprStr.length){
+            retS += exprStr.substr(index);
+        }
+        
+        return retS;
     }
 
     /**
@@ -52,7 +78,7 @@ export class Expression {
         try {
             v = this.execFunc.apply(module.model,[model,module.methods||{}]);
         } catch (e) {
-            console.error(e);
+            // console.error(e);
         }
         return v;
     }

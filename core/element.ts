@@ -1,3 +1,4 @@
+import { CssManager } from "./cssmanager";
 import { Directive } from "./directive";
 import { DirectiveManager } from "./directivemanager";
 import { NEvent } from "./event";
@@ -31,7 +32,7 @@ export class Element {
     /**
      * element为textnode时有效
      */
-    public textContent: string | HTMLElement;
+    public textContent: string;
 
     /**
      * 指令集
@@ -155,6 +156,11 @@ export class Element {
                 i--;
             }
         }
+
+        //给容器设置模块class
+        if(this.tagName === 'style' && this.getProp('scope') === 'this'){
+            module.renderTree.addClass('___module___' + module.id);
+        }
         return true;
     }
 
@@ -166,13 +172,18 @@ export class Element {
      *          parent 	父虚拟dom
      */
     public renderToHtml(module: Module, parentEl:HTMLElement,isRenderChild?:boolean) {
+        //style不添加到html
+        if(this.tagName === 'style'){
+            return;
+        }
+        
         let el = module.objectManager.getNode(this.key);
         if(el){   //html dom节点已存在
             if(this.tagName){
                 //设置属性
                 for(let v of this.props){
                     if (typeof v[1] != 'function'){
-                        (<HTMLElement>el).setAttribute(v[0], v[1]);
+                        (<HTMLElement>el).setAttribute(v[0], v[1]===undefined?'':v[1]);
                     }
                 }
                 this.handleAssets((<HTMLElement>el));
@@ -203,7 +214,7 @@ export class Element {
             //设置属性
             for(let v of vdom.props){
                 if (typeof v[1] != 'function'){
-                    el.setAttribute(v[0], v[1]);
+                    el.setAttribute(v[0], v[1]===undefined?'':v[1]);
                 }
             }
             
@@ -221,6 +232,11 @@ export class Element {
          * 新建文本节点
          */
         function newText(dom:Element,pEl:Node): any {
+            //样式表
+            if(dom.parent.tagName === 'style'){
+                CssManager.addRules(module,dom.textContent,dom.parent.getProp('scope') === 'this');
+                return;
+            }
             let node = document.createTextNode(<string>dom.textContent || '');
             module.objectManager.saveNode(dom.key,node);
             pEl.appendChild(node);
@@ -915,11 +931,5 @@ export class Element {
      */
     public removeParam(module:Module,name:string){
         module.objectManager.removeElementParam(this.key,name);
-    }
-
-    public changeStatic(force?:boolean){
-        if(force){
-
-        }
     }
 }

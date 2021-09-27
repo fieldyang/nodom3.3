@@ -1,4 +1,5 @@
 export { Compiler } from "./core/compiler";
+export { CssManager } from "./core/cssmanager";
 export { Directive } from "./core/directive";
 export { DirectiveManager } from "./core/directivemanager";
 export { DirectiveType } from "./core/directivetype";

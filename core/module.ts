@@ -59,7 +59,7 @@ export class Module {
     /**
      * 渲染树
      */
-    private renderTree: Element;
+    public renderTree: Element;
 
     /**
      * 父模块 id
@@ -142,9 +142,6 @@ export class Module {
             }
             delete this.modules;
         }
-        
-        //处理css配置
-        this.handleCss();
     }
 
     /**
@@ -159,34 +156,33 @@ export class Module {
     /**
      * 处理css
      */
-    private handleCss() {
-        if(!this.css){
-            return;
-        }
-        let cssArr = (typeof this.css === 'function' ? this.css.apply(this.model) : this.css);
-        if (Array.isArray(cssArr) && cssArr.length > 0) {
-            //如果不存在stylesheet或最后一个stylesheet是link src，则新建一个style标签
-            if (document.styleSheets.length === 0 || document.styleSheets[document.styleSheets.length - 1].href) {
-                document.head.appendChild(document.createElement('style'));
-            }
-            //得到最后一个sheet
-            let sheet: CSSStyleSheet = document.styleSheets[document.styleSheets.length - 1];
-            for (let css of cssArr) {
-                if (typeof css === 'string') {
-                    sheet.insertRule("@import '" + css + "'");
-                } else if (typeof css === 'object') {
-                    for (let p in css) {
-                        let style = p + '{';
-                        for (let p1 in css[p]) {  //多个样式
-                            style += p1 + ':' + css[p][p1] + ';'
-                        }
-                        style += p + '}';
-                        //加入样式表
-                        sheet.insertRule(style);
-                    }
-                }
-            }
-        }
+    public handleCss(styleTxt:string){
+
+        
+        // let cssArr = (typeof this.css === 'function' ? this.css.apply(this.model) : this.css);
+        // if (Array.isArray(cssArr) && cssArr.length > 0) {
+        //     //如果不存在stylesheet或最后一个stylesheet是link src，则新建一个style标签
+        //     if (document.styleSheets.length === 0 || document.styleSheets[document.styleSheets.length - 1].href) {
+        //         document.head.appendChild(document.createElement('style'));
+        //     }
+        //     //得到最后一个sheet
+        //     let sheet: CSSStyleSheet = document.styleSheets[document.styleSheets.length - 1];
+        //     for (let css of cssArr) {
+        //         if (typeof css === 'string') {
+        //             sheet.insertRule("@import '" + css + "'");
+        //         } else if (typeof css === 'object') {
+        //             for (let p in css) {
+        //                 let style = p + '{';
+        //                 for (let p1 in css[p]) {  //多个样式
+        //                     style += p1 + ':' + css[p][p1] + ';'
+        //                 }
+        //                 style += p + '}';
+        //                 //加入样式表
+        //                 sheet.insertRule(style);
+        //             }
+        //         }
+        //     }
+        // }
         delete this.css;
     }
 

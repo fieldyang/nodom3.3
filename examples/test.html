@@ -44,7 +44,6 @@
         displayField:'title'
     }
     class MTest extends Module{
-        
         template(){
             return `
              <div class='nd-tree'>
@@ -52,7 +51,6 @@
                     <for cond={{'${props.dataName}'}} class={{'nd-tree-node ' + $selected?'nd-tree-node-selected':''}}>
                         <for tag='span' cond='children' class={{genNodeIcon()}} value=${props.valueField}>{{${props.displayField}}}</for>
                     </for>
-
                 </div>
             </div>
             `

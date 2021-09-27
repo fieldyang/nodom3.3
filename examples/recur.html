@@ -72,9 +72,9 @@
 				return `
 					<div>
 						<h3>简单使用</h3>
-						<div x-recur={{ritem}}>
+						<!-- <div x-recur={{ritem}} nid={{id}}>
 							<span class="{{cls}}">{{title}}</span>
-						</div>
+						</div> -->
 						<!-- <h3>复杂使用</h3>
 						<div x-recur="ritem1">
 							<ul class="{{cls}}">
@@ -83,7 +83,7 @@
 						</div> -->
 						<h3>递归带数组</h3>
 							<for cond={{ritem2}}>
-								<recur class='secondct' cond={{items}}>
+								<recur class='secondct' cond={{items}} nid={{id}}>
 									<div class='second'>id is:{{id}}-{{title}}</div>
 								</recur>
 							</for>
