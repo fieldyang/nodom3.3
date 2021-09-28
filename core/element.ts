@@ -474,8 +474,6 @@ export class Element {
         // 移除
         if (Util.isArray(this.children) && (ind = this.children.findIndex(item=>item===dom)) !== -1) {
             this.children.splice(ind, 1);
-            //从对象管理器删除
-            module.objectManager.removeSavedNode(dom.key);
         }
     }
 

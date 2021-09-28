@@ -186,7 +186,6 @@ export class Module {
                     switch(item[0]){
                         case 1: //添加
                             //把新dom缓存添加到旧dom缓存
-                            // this.objectManager.saveOldElement(this.objectManager.getNewElement(item[1].key));
                             item[1].renderToHtml(this,pEl,true);
                             n1 = this.objectManager.getNode(item[1].key);
                             if(!n2){ //不存在添加节点或为索引号
