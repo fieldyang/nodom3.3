@@ -1,5 +1,5 @@
 import {Module} from "./module";
-
+import {Element} from "./element";
 /**
  * css 管理器
  * 针对不同的rule，处理方式不同
@@ -23,15 +23,51 @@ export class CssManager{
      */
     private static importIndex = 0;
 
+    private static cssPreName = '___nodommodule___';
+
+    
+    /**
+     * 处理style 元素
+     * @param module 
+     * @param dom 
+     * @returns 
+     */
+    public static handleStyleDom(module:Module,dom:Element){
+        if(!dom || dom.tagName.toLowerCase() !== 'style' || dom.getProp('scope') !== 'this'){
+            return;
+        }
+        module.renderTree.addClass(this.cssPreName + module.id);
+    }
+
+    /**
+     * 处理 style 下的文本元素
+     * @param module    模块
+     * @param dom       style text element
+     * @returns         true:style text节点,false:非style text节点
+     */
+    public static handleStyleTextDom(module:Module,dom:Element):boolean{
+        if(!dom.parent || dom.parent.tagName.toLowerCase() !== 'style'){
+            return false;
+        }
+        //scope=this，在模块根节点添加 限定 class
+        const preName = dom.parent.getProp('scope') === 'this'?this.cssPreName + module.id:undefined;
+        let pre;
+        if(preName){
+            module.renderTree.addClass(preName);
+            pre = '.' + preName;
+        }
+        
+        CssManager.addRules(module,dom.textContent,pre);
+        return true;
+    }
+
     /**
      * 添加多个css rule
      * @param cssText           rule集合 
      * @param module            模块
-     * @param scopeInModule     作用域在模块内
+     * @param scopeName         作用域名(前置选择器)
      */
-    public static addRules(module:Module,cssText:string,scopeInModule?:boolean){
-        let removeArr = [];
-        let removeIndex:number;
+    public static addRules(module:Module,cssText:string,scopeName?:string){
         //sheet 初始化
         if(!this.sheet){
             //safari不支持 cssstylesheet constructor，用 style代替
@@ -39,68 +75,78 @@ export class CssManager{
             document.head.appendChild(sheet);
             this.sheet = document.styleSheets[0];
         }
-        
 
-        const reg = /(@import\s+url\(.+?\))|([.#@a-zA-Z][\S\s]*?\{[\s\S]+?\})/g;
-        let re;
-        while((re=reg.exec(cssText)) !== null){
-            if(re[0].startsWith('@import')){ //import
-                handleImport(re[0]);
-            }else if(re[0].startsWith('@')){ //keyframe font...
-                this.sheet.insertRule(re[0]);
-            }else{ //style
-                handleStyle(module,re[0],scopeInModule);
-            }
+        //如果有作用域，则清除作用域下的rule
+        if(scopeName){
+            this.clearModuleRules(module);
         }
 
-        //清理旧name
-        if(removeArr.length>0){
-            for(let i=0;i<removeIndex;i++){
-                let r = this.sheet.cssRules[i];
-                if(r.selectorText && removeArr.indexOf(r.selectorText)){
-                    this.sheet.deleteRule(i--);
-                    break;
+        //是否限定在模块内
+        //cssRule 获取正则式  @impot
+        const reg = /(@[a-zA-Z]+\s+url\(.+?\))|([.#@a-zA-Z]\S*(\s*\S*\s*?)?{)|\}/g;
+
+        //import support url正则式
+        const regImp = /@[a-zA-Z]+\s+url/;
+        
+        // keyframe font page support... 开始 位置
+        let startIndex:number=-1;
+        // { 个数，遇到 } -1 
+        let beginNum:number = 0;
+        let re;
+        while((re=reg.exec(cssText)) !== null){
+            if(regImp.test(re[0])){ //import namespace
+                handleImport(re[0]);
+            }else if(re[0] === '}'){ //回收括号，单个样式结束判断
+                if(startIndex>=0 && --beginNum <= 0){  //style @ end
+                    let txt = cssText.substring(startIndex,re.index+1);
+                    if(txt[0] === '@'){ //@开头
+                        this.sheet.insertRule(txt,CssManager.sheet.cssRules?CssManager.sheet.cssRules.length:0);
+                    }else{  //style
+                        handleStyle(module,txt,scopeName);
+                    }
+                    startIndex = -1;
+                    beginNum = 0;
+                }
+            }else{ //style 或 @内部
+                if(startIndex === -1){
+                    startIndex = re.index;
+                    beginNum++;
+                }else{
+                    beginNum++;
                 }
             }
         }
-
-        console.log(this.sheet.cssRules);
         
         /**
-         * 
-         * @param module 
-         * @param cssText 
-         * @param scopeInModule 
+         * 处理style rule
+         * @param module            模块
+         * @param cssText           css 文本
+         * @param scopeName         作用域名(前置选择器)
          */
-        function handleStyle(module:Module,cssText:string,scopeInModule?:boolean){
+        function handleStyle(module:Module,cssText:string,scopeName?:string){
             const reg = /.+(?=\{)/;
             let r = reg.exec(cssText);
             if(!r){
                 return;
             }
-            
-            if(!removeIndex){
-                removeIndex = CssManager.sheet.cssRules?CssManager.sheet.cssRules.length:0;
+            // 保存样式名，在模块 object manager中以数组存储
+            if(scopeName){
+                let arr = module.objectManager.get('$cssRules');
+                if(!arr){
+                    arr = [];
+                    module.objectManager.set('$cssRules',arr);
+                }
+                arr.push((scopeName + ' ' + r[0]));
+                //为样式添加 scope name
+                cssText = scopeName + ' ' + cssText;
             }
-
-            //前置标识
-            let pre = scopeInModule?('.___module___' + module.id + ' '):'';
-            
-            //如果样式局部使用，则之前的名字需要移除
-            if(pre !== ''){
-                //移除样式名保存
-                removeArr.push(pre + r[0]);
-            }
-
-            
             //加入到样式表
-            CssManager.sheet.insertRule(pre + cssText,CssManager.sheet.cssRules?CssManager.sheet.cssRules.length:0);
+            CssManager.sheet.insertRule(cssText,CssManager.sheet.cssRules?CssManager.sheet.cssRules.length:0);
         } 
 
         /**
-         * 处理import
-         * @param cssText 
-         * @returns 
+         * 处理import rule
+         * @param cssText   css文本
          */
         function handleImport(cssText:string){
             const reg = /(?<=\()\S+(?=\))/;
@@ -114,5 +160,26 @@ export class CssManager{
                 CssManager.importMap.set(r[0],true);
             }
         }
+    }
+
+    /**
+     * 清除模块 css rules
+     * @param module    模块
+     */
+    public static clearModuleRules(module:Module){
+        let rules = module.objectManager.get('$cssRules');
+        if(!rules || rules.length === 0){
+            return;
+        }
+        //从sheet清除
+        for(let i=0;i<this.sheet.cssRules.length;i++){
+            let r = this.sheet.cssRules[i];
+            if(r.selectorText && rules.indexOf(r.selectorText) !== -1){
+                this.sheet.deleteRule(i--);
+            }
+        }
+
+        //置空cache
+        module.objectManager.set('$cssRules',[]);
     }
 }

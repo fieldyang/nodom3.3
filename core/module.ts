@@ -35,22 +35,6 @@ export class Module {
      * 子模块，类名数组，函数或数组
      */
     public modules: any;
-
-    /**
-     * css样式
-     * 函数或数组，如果数组元素为object，则为样式名和键值对，否则为url,url为主页面相对路径
-     * [{
-     *  '.cls1:{
-     *      color:'red',
-     *      font-size:'12px'
-     *  },
-     *  '.cls2':{
-     *      ...
-     *  }
-     * },'css1.css']
-     */
-    public css: any;
-
     /**
      * 父模块通过dom节点传递的属性
      */
@@ -154,39 +138,6 @@ export class Module {
     }
     
     /**
-     * 处理css
-     */
-    public handleCss(styleTxt:string){
-
-        
-        // let cssArr = (typeof this.css === 'function' ? this.css.apply(this.model) : this.css);
-        // if (Array.isArray(cssArr) && cssArr.length > 0) {
-        //     //如果不存在stylesheet或最后一个stylesheet是link src，则新建一个style标签
-        //     if (document.styleSheets.length === 0 || document.styleSheets[document.styleSheets.length - 1].href) {
-        //         document.head.appendChild(document.createElement('style'));
-        //     }
-        //     //得到最后一个sheet
-        //     let sheet: CSSStyleSheet = document.styleSheets[document.styleSheets.length - 1];
-        //     for (let css of cssArr) {
-        //         if (typeof css === 'string') {
-        //             sheet.insertRule("@import '" + css + "'");
-        //         } else if (typeof css === 'object') {
-        //             for (let p in css) {
-        //                 let style = p + '{';
-        //                 for (let p1 in css[p]) {  //多个样式
-        //                     style += p1 + ':' + css[p][p1] + ';'
-        //                 }
-        //                 style += p + '}';
-        //                 //加入样式表
-        //                 sheet.insertRule(style);
-        //             }
-        //         }
-        //     }
-        // }
-        delete this.css;
-    }
-
-    /**
      * 模型渲染
      * @return false 渲染失败 true 渲染成功
      */
@@ -195,8 +146,7 @@ export class Module {
         if (this.state === 2) {
             return true;
         }
-        
-
+    
         //容器没就位或state不为active则不渲染，返回渲染失败
         if (this.state < 3 || !this.getContainer()) {
             return false;

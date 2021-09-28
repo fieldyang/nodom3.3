@@ -144,6 +144,8 @@ export class Element {
             if(this.exprProps.size>0){
                 this.staticNum = -1;
             }
+            //处理style 元素
+            CssManager.handleStyleDom(module,this);
         } else{ //textContent
             this.handleText(module);
         }
@@ -157,10 +159,6 @@ export class Element {
             }
         }
 
-        //给容器设置模块class
-        if(this.tagName === 'style' && this.getProp('scope') === 'this'){
-            module.renderTree.addClass('___module___' + module.id);
-        }
         return true;
     }
 
@@ -232,9 +230,8 @@ export class Element {
          * 新建文本节点
          */
         function newText(dom:Element,pEl:Node): any {
-            //样式表
-            if(dom.parent.tagName === 'style'){
-                CssManager.addRules(module,dom.textContent,dom.parent.getProp('scope') === 'this');
+            //样式表处理，如果是样式表文本，则不添加到dom树
+            if(CssManager.handleStyleTextDom(module,dom)){
                 return;
             }
             let node = document.createTextNode(<string>dom.textContent || '');
@@ -519,13 +516,15 @@ export class Element {
     public addClass(cls: string) {
         let clazz = this.props.get('class');
         if (!clazz) {
-            this.props.set('class', cls);
+            this.setProp('class', cls);
+            this.staticNum = 1;
         } else {
             let sa: any[] = clazz.trim().split(/\s+/);
             if (!sa.includes(cls)) {
                 sa.push(cls);
                 clazz = sa.join(' ');
-                this.props.set('class',clazz);
+                this.setProp('class',clazz);
+                this.staticNum = 1;
             }
         }
     }
