@@ -26,8 +26,9 @@ export class Expression {
         if (!module || !exprStr) {
             return;
         }
+        
         const funStr = this.compile(exprStr);
-        this.execFunc = new Function('$model','$methods',`return ` + funStr);
+        this.execFunc = new Function('$model','$module',`return ` + funStr);
         GlobalCache.saveExpression(this);
     }
 
@@ -37,7 +38,8 @@ export class Expression {
      * @returns         编译后的表达式串
      */
     private compile(exprStr:string){
-        const reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|([a-zA-Z$_][\w$]*(\.[a-zA-Z$_][\w$]*)?(\s*[\[\(])?)/g;
+        //字符串，object key，有效命名(函数或字段)
+        const reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|(\S+\s*?:)|([a-zA-Z$_][\w$]*(\.[a-zA-Z$_][\w$]*)?(\s*[\[\(])?)/g;
         let r;
         let retS = '';
         let index = 0;  //当前位置
@@ -49,10 +51,13 @@ export class Expression {
             }
             if(s[0] === "'" || s[0] === '"' || s[0] === '`'){ //字符串
                 retS += s;
+            }else if(s.endsWith(':')){  //object key
+                retS += s;
             }else if(s.endsWith('(')){ //函数，非内部函数
-                retS += s.indexOf('.') === -1?'$methods.' + s:s;
+                retS += s.indexOf('.') === -1?'$module.invokeMethod("' + s.substring(0,s.length-1) + '",':s;
             }else { //字段
-                retS += '$model.' + s;
+
+                retS += s.startsWith('this')?s:'$model.' + s;
             }
             index = reg.lastIndex;
         }
@@ -76,7 +81,7 @@ export class Expression {
         
         let v;
         try {
-            v = this.execFunc.apply(module.model,[model,module.methods||{}]);
+            v = this.execFunc.apply(module.model,[model,module]);
         } catch (e) {
             // console.error(e);
         }

@@ -20,7 +20,7 @@
 						<p class='cls3'>salary is:<span class='age'>{{Math.round(salary)}}</span></p>
 						
 						<style scope='this'>
-							{{genCls(imp)}}
+							{{genCls(imp,this.age)}}
 
 						</style>
 						
@@ -44,12 +44,12 @@
                 change2(){
                     this.imp = false;
                 },
-                genCls(imp){
-                    
+                genCls(imp,age){
+                    console.log(age);
                     return `
                         .cls1{
                             font-size:16px;
-                            color:${imp?'red':'blue'};
+                            color:${imp && this.age?'red':'blue'};
                         }
 
                         @page {

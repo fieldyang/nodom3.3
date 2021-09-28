@@ -150,14 +150,4 @@ export class Model {
         }
         model[key] = value;
     }
-
-    /**
-     * 执行模块方法
-     * @param methodName    方法名
-     * @param args          参数数组
-     */
-    $call(methodName:string,args:any[]){
-        let module:Module = ModuleFactory.get(this.$moduleId);
-        return module.invokeMethod(methodName,args);
-    }
 }

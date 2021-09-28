@@ -355,15 +355,10 @@ export class Module {
     /**
      * 执行模块事件
      * @param eventName 	事件名
-     * @param param 		参数，为数组
      */
-    private doModuleEvent(eventName: string, param?: Array<any>) {
-        if (param) {
-            param.unshift(this);
-        } else {
-            param = [this];
-        }
-        this.invokeMethod(eventName, param);
+    private doModuleEvent(eventName: string) {
+        
+        this.invokeMethod(eventName, this);
     }
 
     /**
@@ -432,11 +427,15 @@ export class Module {
     /**
      * 调用方法
      * @param methodName    方法名
-     * @param args          参数数组
      */
-    public invokeMethod(methodName: string, args: any[]) {
+    public invokeMethod(methodName: string,arg1?:any,arg2?:any,arg3?:any) {
         let foo = this.getMethod(methodName);
+        
         if (foo && typeof foo === 'function') {
+            let args = [];
+            for(let i=1;i<arguments.length;i++){
+                args.push(arguments[i]);
+            }
             return foo.apply(this.model, args);
         }
     }
