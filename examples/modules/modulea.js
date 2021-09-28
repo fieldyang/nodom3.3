@@ -28,7 +28,7 @@ export class ModuleA extends Module{
                     <div>这是外部数据x1:{{x1}}</div>
                     <div>nodom
                         <p>这是外部数据x2:{{x2}}</p>
-                        <!--<slot name='s2'>第二个slot</slot>-->
+                        <slot name='s2'>第二个slot</slot>
                     </div>
                     <button e-click='changeX2'>修改x2</button>
                 </div>
@@ -52,7 +52,6 @@ export class ModuleA extends Module{
             this.x2 = 'hahaha'
         }
     }
-    modules = [ModuleB];
 }
 
 registModule(ModuleA,'mod-a');

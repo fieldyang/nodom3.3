@@ -33,11 +33,10 @@ export  class Directive {
     
     /**
      * 构造方法
-     * @param module    模块  
      * @param type  	类型名
      * @param value 	指令值
      */
-    constructor(module:Module,type:string,value:string|Expression) {
+    constructor(type:string,value:string|Expression) {
         this.id = Util.genId();
         this.type = DirectiveManager.getType(type);
         if (Util.isString(value)) {

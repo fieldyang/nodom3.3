@@ -28,6 +28,7 @@ export class Expression {
         }
         
         const funStr = this.compile(exprStr);
+        console.log(funStr);
         this.execFunc = new Function('$model','$module',`return ` + funStr);
         GlobalCache.saveExpression(this);
     }
@@ -39,26 +40,36 @@ export class Expression {
      */
     private compile(exprStr:string){
         //字符串，object key，有效命名(函数或字段)
-        const reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|(\S+\s*?:)|([a-zA-Z$_][\w$]*(\.[a-zA-Z$_][\w$]*)?(\s*[\[\(])?)/g;
+        const reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|([a-zA-Z$_][\w$]*\s*?:)|([a-zA-Z$_][\w$]*(\.[a-zA-Z$_][\w$]*)?(\s*[\[\(](\s*\))?)?)/g;
         let r;
         let retS = '';
         let index = 0;  //当前位置
 
         while((r=reg.exec(exprStr)) !== null){
             let s = r[0];
+            
             if(index < r.index){
                 retS += exprStr.substring(index,r.index);
             }
             if(s[0] === "'" || s[0] === '"' || s[0] === '`'){ //字符串
                 retS += s;
-            }else if(s.endsWith(':')){  //object key
-                retS += s;
-            }else if(s.endsWith('(')){ //函数，非内部函数
-                retS += s.indexOf('.') === -1?'$module.invokeMethod("' + s.substring(0,s.length-1) + '",':s;
-            }else { //字段
-
-                retS += s.startsWith('this')?s:'$model.' + s;
-            }
+            }else{
+                let lch = s[s.length-1];
+                if(lch === ':'){  //object key
+                    retS += s;
+                }else if(lch === '('){ //函数，非内部函数
+                    let s1 = s.substr(0,s.length-1);
+                    retS += s1.indexOf('.') === -1 && !Util.isKeyWord(s1)?'$module.invokeMethod("' + s1 + '",':s;
+                }else if(lch === ')'){  //无参数函数
+                    let ind;
+                    if((ind=s.lastIndexOf('(')) !== -1){
+                        let s1 = s.substr(0,ind);
+                        retS += s1.indexOf('.') === -1 && !Util.isKeyWord(s1)?'$module.invokeMethod("' + s1 + '")':s;
+                    }
+                }else { //字段
+                    retS += (s.startsWith('this') || Util.isKeyWord(s))?s:'$model.' + s;
+                }
+            } 
             index = reg.lastIndex;
         }
         if(index < exprStr.length){

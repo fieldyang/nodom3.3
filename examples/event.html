@@ -26,8 +26,9 @@
 				return `
 				<div>
 					<div>hello</div>
-					<ul x-show='show' e-click='clickP' e-swipedown='swipedown'>
-						<li x-repeat={{edus}} e-tap='clickItem:delg:once' e-mousewheel='clickItem:delg:once'><span>{{eduName}}</span></li>
+					<!-- e-swipedown='swipedown' touch设备下测试-->
+					<ul x-show='show' e-click='clickP' >
+						<li x-repeat={{edus}} e-click='clickItem:delg:once' e-mousewheel='clickItem:delg:once'><span>{{eduName}}</span></li>
 					</ul>
 				</div>
 				`

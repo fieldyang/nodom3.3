@@ -218,9 +218,9 @@ export class Compiler {
             //指令
             if (pName.startsWith("x-")) {
                 //不排序
-                ele.addDirective(new Directive(me.module,pName.substr(2), value));
+                ele.addDirective(new Directive(pName.substr(2), value));
             } else if (pName.startsWith("e-")) { //事件
-                ele.addEvent(new NEvent(me.module,pName.substr(2), value));
+                ele.addEvent(new NEvent(pName.substr(2), value));
             } else { //普通属性
                 ele.setProp(pName, value);
             }
@@ -243,7 +243,7 @@ export class Compiler {
                 }
                 if(!slotCt){
                     slotCt = new Element('div',this.genKey());
-                    slotCt.addDirective(new Directive(this.module,'slot',null));
+                    slotCt.addDirective(new Directive('slot',null));
                     //当前位置，用slot替代
                     dom.children.splice(j,1,slotCt);
                 }else{
@@ -310,7 +310,7 @@ export class Compiler {
     private postHandleNode(node:Element){
         // 模块类判断
         if (ModuleFactory.hasClass(node.tagName)) {
-            node.addDirective(new Directive(this.module,'module',node.tagName));
+            node.addDirective(new Directive('module',node.tagName));
             node.tagName = 'div';
         }else if(DirectiveElementManager.has(node.tagName)){ //自定义元素
             let clazz = DirectiveElementManager.get(node.tagName);

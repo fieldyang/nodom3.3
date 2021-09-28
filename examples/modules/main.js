@@ -24,15 +24,16 @@ export class ModuleMain extends Module{
                 
                 </mod-a>
     -->
+    
                 <hr/>
                 <p>第二个子模块</p>
                 <h2>替换plug</h2>
-                <ModuleA x-data={{{n:'name',x1:'x.y',x2:['y',true]}}} xxx='222'>
+                <ModuleA x-data={{{'..yyy':'xxx',n:'name',x1:'x.y',x2:['y',true]}}} xxx='222'>
                     <slot>
                         <h3 style='color:red'> hello change plug 2</h3>    
                     </slot>
                     
-                </ModuleA>
+                </ModuleA> 
             <!--
                 <p>第三个子模块</p>
                 <h2>默认子节点自动转换为slot节点</h2>
@@ -47,7 +48,7 @@ export class ModuleMain extends Module{
                     <slot>hahaha</slot>
                 </ModuleA>-->
 
-                <mod-a temp={{genTemp()}}>
+                <mod-a temp={{genTemp(show)}}>
                 </mod-a>
            </div>
         `
@@ -82,10 +83,15 @@ export class ModuleMain extends Module{
             this.y = 'aaaa';
             // console.log(this);
         },
-        genTemp(){
-            return `
-                <p>这是传递的子模版</p>
-                <div x-repeat={{rows}}>{{name}}</div>
+        genTemp(show){
+            if(show)
+                return `
+                    <p>这是传递的子模版111</p>
+                    <div x-repeat={{rows}}>{{name}}</div>
+                `;
+            return`
+                <p>这是传递的子模版222</p>
+                <div>name is: {{name}}</div>
             `
         }
         

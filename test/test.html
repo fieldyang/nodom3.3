@@ -18,6 +18,7 @@
     <button onclick='changeCls1()'>修改样式1</button>
 </body>
 <script>
+
     let reg = /(@import\s+url\(.+?\))|([.#@a-zA-Z][\S\s]*?\{[\s\S]+?\})/g; 
     let s = `
             .cls1{
@@ -111,7 +112,7 @@
     }
 
     let obj = {};
-    obj['.abc >ab'] = 12;
+    obj.__a = 12;
     console.log(obj);
 </script>
 

@@ -33,7 +33,7 @@ export default (function () {
                 if(!dom.hasProp('once')){
                     dom.handleProps(module);
                     //设置props，如果改变了props，启动渲染
-                    m.setProps(dom.props);    
+                    m.setProps(Object.fromEntries(dom.props));
                 }
             } else {
                 m = ModuleFactory.get(this.value);
@@ -50,11 +50,7 @@ export default (function () {
                 m.active();
                 //设置props，如果改变了props，启动渲染
                 dom.handleProps(module);
-                let props = Object.create(null);
-                for(let o of dom.props){
-                    props[o[0]] = o[1];
-                }
-                m.setProps(props);
+                m.setProps(Object.fromEntries(dom.props));
             }
         },
         8
@@ -284,7 +280,7 @@ export default (function () {
                 } else {
                     field = obj[p];
                 }
-
+                
                 let d = model.$get(field);
                 //数据赋值
                 if (d !== undefined) {
@@ -292,7 +288,9 @@ export default (function () {
                 }
                 //反向处理
                 if (reverse) {
+                    
                     m.$watch(p, function (ov, nv) {
+                        console.log(model);
                         if (model) {
                             model.$set(field, nv);
                         }
@@ -351,7 +349,7 @@ export default (function () {
 
             //初始化
             if(!this.getParam(module,dom,'inited')){
-                dom.addEvent(new NEvent(module,'change',
+                dom.addEvent(new NEvent('change',
                     function(dom, module, e, el){
                         if (!el) {
                             return;
@@ -419,7 +417,7 @@ export default (function () {
             //添加click事件,避免重复创建事件对象，创建后缓存
             let event:NEvent = module.objectManager.get('$routeClickEvent');
             if(!event){
-                event = new NEvent(module,'click',
+                event = new NEvent('click',
                     (dom, module, e) => {
                         let path = dom.getProp('path');
                         if (!path) {

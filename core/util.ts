@@ -7,23 +7,44 @@ import { Element } from "./element";
  * @since       1.0.0
  */
 export class Util {
+    /**
+     * 全局id
+     */
     private static generatedId: number = 1;
+    
+    /**
+     * js 保留字 map
+     */
+    public static keyWordMap = new Map();
+    
     //唯一主键
     public static genId() {
         return this.generatedId++;
     }
 
     /**
-     * js 保留关键字
+     * 初始化保留词map
      */
-    static keyWords = [
-        'arguments','boolean','break','byte','catch','char','const','default','delete','do',
-        'double','else','enum','eval','false','float','for','function','goto','if',
-        'in','instanceof','int','let','long','new','null','return','short','switch',
-        'this','throw','throws','true','try','typeof','var','void','while','with',
-        'Array','Date','eval','function','hasOwnProperty','Infinity','isFinite','isNaN',
-        'isPrototypeOf','length','Math','NaN','Number','Object','prototype','String','undefined','valueOf'
-    ];
+    public static initKeyMap(){
+        for(let k of [
+            'arguments','boolean','break','byte','catch','char','const','default','delete','do',
+            'double','else','enum','eval','false','float','for','function','goto','if',
+            'in','instanceof','int','let','long','new','null','return','short','switch',
+            'this','throw','throws','true','try','typeof','var','void','while','with',
+            'Array','Date','eval','function','hasOwnProperty','Infinity','isFinite','isNaN',
+            'isPrototypeOf','length','Math','NaN','Number','Object','prototype','String','undefined','valueOf'
+        ]){
+            this.keyWordMap.set(k,true);
+        }
+    }
+    /**
+     * 是否为 js 保留关键字
+     * @param name  名字
+     * @returns     如果为保留字，则返回true，否则返回false
+     */
+    public static isKeyWord(name:string):boolean{
+        return this.keyWordMap.has(name);
+    }
 
     /******对象相关******/
 
@@ -642,3 +663,6 @@ export class Util {
         return new Function(`return(${evalStr})`)();
     }
 }
+
+//初始化keymap
+Util.initKeyMap();

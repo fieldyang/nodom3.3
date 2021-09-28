@@ -18,7 +18,6 @@ export class Element {
      */
     public key: string;
 
-
     /**
      * 别名，设置后，在模版中以别名方式使用，不再支持模块类名
      */
@@ -99,7 +98,7 @@ export class Element {
      * @param tag       标签名
      * @param key       key
      */
-    constructor(tag?: string,key?:string,module?:Module) {
+    constructor(tag?: string,key?:string) {
         this.tagName = tag; //标签
         if(key){
             this.key = key;
@@ -265,10 +264,6 @@ export class Element {
      */
     public clone(): Element {
         let dst: Element = new Element();
-        //如果staticNum>0，则表示为新编译节点，第二次clone时预设为不再需要比较
-        if(this.staticNum>0){
-            this.staticNum--;
-        }
         //不直接拷贝的属性
         let notCopyProps: string[] = ['parent', 'model'];
         Util.getOwnProps(this).forEach((p) => {
@@ -281,6 +276,11 @@ export class Element {
                 dst[p] = this[p];
             }
         });
+
+        //如果staticNum>0，则表示为新编译节点，第二次clone时预设为不再需要比较
+        if(this.staticNum>0){
+            this.staticNum--;
+        }
         return dst;
     }
 
@@ -546,9 +546,9 @@ export class Element {
         this.props.set('class',clazz);
     }
     /**
-         * 查询style
-         * @param styStr style字符串
-         */
+     * 查询style
+     * @param styStr style字符串
+     */
     public hasStyle(styStr: string) {
         let styleStr = this.props.get('style');
         if (!styleStr) {
@@ -934,7 +934,7 @@ export class Element {
     }
 
     /**
-     * 设置单次后静态标志
+     * 设置单次静态标志
      */
     private setStaticOnce(){
         if(this.staticNum !== -1){

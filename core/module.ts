@@ -485,10 +485,9 @@ export class Module {
         //为提升性能，只进行浅度比较
         //如果相同且属性值不含对象，则返回
         let change:boolean = !Util.compare(this.props,props);
-        
         if(!change){
             if(props){
-                for(let p in props){
+                for(let p of Object.keys(props)){
                     if(typeof p === 'object' && !Util.isFunction(p)){
                         change = true;
                         break;
