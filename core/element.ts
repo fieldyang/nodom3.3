@@ -517,14 +517,14 @@ export class Element {
         let clazz = this.props.get('class');
         if (!clazz) {
             this.setProp('class', cls);
-            this.staticNum = 1;
+            this.setStaticOnce();
         } else {
             let sa: any[] = clazz.trim().split(/\s+/);
             if (!sa.includes(cls)) {
                 sa.push(cls);
                 clazz = sa.join(' ');
                 this.setProp('class',clazz);
-                this.staticNum = 1;
+                this.setStaticOnce();
             }
         }
     }
@@ -568,12 +568,14 @@ export class Element {
         let styleStr = this.props.get('style');
         if (!styleStr) {
             this.props.set('style', styStr);
+            this.setStaticOnce();
         } else {
             let sa: any[] = styleStr.trim().split(/;\s+/);
             if (!sa.includes(styStr)) {
                 sa.push(styStr);
                 styleStr = sa.join(';');
                 this.props.set('style',styleStr);
+                this.setStaticOnce();
             }
         }
     }
@@ -595,6 +597,7 @@ export class Element {
             }
         }
         this.props.set('style',styleStr);
+        this.setStaticOnce();
     }
 
     /**
@@ -645,7 +648,7 @@ export class Element {
             this.props.delete(<string>props);
         }
         //设置静态标志，至少要比较一次
-        this.staticNum = 1;
+        this.setStaticOnce();
     }
 
     /**
@@ -930,5 +933,14 @@ export class Element {
      */
     public removeParam(module:Module,name:string){
         module.objectManager.removeElementParam(this.key,name);
+    }
+
+    /**
+     * 设置单次后静态标志
+     */
+    private setStaticOnce(){
+        if(this.staticNum !== -1){
+            this.staticNum = 1;
+        }
     }
 }
