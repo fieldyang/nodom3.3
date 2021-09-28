@@ -1,4 +1,6 @@
+import { NCache } from "./cache";
 import { Compiler } from "./compiler";
+import { CssManager } from "./cssmanager";
 import { Element } from "./element";
 import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
@@ -309,7 +311,10 @@ export class Module {
         delete this.container;
         //删除渲染树
         delete this.renderTree;
-        
+
+        //清理缓存
+        this.clearCache();
+
         //处理子节点
         for(let id of this.children){
             let m = ModuleFactory.get(id);
@@ -505,9 +510,28 @@ export class Module {
      */
     public compile(){
         //清除缓存
-        this.objectManager.clearDirectives();
-        this.objectManager.clearExpressions();
-        this.objectManager.clearEvents();
+        this.clearCache();
         this.originTree = new Compiler(this).compile(this.template(this.props));
+    }
+
+
+    /**
+     * 清理缓存
+     * @param force 强力清除 
+     */
+    public clearCache(force?:boolean){
+        if(force){ //强力清除，后续不再使用
+            this.objectManager.cache = new NCache();
+            return;
+        }
+        
+        //清理指令
+        this.objectManager.clearDirectives();
+        //清理表达式
+        this.objectManager.clearExpressions();
+        //清理事件
+        this.objectManager.clearEvents();
+        //清理css url
+        CssManager.clearModuleRules(this);
     }
 }
