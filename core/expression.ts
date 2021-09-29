@@ -28,7 +28,6 @@ export class Expression {
         }
         
         const funStr = this.compile(exprStr);
-        console.log(funStr);
         this.execFunc = new Function('$model','$module',`return ` + funStr);
         GlobalCache.saveExpression(this);
     }

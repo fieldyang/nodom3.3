@@ -717,11 +717,11 @@ export class Util {
      * @param deep  是否深度处理
      */
     public static setNodeKey(node:Element, key:string, id?:string,deep?:boolean){
-        node.key = node.key = key + '_' + (id||Util.genId());
-        if(deep){
-            node.children.forEach((dom) => {
-                Util.setNodeKey(dom,dom.key,id);
-            });
+        node.key = key + '_' + (id||Util.genId());
+        if(deep && node.children){
+            for(let c of node.children) {
+                Util.setNodeKey(c,c.key,id,deep);
+            }
         }
     }
 }

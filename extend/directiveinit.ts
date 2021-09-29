@@ -116,79 +116,60 @@ export default (function () {
 
     /**
      * 递归指令
-     * 作用：在dom内部递归，即根据数据层复制节点作为前一层的子节点
-     * 数据格式：
-     * data:{
-     *     recurItem:{
-    *          title:'第一层',
-    *          recurItem:{
-    *              title:'第二层',
-    *              recurItem:{...}
-    *          }
-    *      }
-     * }
-     * 模版格式：
-     * <div x-recursion='items'><span>{{title}}</span></div>
+     * 作用：在dom内部递归，用于具有相同数据结构的节点递归生成
+     * 递归指令不允许嵌套
+     * 典型模版
+     * ```
+     * <recur name='r1'>
+     *      <div>...</div>
+     *      <p>...</p>
+     *      <recur ref='r1' />
+     * </recur>
+     * ```
+     * name表示递归名字，必须与内部的recur标签的ref保持一致，名字默认为default
      */
     createDirective(
         'recur',
         function(module:Module,dom:Element){
             //递归节点存放容器
             if(dom.hasProp('ref')){
-                const name = '$recurs.' + (dom.getProp('ref') || 'default');
+                const name = '$recurs.' + (dom.getProp('ref') || 'default') + '_' + dom.model.$key;
                 let refDom = module.objectManager.get(name);
+                // dom.delProp('ref');
                 if(refDom){
                     dom.add(refDom);
-                    module.objectManager.remove(name);
+                    module.objectManager.remove(name)
+                }else{  //没有recur节点，则不渲染
+                    dom.dontRender = true;
                 }
             }else { //递归节点
                 //递归名，默认default
+                const name = '$recurs.' + (dom.getProp('name') || 'default');
+                //删除之前的同名递归
+                module.objectManager.remove(name);
+
                 let data = dom.model[this.value];
                 if(!data){
                     return;
                 }
-                const name = '$recurs.' + (dom.getProp('name') || 'default');
-                let node = dom.clone();
-
-                module.objectManager.set(name,node);
                 
+                //删除name属性
+                dom.delProp('name');
+                //克隆节点
+                let node = dom.clone();
+                
+                //因为克隆，避免重复，需要设置key
                 if(!Array.isArray(data)){ //数组由repeat指令进行model处理，此处不处理
                     node.model = data;
-                    Util.setNodeKey(node,node.key,data.$key,true);
+                    module.objectManager.set(name+'_' + data.$key,node);
+                }else{
+                    // Util.setNodeKey(node,node.key,dom.model.$key,true);
+                    for(let d of data){
+                        module.objectManager.set(name + '_' + d.$key,node.clone());    
+                    }
                 }
+                Util.setNodeKey(node,node.key,data.$key,true);
             }
-            // let data = this.value;
-            // let model = dom.model;
-            // let data = model[this.value];
-            // if(!data){
-            //     return;
-            // }
-            // console.log(model,this.value);
-            //处理内部递归节点
-            // if (!data || typeof data !== 'object') {
-            //     return;
-            // }
-            // 渲染时，去掉model指令，避免被递归节点使用
-            // dom.removeDirectives('model');
-            // if (Array.isArray(data)) { //为数组，则遍历生成多个节点
-            //     // 先克隆一个用作基本节点，避免在循环中为基本节点增加子节点
-            //     let node: Element = dom.clone();
-            //     for (let d of data) {
-            //         let nod: Element = node.clone();
-            //         nod.model = d;
-            //         //作为当前节点子节点
-            //         dom.add(nod);
-            //     }
-            // } else {
-                // let node: Element = dom.clone();
-                // if(!node.hasDirective('repeat')){
-                    // node.model = data;
-                // }
-                
-                //作为当前节点子节点
-                // dom.add(node);
-                // console.log(node.directives);
-            // }
         },
         2
     );

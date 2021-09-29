@@ -60,25 +60,19 @@
 						<div x-recur='ritem'>
 							<span class="{{cls}}">{{title}}</span>
 							<recur ref/>
-						</div> 
-						<!-- <h3>复杂使用</h3>
-						<div x-recur="ritem1">
-							<ul class="{{cls}}">
-								<li x-repeat="items">{{title}}</li>
-							</ul>
-						</div> -->
-							<h3>递归带数组</h3>
-							<for cond={{ritem2}}>
-								<div class='first'>first id is:{{id}}-{{title}}</div>
-								<recur class='secondct' cond='items' name='r1'>
-									<for cond={{items}}>
-										<div class='second'>id is:{{id}}-{{title}}</div>
-										<recur ref='r1' />
-									</for>
-								</recur>
-							</for>
 						</div>
 						
+						<h3>递归带repeat</h3>
+						<for cond={{ritem2}}>
+							<recur class='secondct' cond='items' name='r1'>
+								<div class='first'>first id is:{{id}}-{{title}}</div>
+								<for cond={{items}}>
+									<div class='second'>id is:{{id}}-{{title}}</div>
+									<recur ref='r1' />
+								</for>
+							</recur>
+						</for>
+					</div>
 				`
 			}
 			data = {
@@ -125,7 +119,10 @@
 							title:'aaa2',
 							id:2,
 							items:[
-								{title:'aaa21',id:21},
+								{title:'aaa21',id:21,items:[
+									{title:'aaa211',id:211},
+									{title:'aaa212',id:212},
+								]},
 								{title:'aaa22',id:22}
 							]}
 						]
@@ -152,8 +149,8 @@
 			methods = {
 				change(){
 					console.log(this);
-					this.ritem2[0].items[1].title='hahaha';
-					// this.ritem.ritem.title='hahaha';
+					this.ritem2[0].items[0].items[1].title='hahaha';
+					this.ritem.ritem.title='hahaha';
 				}
 			}
 		}

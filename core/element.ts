@@ -469,11 +469,24 @@ export class Element {
      * 移除子节点
      * @param dom   子dom
      */
-    public removeChild(module:Module,dom: Element) {
+    public removeChild(dom: Element) {
         let ind: number;
         // 移除
         if (Util.isArray(this.children) && (ind = this.children.findIndex(item=>item===dom)) !== -1) {
             this.children.splice(ind, 1);
+        }
+    }
+
+    /**
+     * 替换子节点
+     * @param src   待替换dom
+     * @param dst   被替换dom
+     */
+     public replaceChild(src: Element,dst:Element) {
+        let ind: number;
+        // 移除
+        if (Util.isArray(this.children) && (ind = this.children.findIndex(item=>item===dst)) !== -1) {
+            this.children.splice(ind, 1,src);
         }
     }
 
@@ -867,7 +880,7 @@ export class Element {
      */
     public doDontRender(module:Module,parent?:Element) {
         if(parent){
-            parent.removeChild(module,this);
+            parent.removeChild(this);
         }
         //对于模块容器，对应module需unactive
         if (this.hasDirective('module')) {

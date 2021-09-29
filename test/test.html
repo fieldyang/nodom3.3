@@ -13,107 +13,14 @@
         <p class='cls1'>cls1样式</p>
         <p class='cls2'>cls2样式</p>
         <p class='cls3'>cls2样式</p>
+        <div>aaaa
     </div>
     <button onclick='changeCls()'>修改样式</button>
     <button onclick='changeCls1()'>修改样式1</button>
 </body>
 <script>
 
-    let reg = /(@import\s+url\(.+?\))|([.#@a-zA-Z][\S\s]*?\{[\s\S]+?\})/g; 
-    let s = `
-            .cls1{
-                color:red;
-            }
-            .mod1 .cls2{
-                color:blue;
-            }
-            .mod1 .cls3{
-                color:green;
-            }
-
-            @import url("css/1.css")
-
-            @font-face {
-                font-family: MyHelvetica;
-                src: local("Helvetica Neue Bold"),
-                local("HelveticaNeue-Bold"),
-                url(MgOpenModernaBold.ttf);
-                font-weight: bold;
-            }
-    `
-    let r;
-    while((r=reg.exec(s)) !== null){
-        console.log(r);
-    }
-    function changeCls(){
-        let arr = [
-            // '@import url("css/1.css")',
-
-            `.cls1{
-                color:red;
-            }`,
-            `.mod1 .cls2{
-                color:blue;
-            }`,
-            `.mod1 .cls3{
-                color:green;
-            }`,
-
-            `@font-face {
-                font-family: MyHelvetica;
-                src: local("Helvetica Neue Bold"),
-                local("HelveticaNeue-Bold"),
-                url(MgOpenModernaBold.ttf);
-                font-weight: bold;
-            }`
-
-            
-        ]
-        // let sheet = document.styleSheets[document.styleSheets.length - 1];
-        let sheet = document.styleSheets[0];
-        let index = 0;
-        for(let a of arr){
-            sheet.insertRule(a,index);
-            index++;
-        }
-        sheet.cssRules[1].style = {'font-size':'50px'};
-        // console.log(sheet,sheet.cssRules);
-        // for(let i=0;i<sheet.cssRules.length;i++){
-        //     if(sheet.cssRules[i].selectorText === '.cls1'){
-        //         sheet.deleteRule(i);
-        //         break;
-        //     }
-        // }
-        sheet.cssRules[0].href = 'css/2.css';
-        console.log(sheet.cssRules);
-    }
-
-    function changeCls1(){
-        // let arr = [
-        //     `.cls1{
-        //         color:red;
-        //     }`,
-        //     `.cls2{
-        //         color:blue;
-        //     }`,
-        //     `.cls3{
-        //         color:green;
-        //     }`,
-        //     '@import url("css/1.css")'
-        // ]
-        // let sheet = document.styleSheets[document.styleSheets.length - 1];
-        let sheet = document.styleSheets[0];
-        // for(let a of arr){
-        //     sheet.insertRule(a);
-        // }
-
-        // console.log(sheet.cssRules);
-        sheet.cssRules[0] =  '.cls1 {font-size:20px}'
-    }
-
-    let obj = {};
-    obj.__a = 12;
-    console.log(obj);
+    
 </script>
 
 </html>
