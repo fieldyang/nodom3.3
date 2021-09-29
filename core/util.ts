@@ -1,7 +1,6 @@
 import { NError } from "./error";
 import { NodomMessage } from "./nodom";
 import { Element } from "./element";
-
 /**
  * 基础服务库
  * @since       1.0.0
@@ -26,16 +25,63 @@ export class Util {
      * 初始化保留词map
      */
     public static initKeyMap(){
-        for(let k of [
-            'arguments','boolean','break','byte','catch','char','const','default','delete','do',
-            'double','else','enum','eval','false','float','for','function','goto','if',
-            'in','instanceof','int','let','long','new','null','return','short','switch',
-            'this','throw','throws','true','try','typeof','var','void','while','with',
-            'Array','Date','eval','function','hasOwnProperty','Infinity','isFinite','isNaN',
-            'isPrototypeOf','length','Math','NaN','Number','Object','prototype','String','undefined','valueOf'
-        ]){
-            this.keyWordMap.set(k,true);
-        }
+        this.keyWordMap.set('arguments',true);
+        this.keyWordMap.set('boolean',true);
+        this.keyWordMap.set('break',true);
+        this.keyWordMap.set('byte',true);
+        this.keyWordMap.set('catch',true);
+        this.keyWordMap.set('char',true);
+        this.keyWordMap.set('const',true);
+        this.keyWordMap.set('default',true);
+        this.keyWordMap.set('delete',true);
+        this.keyWordMap.set('do',true);
+        this.keyWordMap.set('double',true);
+        this.keyWordMap.set('else',true);
+        this.keyWordMap.set('enum',true);
+        this.keyWordMap.set('eval',true);
+        this.keyWordMap.set('false',true);
+        this.keyWordMap.set('float',true);
+        this.keyWordMap.set('for',true);
+        this.keyWordMap.set('function',true);
+        this.keyWordMap.set('goto',true);
+        this.keyWordMap.set('if',true);
+        this.keyWordMap.set('in',true);
+        this.keyWordMap.set('instanceof',true);
+        this.keyWordMap.set('int',true);
+        this.keyWordMap.set('let',true);
+        this.keyWordMap.set('long',true);
+        this.keyWordMap.set('new',true);
+        this.keyWordMap.set('null',true);
+        this.keyWordMap.set('return',true);
+        this.keyWordMap.set('short',true);
+        this.keyWordMap.set('switch',true);
+        this.keyWordMap.set('this',true);
+        this.keyWordMap.set('throw',true);
+        this.keyWordMap.set('true',true);
+        this.keyWordMap.set('try',true);
+        this.keyWordMap.set('this',true);
+        this.keyWordMap.set('throw',true);
+        this.keyWordMap.set('typeof',true);
+        this.keyWordMap.set('var',true);
+        this.keyWordMap.set('while',true);
+        this.keyWordMap.set('with',true);
+        this.keyWordMap.set('Array',true);
+        this.keyWordMap.set('Date',true);
+        this.keyWordMap.set('eval',true);
+        this.keyWordMap.set('function',true);
+        this.keyWordMap.set('Infinity',true);
+        this.keyWordMap.set('isFinite',true);
+        this.keyWordMap.set('isNaN',true);
+        this.keyWordMap.set('isPrototypeOf',true);
+        this.keyWordMap.set('Math',true);
+        this.keyWordMap.set('NaN',true);
+        this.keyWordMap.set('Number',true);
+        this.keyWordMap.set('Object',true);
+        this.keyWordMap.set('prototype',true);
+        this.keyWordMap.set('String',true);
+        this.keyWordMap.set('isPrototypeOf',true);
+        this.keyWordMap.set('undefined',true);
+        this.keyWordMap.set('valueOf',true);
     }
     /**
      * 是否为 js 保留关键字
@@ -661,6 +707,22 @@ export class Util {
      */
     public static eval(evalStr: string): any {
         return new Function(`return(${evalStr})`)();
+    }
+
+    /**
+     * 改造 dom key，格式为：key_id
+     * @param node  节点
+     * @param key   待设置key 
+     * @param id    附加id
+     * @param deep  是否深度处理
+     */
+    public static setNodeKey(node:Element, key:string, id?:string,deep?:boolean){
+        node.key = node.key = key + '_' + (id||Util.genId());
+        if(deep){
+            node.children.forEach((dom) => {
+                Util.setNodeKey(dom,dom.key,id);
+            });
+        }
     }
 }
 

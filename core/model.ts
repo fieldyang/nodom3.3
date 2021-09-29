@@ -11,8 +11,12 @@ export class Model {
     /**
      * 模块id
      */
-    $moduleId: number;
+    public $moduleId: number;
 
+    /**
+     * model key
+     */
+    public $key:any;
     /**
      * @param data 		数据
      * @param module 	模块对象

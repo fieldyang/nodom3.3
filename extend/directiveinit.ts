@@ -94,12 +94,7 @@ export default (function () {
                 //设置modelId
                 node.model = rows[i];
                 //设置key
-                if (rows[i].$key) {
-                    setKey(node, key, rows[i].$key);
-                }
-                else {
-                    setKey(node, key, Util.genId());
-                }
+                Util.setNodeKey(node,key,node.model.$key, true);
                 rows[i].$index = i;
                 chds.push(node);
             }
@@ -115,19 +110,6 @@ export default (function () {
             }
             // 不渲染该节点
             dom.dontRender = true;
-
-            /**
-             * 修改repeat下的dom key
-             * @param node  节点
-             * @param key   原始key
-             * @param id    数据id
-             */
-            function setKey(node, key, id) {
-                node.key = key + '_' + id;
-                node.children.forEach((dom) => {
-                    setKey(dom, dom.key, id);
-                });
-            }
         },
         2
     );
@@ -151,30 +133,64 @@ export default (function () {
     createDirective(
         'recur',
         function(module:Module,dom:Element){
-            let data = this.value;
-            //处理内部递归节点
-            if (!data || typeof data !== 'object') {
-                return;
-            }
-            // 渲染时，去掉model指令，避免被递归节点使用
-            dom.removeDirectives('model');
-            if (Array.isArray(data)) { //为数组，则遍历生成多个节点
-                // 先克隆一个用作基本节点，避免在循环中为基本节点增加子节点
-                let node: Element = dom.clone();
-                for (let d of data) {
-                    let nod: Element = node.clone();
-                    nod.model = d;
-                    //作为当前节点子节点
-                    dom.add(nod);
+            //递归节点存放容器
+            if(dom.hasProp('ref')){
+                const name = '$recurs.' + (dom.getProp('ref') || 'default');
+                let refDom = module.objectManager.get(name);
+                if(refDom){
+                    dom.add(refDom);
+                    module.objectManager.remove(name);
                 }
-            } else {
-                let node: Element = dom.clone();
-                node.model = data;
-                //作为当前节点子节点
-                dom.add(node);
+            }else { //递归节点
+                //递归名，默认default
+                let data = dom.model[this.value];
+                if(!data){
+                    return;
+                }
+                const name = '$recurs.' + (dom.getProp('name') || 'default');
+                let node = dom.clone();
+
+                module.objectManager.set(name,node);
+                
+                if(!Array.isArray(data)){ //数组由repeat指令进行model处理，此处不处理
+                    node.model = data;
+                    Util.setNodeKey(node,node.key,data.$key,true);
+                }
             }
+            // let data = this.value;
+            // let model = dom.model;
+            // let data = model[this.value];
+            // if(!data){
+            //     return;
+            // }
+            // console.log(model,this.value);
+            //处理内部递归节点
+            // if (!data || typeof data !== 'object') {
+            //     return;
+            // }
+            // 渲染时，去掉model指令，避免被递归节点使用
+            // dom.removeDirectives('model');
+            // if (Array.isArray(data)) { //为数组，则遍历生成多个节点
+            //     // 先克隆一个用作基本节点，避免在循环中为基本节点增加子节点
+            //     let node: Element = dom.clone();
+            //     for (let d of data) {
+            //         let nod: Element = node.clone();
+            //         nod.model = d;
+            //         //作为当前节点子节点
+            //         dom.add(nod);
+            //     }
+            // } else {
+                // let node: Element = dom.clone();
+                // if(!node.hasDirective('repeat')){
+                    // node.model = data;
+                // }
+                
+                //作为当前节点子节点
+                // dom.add(node);
+                // console.log(node.directives);
+            // }
         },
-        3
+        2
     );
 
     /**
@@ -288,9 +304,7 @@ export default (function () {
                 }
                 //反向处理
                 if (reverse) {
-                    
                     m.$watch(p, function (ov, nv) {
-                        console.log(model);
                         if (model) {
                             model.$set(field, nv);
                         }

@@ -51,9 +51,9 @@ class RECUR extends DirectiveElement{
         super(node,module);
         //条件
         let cond = node.getProp('cond');
-        if (!cond) {
-            throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'recur', 'cond');
-        }
+        // if (!cond) {
+        //     throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'recur', 'cond');
+        // }
         node.delProp('cond');
         if(typeof cond === 'number'){ //表达式
             cond = GlobalCache.getExpression(cond);

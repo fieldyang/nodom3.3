@@ -46,23 +46,7 @@
 		<h2>递归指令</h2>
 		<div class="view">
 			<button e-click="show">show</button>
-			<!-- <h3>简单使用</h3>
-			<div x-recur="ritem">
-				<span class="{{cls}}">{{title}}</span>
-			</div>
-			<h3>复杂使用</h3>
-			<div x-recur="ritem1">
-				<ul class="{{cls}}">
-					<li x-repeat="items">{{title}}</li>
-				</ul>
-			</div> -->
-			<!-- <h3>递归带数组</h3>
-			<div x-repeat='items'>
-				<div class='first'>{{title}}</div>
-				<div class='secondct' x-recur='items'>
-					<div class='second'>{{title}}</div>
-				</div>
-			</div> -->
+			
 		</div>
 	</body>
 	<script type='module'>
@@ -71,23 +55,30 @@
 			template(){
 				return `
 					<div>
+						<button e-click='change'>change</button>
 						<h3>简单使用</h3>
-						<!-- <div x-recur={{ritem}} nid={{id}}>
+						<div x-recur='ritem'>
 							<span class="{{cls}}">{{title}}</span>
-						</div> -->
+							<recur ref/>
+						</div> 
 						<!-- <h3>复杂使用</h3>
 						<div x-recur="ritem1">
 							<ul class="{{cls}}">
 								<li x-repeat="items">{{title}}</li>
 							</ul>
 						</div> -->
-						<h3>递归带数组</h3>
+							<h3>递归带数组</h3>
 							<for cond={{ritem2}}>
-								<recur class='secondct' cond={{items}} nid={{id}}>
-									<div class='second'>id is:{{id}}-{{title}}</div>
+								<div class='first'>first id is:{{id}}-{{title}}</div>
+								<recur class='secondct' cond='items' name='r1'>
+									<for cond={{items}}>
+										<div class='second'>id is:{{id}}-{{title}}</div>
+										<recur ref='r1' />
+									</for>
 								</recur>
 							</for>
 						</div>
+						
 				`
 			}
 			data = {
@@ -159,9 +150,10 @@
 				]
 			}
 			methods = {
-				show: function (dom, model) {
-					console.log(model);
-					model.set("show", 1);
+				change(){
+					console.log(this);
+					this.ritem2[0].items[1].title='hahaha';
+					// this.ritem.ritem.title='hahaha';
 				}
 			}
 		}
