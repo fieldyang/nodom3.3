@@ -135,16 +135,17 @@ export default (function () {
                 const name = '$recurs.' + (dom.getProp('ref') || 'default');
                 let node = module.objectManager.get(name);
                 if(!node){
-                    dom.dontRender;
+                    dom.dontRender=true;
                     return;
                 }
                 let model = dom.model;
                 let cond = node.getDirective(module,'recur');
                 let m = model[cond.value];
                 if(!m){
-                    dom.dontRender;
+                    dom.dontRender=true;
                     return;
                 }
+
                 if(node){
                     //克隆，后续可以继续用
                     let node1 = node.clone();
@@ -159,7 +160,6 @@ export default (function () {
                     dom.add(node1);
                 }
             }else { //递归节点
-                
                 let data = dom.model[this.value];
                 if(!data){
                     return;

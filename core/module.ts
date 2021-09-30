@@ -430,13 +430,12 @@ export class Module {
      */
     public invokeMethod(methodName: string,arg1?:any,arg2?:any,arg3?:any) {
         let foo = this.getMethod(methodName);
-        
         if (foo && typeof foo === 'function') {
             let args = [];
             for(let i=1;i<arguments.length;i++){
                 args.push(arguments[i]);
             }
-            return foo.apply(this.model, args);
+            return foo.apply(this, args);
         }
     }
 
