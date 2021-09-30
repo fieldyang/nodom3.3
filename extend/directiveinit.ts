@@ -86,7 +86,6 @@ export default (function () {
             }
             dom.dontRender = false;
             let chds = [];
-            let key = dom.key;
             // 移除指令
             dom.removeDirectives(['repeat']);
             for (let i = 0; i < rows.length; i++) {
@@ -94,7 +93,7 @@ export default (function () {
                 //设置modelId
                 node.model = rows[i];
                 //设置key
-                Util.setNodeKey(node,key,node.model.$key, true);
+                Util.setNodeKey(node,node.model.$key, true);
                 rows[i].$index = i;
                 chds.push(node);
             }
@@ -133,42 +132,43 @@ export default (function () {
         function(module:Module,dom:Element){
             //递归节点存放容器
             if(dom.hasProp('ref')){
-                const name = '$recurs.' + (dom.getProp('ref') || 'default') + '_' + dom.model.$key;
-                let refDom = module.objectManager.get(name);
-                // dom.delProp('ref');
-                if(refDom){
-                    dom.add(refDom);
-                    module.objectManager.remove(name)
-                }else{  //没有recur节点，则不渲染
-                    dom.dontRender = true;
+                const name = '$recurs.' + (dom.getProp('ref') || 'default');
+                let node = module.objectManager.get(name);
+                if(!node){
+                    dom.dontRender;
+                    return;
+                }
+                let model = dom.model;
+                let cond = node.getDirective(module,'recur');
+                let m = model[cond.value];
+                if(!m){
+                    dom.dontRender;
+                    return;
+                }
+                if(node){
+                    //克隆，后续可以继续用
+                    let node1 = node.clone();
+                    let key:string;
+                    if(!Array.isArray(m)){  //recur子节点不为数组
+                        node1.model = m;
+                        key = m.$key;
+                    }else{
+                        key = dom.model.$key
+                    }
+                    Util.setNodeKey(node1,key,true);
+                    dom.add(node1);
                 }
             }else { //递归节点
-                //递归名，默认default
-                const name = '$recurs.' + (dom.getProp('name') || 'default');
-                //删除之前的同名递归
-                module.objectManager.remove(name);
-
+                
                 let data = dom.model[this.value];
                 if(!data){
                     return;
                 }
-                
-                //删除name属性
-                dom.delProp('name');
-                //克隆节点
-                let node = dom.clone();
-                
-                //因为克隆，避免重复，需要设置key
-                if(!Array.isArray(data)){ //数组由repeat指令进行model处理，此处不处理
-                    node.model = data;
-                    module.objectManager.set(name+'_' + data.$key,node);
-                }else{
-                    // Util.setNodeKey(node,node.key,dom.model.$key,true);
-                    for(let d of data){
-                        module.objectManager.set(name + '_' + d.$key,node.clone());    
-                    }
+                //递归名，默认default
+                const name = '$recurs.' + (dom.getProp('name') || 'default');
+                if(!module.objectManager.get(name)){
+                    module.objectManager.set(name,dom.clone());
                 }
-                Util.setNodeKey(node,node.key,data.$key,true);
             }
         },
         2

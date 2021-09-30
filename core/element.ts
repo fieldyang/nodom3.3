@@ -95,6 +95,19 @@ export class Element {
     public dontRender: boolean = false;
 
     /**
+     * 渲染前（获取model后）执行方法集合,可以是方法名（在module的methods中定义），也可以是函数
+     * 函数的this指向element的model，参数为(element,module)
+     */
+     private beforeRenderOps: any[] = [];
+
+     /**
+      * 渲染后（renderToHtml前）执行方法集合，可以是方法名（在module的methods中定义），也可以是函数
+      * 函数的this指向element的model，参数为(element,module)
+      */
+     private afterRenderOps: any[] = [];
+ 
+
+    /**
      * @param tag       标签名
      * @param key       key
      */
@@ -132,6 +145,9 @@ export class Element {
             let d = this.getDirective(module,'model');
             d.exec(module,this);
         }
+
+        //前置方法集合执行
+        this.doRenderOp(module, 'before');
         
         if (this.tagName) { //element
             if (!this.handleDirectives(module)) {
@@ -158,6 +174,8 @@ export class Element {
             }
         }
 
+        //后置方法集执行
+        this.doRenderOp(module, 'after');
         return true;
     }
 
@@ -261,8 +279,9 @@ export class Element {
 
     /**
      * 克隆
+     * @param changeKey     是否更改key，如果为true，则生成的节点，用新的key
      */
-    public clone(): Element {
+    public clone(changeKey?:boolean): Element {
         let dst: Element = new Element();
         //不直接拷贝的属性
         let notCopyProps: string[] = ['parent', 'model'];
@@ -276,10 +295,13 @@ export class Element {
                 dst[p] = this[p];
             }
         });
-
         //如果staticNum>0，则表示为新编译节点，第二次clone时预设为不再需要比较
         if(this.staticNum>0){
             this.staticNum--;
+        }
+
+        if(changeKey){
+            dst.key = Util.genId() + '';
         }
         return dst;
     }
@@ -384,14 +406,6 @@ export class Element {
             return;
         }
         EventManager.bind(module,this);
-        // for (let evt of this.events) {
-        //     if(evt[1]){
-        //         for (let eid of evt[1]) {
-        //             let ev = module.objectManager.getEvent(eid);
-        //             ev&&ev.bind(module, this,parentEl);
-        //         }
-        //     }
-        // }
     }
 
     /**
@@ -952,6 +966,38 @@ export class Element {
     private setStaticOnce(){
         if(this.staticNum !== -1){
             this.staticNum = 1;
+        }
+    }
+
+    /**
+     * 添加渲染附加操作
+     * @param method    方法名 
+     * @param type      类型 before,after
+     */
+     addRenderOp(method: any, type: string) {
+        if (type === 'before') {
+            this.beforeRenderOps.push(method);
+        } else {
+            this.afterRenderOps.push(method);
+        }
+    }
+
+    /**
+     * 执行渲染附加操作
+     * @param module    模块
+     * @param type      类型 before,after
+     */
+    doRenderOp(module: Module, type: string) {
+        // 否则执行注册在element上的前置渲染方法
+        let arr = type === 'before' ? this.beforeRenderOps : this.afterRenderOps;
+        for (let m of arr) {
+            //可能是字符串
+            if (typeof m === 'string') {
+                m = module.getMethod(m);
+            }
+            if (m) {
+                m.apply(this.model, [this, module]);
+            }
         }
     }
 }

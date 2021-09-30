@@ -34,6 +34,7 @@
 				background:#ff9900;
 				padding:5px 20px;
 				margin:5px 0;
+				border:1px solid;
 			}
 			.second{
 				padding:5px;
@@ -64,9 +65,9 @@
 						
 						<h3>递归带repeat</h3>
 						<for cond={{ritem2}}>
-							<recur class='secondct' cond='items' name='r1'>
-								<div class='first'>first id is:{{id}}-{{title}}</div>
-								<for cond={{items}}>
+							<div class='first'>first id is:{{id}}-{{title}}</div>
+							<recur cond='items' name='r1'>
+								<for cond={{items}}  class='secondct'>
 									<div class='second'>id is:{{id}}-{{title}}</div>
 									<recur ref='r1' />
 								</for>

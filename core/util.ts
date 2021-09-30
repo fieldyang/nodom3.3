@@ -710,17 +710,16 @@ export class Util {
     }
 
     /**
-     * 改造 dom key，格式为：key_id
+     * 改造 dom key，避免克隆时重复，格式为：key_id
      * @param node  节点
-     * @param key   待设置key 
      * @param id    附加id
      * @param deep  是否深度处理
      */
-    public static setNodeKey(node:Element, key:string, id?:string,deep?:boolean){
-        node.key = key + '_' + (id||Util.genId());
+    public static setNodeKey(node:Element, id?:string,deep?:boolean){
+        node.key += '_' + (id||Util.genId());
         if(deep && node.children){
             for(let c of node.children) {
-                Util.setNodeKey(c,c.key,id,deep);
+                Util.setNodeKey(c,id,deep);
             }
         }
     }
