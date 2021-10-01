@@ -30,17 +30,28 @@ export class Module {
 
     /**
      * 方法集合，函数或对象
+     * 模版内使用的方法，包括事件，都在这里面定义
+     * 方法this： 指向module实例
+     * 事件参数: model(当前按钮对应model),dom(事件对应虚拟dom),eventObj(事件对象),e(实际触发的html event)
+     * 表达式方法：参数按照表达式方式给定即可
      */
     public methods: any;
 
     /**
-     * 子模块，类名数组，函数或数组
+     * 子模块类集合，模版中引用的模块类需要声明
+     * 如果类已经通过registModule注册过，这里不再需要定义，只需import即可
      */
     public modules: any;
+
     /**
      * 父模块通过dom节点传递的属性
      */
-     private props:any;
+    private props:any;
+
+    /**
+     * 编译后的dom树
+     */
+     public originTree:Element;
 
     /**
      * 渲染树
@@ -88,12 +99,7 @@ export class Module {
     private postRenderOps:any[] = [];
 
     /**
-     * 编译后的dom树
-     */
-    public originTree:Element;
-
-    /**
-     * 对象管理器，用于管理虚拟dom节点、指令、表达式、事件对象
+     * 对象管理器，用于管理虚拟dom节点、指令、表达式、事件对象及其运行时参数
      */
     public objectManager:ObjectManager;
 

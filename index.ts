@@ -15,7 +15,7 @@ export { NFactory } from "./core/factory";
 
 export { NodomMessage_en } from "./core/locales/msg_en";
 export { NodomMessage_zh } from "./core/locales/msg_zh";
-export { MethodFactory } from "./core/methodfactory";
+// export { MethodFactory } from "./core/methodfactory";
 export { Model } from "./core/model";
 export { ModelManager } from "./core/modelmanager";
 export { Module } from "./core/module";

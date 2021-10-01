@@ -39,7 +39,7 @@ EventManager.regist('tap',{
                 foo = module.getMethod(foo);
             }
             if(foo){
-                foo.apply(dom.model,[dom, module,evtObj.dependEvent, e]); 
+                foo.apply(module,[dom.model, dom,evtObj.dependEvent, e]); 
             }
         }
     }
@@ -112,7 +112,7 @@ EventManager.regist('tap',{
                     foo = module.getMethod(foo);
                 }
                 if(foo){
-                    foo.apply(dom.model,[dom, module,evtObj.dependEvent, e]); 
+                    foo.apply(module,[dom.model, dom,evtObj.dependEvent, e]); 
                 }
             }
         }

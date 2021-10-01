@@ -158,10 +158,10 @@
 				}
 			}
 			methods = {
-				change(){
-					console.log(this);
-					this.ritem2[0].items[0].items[1].title='hahaha';
-					this.ritem.ritem.title='hahaha';
+				change(model){
+					console.log(model);
+					model.ritem2.items[0].items[1].title='hahaha';
+					model.ritem.ritem.title='hahaha';
 				}
 			}
 		}

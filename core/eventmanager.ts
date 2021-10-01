@@ -133,7 +133,7 @@ export class EventManager{
                                 if(execMap.get(ev.id) === dom1.key){
                                     break;
                                 }
-                                ev.handler.apply(dom1.model,[dom1, module,ev, e]);
+                                ev.handler.apply(module,[dom1.model, dom1,ev, e]);
                                 execMap.set(ev.id,dom1.key);
                                 if(ev.once){
                                     EventManager.unbind(module,dom1,ev);
@@ -143,7 +143,7 @@ export class EventManager{
                         }
                     }
                 }else{
-                    ev.handler.apply(dom.model,[dom, module,ev, e]);
+                    ev.handler.apply(module,[dom.model, dom,ev, e]);
                     //事件只执行一次，从事件数组删除
                     if (ev.once) {
                         EventManager.unbind(module,dom,ev);

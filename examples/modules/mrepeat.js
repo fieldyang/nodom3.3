@@ -86,17 +86,17 @@ export class MRepeat extends Module{
             }
             return a1;
         },
-        desc(){
-            this.foods.sort((a,b)=>{if(a.price>b.price)return -1;return 1;})
+        desc(model){
+            model.foods.sort((a,b)=>{if(a.price>b.price)return -1;return 1;})
         },
-        pop(){
-            this.foods.pop();
+        pop(model){
+            model.foods.pop();
         },
-        push(){
-            this.foods.push({name:'push菜单',price:50});
+        push(model){
+            model.foods.push({name:'push菜单',price:50});
         },
-        addFood(){
-            this.foods.splice(2,0,
+        addFood(model){
+            model.foods.splice(2,0,
                 {
                     name: '新增1',
                     price: 20

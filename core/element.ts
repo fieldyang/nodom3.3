@@ -996,7 +996,7 @@ export class Element {
                 m = module.getMethod(m);
             }
             if (m) {
-                m.apply(this.model, [this, module]);
+                m.apply(this, [this.model, module]);
             }
         }
     }
