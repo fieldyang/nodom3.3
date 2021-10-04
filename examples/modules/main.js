@@ -78,9 +78,9 @@ export class ModuleMain extends Module{
                 x2:['y',true]
             }
         },
-        change(){
-            this.show = false;
-            this.y = 'aaaa';
+        change(model){
+            model.show = false;
+            model.y = 'aaaa';
             // console.log(this);
         },
         genTemp(show){

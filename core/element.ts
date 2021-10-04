@@ -21,7 +21,7 @@ export class Element {
     /**
      * 别名，设置后，在模版中以别名方式使用，不再支持模块类名
      */
-    public alias:string;
+    // public alias:string;
 
     /**
      * 绑定模型
@@ -98,13 +98,13 @@ export class Element {
      * 渲染前（获取model后）执行方法集合,可以是方法名（在module的methods中定义），也可以是函数
      * 函数的this指向element的model，参数为(element,module)
      */
-     private beforeRenderOps: any[] = [];
+    private beforeRenderOps: any[] = [];
 
-     /**
-      * 渲染后（renderToHtml前）执行方法集合，可以是方法名（在module的methods中定义），也可以是函数
-      * 函数的this指向element的model，参数为(element,module)
-      */
-     private afterRenderOps: any[] = [];
+    /**
+     * 渲染后（renderToHtml前）执行方法集合，可以是方法名（在module的methods中定义），也可以是函数
+     * 函数的this指向element的model，参数为(element,module)
+     */
+    private afterRenderOps: any[] = [];
  
 
     /**
@@ -282,27 +282,48 @@ export class Element {
      * @param changeKey     是否更改key，如果为true，则生成的节点，用新的key
      */
     public clone(changeKey?:boolean): Element {
-        let dst: Element = new Element();
-        //不直接拷贝的属性
-        let notCopyProps: string[] = ['parent', 'model'];
-        Util.getOwnProps(this).forEach((p) => {
-            if (notCopyProps.includes(p)) {
-                return;
+        let dst: Element = new Element(this.tagName,changeKey?Util.genId() + '':this.key);
+        dst.expressions = this.expressions;
+        dst.textContent = this.textContent;
+        dst.events = this.events;
+        dst.staticNum = this.staticNum;
+        dst.exprProps = this.exprProps;
+        //普通属性
+        if(this.props.size>0){
+            for(let p of this.props){
+                dst.props.set(p[0],p[1]);
             }
-            if (typeof this[p] === 'object') {
-                dst[p] = Util.clone(this[p]);
-            } else {
-                dst[p] = this[p];
+        }
+
+        // dst.events = Util.clone(this.events);
+        
+        //表达式属性
+        // if(this.exprProps.size>0){
+        //     for(let p of this.exprProps){
+        //         dst.exprProps.set(p[0],p[1]);
+        //     }
+        // }
+
+        //assets
+        if(this.assets.size>0){
+            for(let p of this.assets){
+                dst.assets.set(p[0],p[1]);
             }
-        });
+        }
+
+        for(let d of this.directives){
+            dst.directives.push({type:d.type,id:d.id});
+        }
+
+        for(let c of this.children){
+            dst.add(c.clone(changeKey));
+        }
+
         //如果staticNum>0，则表示为新编译节点，第二次clone时预设为不再需要比较
         if(this.staticNum>0){
             this.staticNum--;
         }
 
-        if(changeKey){
-            dst.key = Util.genId() + '';
-        }
         return dst;
     }
 

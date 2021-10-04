@@ -97,6 +97,7 @@ export default (function () {
                 rows[i].$index = i;
                 chds.push(node);
             }
+            console.log(chds);
             //找到并追加到dom后
             if (chds.length > 0) {
                 for (let i = 0, len = parent.children.length; i < len; i++) {
@@ -281,6 +282,10 @@ export default (function () {
                 let d = model.$get(field);
                 //数据赋值
                 if (d !== undefined) {
+                    //对象需要克隆
+                    if(typeof d === 'object'){
+                        d = Util.clone(d,/^\$/);
+                    }
                     m[p] = d;
                 }
                 //反向处理

@@ -124,7 +124,6 @@ export class NEvent {
                     break;
             }
         }
-        console.log(this.name);
     }
 
     /**

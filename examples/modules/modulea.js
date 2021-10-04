@@ -47,9 +47,8 @@ export class ModuleA extends Module{
         onBeforeFirstRender(){
             console.log(this);
         },
-        changeX2(dom,module){
-            console.log(this);
-            this.x2 = 'hahaha'
+        changeX2(model,dom,){
+            model.x2 = 'hahaha'
         }
     }
 }

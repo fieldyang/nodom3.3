@@ -32,8 +32,7 @@ export class Model {
                     return true;
                 }
                 //不处理原型属性 
-                let excludes = ['__proto__', 'constructor'];
-                if (excludes.includes(<string>key)) {
+                if (['__proto__', 'constructor'].includes(<string>key)) {
                     return true;
                 }
                 const excArr = ['$watch', "$moduleId", "$set","$get", "$key", "$index"];
@@ -52,7 +51,7 @@ export class Model {
                 if(Array.isArray(src) && ['sort','fill'].indexOf(<string>key) !== -1){ //强制渲染
                     mm.update(proxy,null,null,null,true);
                 }
-                let data = module.modelManager.getFromDataMap(src[key]);
+                let data = mm.getFromDataMap(src[key]);
                 if (data) {
                     return data;
                 }

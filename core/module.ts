@@ -26,7 +26,7 @@ export class Module {
     /**
      * 模型，代理过的data
      */
-    public model:any;
+    public model:Model;
 
     /**
      * 方法集合，函数或对象
@@ -364,7 +364,7 @@ export class Module {
      */
     private doModuleEvent(eventName: string) {
         
-        this.invokeMethod(eventName, this);
+        this.invokeMethod(eventName, this.model);
     }
 
     /**
