@@ -97,7 +97,6 @@ export default (function () {
                 rows[i].$index = i;
                 chds.push(node);
             }
-            console.log(chds);
             //找到并追加到dom后
             if (chds.length > 0) {
                 for (let i = 0, len = parent.children.length; i < len; i++) {

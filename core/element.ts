@@ -181,10 +181,9 @@ export class Element {
 
     /**
      * 渲染到html element
-     * @param module 	模块
-     * @param params 	配置对象{}
-     *          type 		类型
-     *          parent 	父虚拟dom
+     * @param module 	        模块
+     * @param parentEl 	        父html
+     * @param isRenderChild     是否渲染子节点
      */
     public renderToHtml(module: Module, parentEl:HTMLElement,isRenderChild?:boolean) {
         //style不添加到html
@@ -207,23 +206,24 @@ export class Element {
             }
         }else{
             if(this.tagName){
-                el = newEl(this,parentEl);
+                el = newEl(this);
             }else{
-                el = newText(this,parentEl);
+                el = newText(this);
             }
+            //先创建子节点，再添加到html dom树，避免频繁添加
             if(this.tagName  && isRenderChild){
                 genSub(el, this);
             }
+            parentEl.appendChild(el);
             return el;
         }
         
         /**
          * 新建element节点
          * @param vdom 		虚拟dom
-         * @param pEl 	    父element
          * @returns 		新的html element
          */
-        function newEl(vdom: Element,pEl:Node): any {
+        function newEl(vdom: Element): HTMLElement {
             //创建element
             let el= Util.newEl(vdom.tagName);
             //设置属性
@@ -238,40 +238,40 @@ export class Element {
             //把el引用与key关系存放到cache中
             module.objectManager.saveNode(vdom.key,el);
             vdom.handleAssets(el);
-            vdom.handleEvents(module,pEl);
-            pEl.appendChild(el);
+            vdom.handleEvents(module);
             return el;
         }
 
         /**
          * 新建文本节点
+         * @param vdom  虚拟dom节点
          */
-        function newText(dom:Element,pEl:Node): any {
+        function newText(vdom:Element): Node {
             //样式表处理，如果是样式表文本，则不添加到dom树
-            if(CssManager.handleStyleTextDom(module,dom)){
+            if(CssManager.handleStyleTextDom(module,vdom)){
                 return;
             }
-            let node = document.createTextNode(<string>dom.textContent || '');
-            module.objectManager.saveNode(dom.key,node);
-            pEl.appendChild(node);
+            let node = document.createTextNode(<string>vdom.textContent || '');
+            module.objectManager.saveNode(vdom.key,node);
             return node;
         }
 
         /**
          * 生成子节点
          * @param pEl 	父节点
-         * @param vNode 虚拟dom父节点	
+         * @param vdom  虚拟dom节点	
          */
-        function genSub(pEl: Node, vNode: Element) {
-            if (vNode.children && vNode.children.length > 0) {
-                vNode.children.forEach(item => {
+        function genSub(pEl: Node, vdom: Element) {
+            if (vdom.children && vdom.children.length > 0) {
+                vdom.children.forEach(item => {
                     let el1;
                     if (item.tagName) {
-                        el1 = newEl(item,pEl);
+                        el1 = newEl(item);
                         genSub(el1, item);
                     } else {
-                        el1 = newText(item,pEl);
+                        el1 = newText(item);
                     }
+                    pEl.appendChild(el1);
                 });
             }
         }
@@ -279,15 +279,15 @@ export class Element {
 
     /**
      * 克隆
-     * @param changeKey     是否更改key，如果为true，则生成的节点，用新的key
+     * @param changeKey     是否更改key，如果为true，则生成的节点用新的key
      */
     public clone(changeKey?:boolean): Element {
         let dst: Element = new Element(this.tagName,changeKey?Util.genId() + '':this.key);
+        
         dst.expressions = this.expressions;
         dst.textContent = this.textContent;
-        dst.events = this.events;
         dst.staticNum = this.staticNum;
-        dst.exprProps = this.exprProps;
+
         //普通属性
         if(this.props.size>0){
             for(let p of this.props){
@@ -295,14 +295,12 @@ export class Element {
             }
         }
 
-        // dst.events = Util.clone(this.events);
-        
         //表达式属性
-        // if(this.exprProps.size>0){
-        //     for(let p of this.exprProps){
-        //         dst.exprProps.set(p[0],p[1]);
-        //     }
-        // }
+        if(this.exprProps.size>0){
+            for(let p of this.exprProps){
+                dst.exprProps.set(p[0],p[1]);
+            }
+        }
 
         //assets
         if(this.assets.size>0){
@@ -311,10 +309,20 @@ export class Element {
             }
         }
 
+        //事件
+        if(this.events.size>0){
+            for(let p of this.events){
+                //复制数组
+                dst.events.set(p[0],p[1].slice(0));
+            }
+        }
+
+        //指令
         for(let d of this.directives){
             dst.directives.push({type:d.type,id:d.id});
         }
 
+        //children
         for(let c of this.children){
             dst.add(c.clone(changeKey));
         }
@@ -323,7 +331,6 @@ export class Element {
         if(this.staticNum>0){
             this.staticNum--;
         }
-
         return dst;
     }
 
@@ -418,11 +425,8 @@ export class Element {
     /**
      * 处理事件
      * @param module    模块
-     * @param el        html element
-     * @param parent    父virtual dom
-     * @param parentEl  父html element
      */
-    public handleEvents(module: Module, parentEl?: Node) {
+    public handleEvents(module: Module) {
         if (this.events.size === 0) {
             return;
         }
