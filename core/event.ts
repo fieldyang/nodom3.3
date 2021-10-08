@@ -40,11 +40,6 @@ export class NEvent {
     public capture: boolean;
 
     /**
-     * 模块id
-     */
-    public module: Module;
-
-    /**
      * 依赖事件，用于扩展事件存储原始事件对戏
      */
     public dependEvent:NEvent;
@@ -57,10 +52,9 @@ export class NEvent {
      *                      如果为函数，则替代第三个参数
      * @param handler       事件执行函数，如果方法不在module methods中定义，则可以直接申明，eventStr第一个参数失效，即eventStr可以是":delg:nopopo..."
      */
-    constructor(module:Module,eventName: string, eventStr?: string | Function, handler?: Function) {
+    constructor(eventName: string, eventStr?: string | Function, handler?: Function) {
         this.id = Util.genId();
         this.name = eventName;
-        this.module = module;
         
         GlobalCache.saveEvent(this);
         //如果事件串不为空，则不需要处理
@@ -115,7 +109,7 @@ export class NEvent {
                     break;
             }
         } else { //转非触屏
-            /*switch (this.name) {
+            switch (this.name) {
                 case 'tap':
                     this.name = 'click';
                     break;
@@ -128,43 +122,47 @@ export class NEvent {
                 case 'touchmove':
                     this.name = 'mousemove';
                     break;
-            }*/
+            }
         }
     }
 
     /**
      * 设置附加参数值
+     * @param module    模块
      * @param dom       虚拟dom
-     * @param name       参数名
+     * @param name      参数名
      * @param value     参数值
      */
-    public setParam(dom:Element,name: string, value: any) {
-        this.module.objectManager.setEventParam(this.id,dom.key,name,value);
+    public setParam(module:Module,dom:Element,name: string, value: any) {
+        module.objectManager.setEventParam(this.id,dom.key,name,value);
     }
 
     /**
      * 获取附加参数值
-     * @param dom   虚拟dom
-     * @param name  参数名
-     * @returns     参数值
+     * @param module    模块
+     * @param dom       虚拟dom
+     * @param name      参数名
+     * @returns         参数值
      */
-    public getParam(dom:Element,name: string) {
-        return this.module.objectManager.getEventParam(this.id,dom.key,name);
+    public getParam(module:Module,dom:Element,name: string) {
+        return module.objectManager.getEventParam(this.id,dom.key,name);
     }
 
     /**
      * 移除参数
-     * @param dom   虚拟dom
-     * @param name   参数名
+     * @param module    模块 
+     * @param dom       虚拟dom
+     * @param name      参数名
      */
-    public removeParam(dom:Element,name: string) {
-        return this.module.objectManager.removeEventParam(this.id,dom.key,name);
+    public removeParam(module:Module,dom:Element,name: string) {
+        return module.objectManager.removeEventParam(this.id,dom.key,name);
     }
     /**
      * 清参数cache
-     * @param dom   虚拟dom
+     * @param module    模块
+     * @param dom       虚拟dom
      */
-    public clearParam(dom:Element){
-        this.module.objectManager.clearEventParam(this.id,dom.key);
+    public clearParam(module:Module,dom:Element){
+        module.objectManager.clearEventParam(this.id,dom.key);
     }
 }

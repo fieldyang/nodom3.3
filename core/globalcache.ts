@@ -110,7 +110,6 @@ export class GlobalCache{
      * @returns         表达式对象
      */
     public static getExpression(id:number):Expression{
-        console.log(this.cache.get('$expressions'));
         return this.cache.get('$expressions.' + id);
     }
 
@@ -120,7 +119,6 @@ export class GlobalCache{
      */
     public static saveExpression(expression:Expression){
         this.cache.set('$expressions.' + expression.id,expression);
-        // console.log(this.cache.get('$expressions'));
     }
 
     /**

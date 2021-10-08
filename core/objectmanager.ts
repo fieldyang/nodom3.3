@@ -278,7 +278,6 @@ export  class ObjectManager {
      * @returns         html element
      */
     public getNode(key: string): Node {
-        // console.log('get',this.module,this.module.id,this.id,key,this.cache.get('$doms.' + key + '.$el'));
         return this.cache.get('$doms.' + key + '.$el');
     }
 
@@ -289,7 +288,6 @@ export  class ObjectManager {
      */
     public saveNode(key:string,node:Node){
         this.cache.set('$doms.' + key + '.$el',node);
-        // console.log('save',this.module,this.module.id,this.id,key,node);
     }
 
     /**

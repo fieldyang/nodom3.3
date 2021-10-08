@@ -19,7 +19,7 @@ class MODULE extends DirectiveElement{
             throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'MODULE', 'className');
         }
         node.delProp('name');
-        node.addDirective(new Directive(module,'module',clazz));
+        node.addDirective(new Directive('module',clazz));
     }
 }
 
@@ -36,11 +36,29 @@ class FOR extends DirectiveElement{
         }
         node.delProp('cond');
         if(typeof cond === 'number'){ //表达式
-            console.log(cond);
             cond = GlobalCache.getExpression(cond);
         }
         
-        node.addDirective(new Directive(module,'repeat',cond));
+        node.addDirective(new Directive('repeat',cond));
+    }
+}
+
+/**
+ * 递归元素
+ */
+class RECUR extends DirectiveElement{
+    constructor(node: Element,module:Module){
+        super(node,module);
+        //条件
+        let cond = node.getProp('cond');
+        // if (!cond) {
+        //     throw new NError('itemnotempty', NodomMessage.TipWords['element'], 'recur', 'cond');
+        // }
+        node.delProp('cond');
+        if(typeof cond === 'number'){ //表达式
+            cond = GlobalCache.getExpression(cond);
+        }
+        node.addDirective(new Directive('recur',cond));
     }
 }
 
@@ -59,14 +77,14 @@ class IF extends DirectiveElement{
         if(typeof cond === 'number'){ //表达式
             cond = GlobalCache.getExpression(cond);
         }
-        node.addDirective(new Directive(module,'if',cond));
+        node.addDirective(new Directive('if',cond));
     }
 }
 
 class ELSE extends DirectiveElement{
     constructor(node: Element,module:Module){
         super(node,module);
-        node.addDirective(new Directive(module,'else',null));
+        node.addDirective(new Directive('else',null));
     }
 }
 /**
@@ -84,7 +102,7 @@ class ELSEIF extends DirectiveElement{
         if(typeof cond === 'number'){ //表达式
             cond = GlobalCache.getExpression(cond);
         }
-        node.addDirective(new Directive(module,'elseif',cond));
+        node.addDirective(new Directive('elseif',cond));
     }
 }
 /**
@@ -93,7 +111,7 @@ class ELSEIF extends DirectiveElement{
 class ENDIF extends DirectiveElement{
     constructor(node: Element,module:Module){
         super(node,module);
-        node.addDirective(new Directive(module,'endif',null));
+        node.addDirective(new Directive('endif',null));
     }
 }
 
@@ -106,8 +124,8 @@ class SLOT extends DirectiveElement{
         //条件
         let cond = node.getProp('name') || 'default';
         node.delProp('name');
-        node.addDirective(new Directive(module,'slot',cond));
+        node.addDirective(new Directive('slot',cond));
     }
 }
 
-DirectiveElementManager.add([MODULE,FOR,IF,ELSE,ELSEIF,ENDIF,SLOT]);
+DirectiveElementManager.add([MODULE,FOR,IF,RECUR,ELSE,ELSEIF,ENDIF,SLOT]);

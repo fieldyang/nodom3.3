@@ -53,10 +53,10 @@ export class EventManager{
                     //加入父对象
                     dom.parent.addEvent(ev);
                     // 保存代理dom信息
-                    let delgs = ev.getParam(dom.parent,'$delgs');
+                    let delgs = ev.getParam(module,dom.parent,'$delgs');
                     if(!delgs){
                         delgs = {};
-                        ev.setParam(dom.parent,'$delgs',delgs);
+                        ev.setParam(module,dom.parent,'$delgs',delgs);
                     }
                     delgs[dom.key] = dom;
                     //从本地移除
@@ -120,7 +120,7 @@ export class EventManager{
 
                 //代理事件，需要作用在子节点上
                 if(ev.delg){ // 代理
-                    let delgs = ev.getParam(dom,'$delgs');
+                    let delgs = ev.getParam(module,dom,'$delgs');
                     //向上找节点
                     for(let i=0;i<e.path.length&&e.path[i] !== el;i++){
                         let el1 = e.path[i];
@@ -133,7 +133,7 @@ export class EventManager{
                                 if(execMap.get(ev.id) === dom1.key){
                                     break;
                                 }
-                                ev.handler.apply(dom1.model,[dom1, module,ev, e]);
+                                ev.handler.apply(module,[dom1.model, dom1,ev, e]);
                                 execMap.set(ev.id,dom1.key);
                                 if(ev.once){
                                     EventManager.unbind(module,dom1,ev);
@@ -143,7 +143,7 @@ export class EventManager{
                         }
                     }
                 }else{
-                    ev.handler.apply(dom.model,[dom, module,ev, e]);
+                    ev.handler.apply(module,[dom.model, dom,ev, e]);
                     //事件只执行一次，从事件数组删除
                     if (ev.once) {
                         EventManager.unbind(module,dom,ev);
@@ -165,7 +165,7 @@ export class EventManager{
         let evts;
         if(ev.delg){
             evts = dom.parent.events.get(ev.name);
-            let delgs = ev.getParam(dom.parent,'$delgs');
+            let delgs = ev.getParam(module,dom.parent,'$delgs');
             delete delgs[dom.key];
             //如果代理不为空，则不删除事件
             if(Object.keys(delgs).length > 0){
@@ -184,7 +184,7 @@ export class EventManager{
         //判断并解绑
         if(evts.length === 0){
             let cfg = dom.getParam(module,'$events.' + ev.name);
-            if(cfg.handler){
+            if(cfg && cfg.handler){
                 (<HTMLElement>dom.getEl(module)).removeEventListener(ev.name,cfg.handler,cfg.capture);
             }
         }
@@ -203,7 +203,7 @@ export class EventManager{
             return false;
         }
         for(let key of Object.keys(evts)){
-            let ev = new NEvent(module,key,evts[key]);
+            let ev = new NEvent(key,evts[key]);
             ev.capture = event.capture;
             ev.nopopo = event.nopopo;
             ev.delg = event.delg;

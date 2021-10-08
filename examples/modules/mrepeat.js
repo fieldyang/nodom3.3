@@ -8,14 +8,14 @@ export class MRepeat extends Module{
             <button e-click='addFood'>addFood</button>
             <button e-click='desc'>价格降序</button>
             
-            <div class="tip">基本使用</div>
+            <!-- <div class="tip">基本使用</div> -->
             <div class="code">
                 菜单：
-                <for cond="{{foods}}">
-                    菜名：{{name}}，价格：{{price}}
+                <for cond="{{foods}}" nid={{$index}}>
+                    <span nid={{$index}}>菜名：{{name}}，价格：{{price}}</span>
                 </for>
             </div>
-            <div class=tip>索引号的使用（编号从0开始）</div> 
+            <!-- <div class=tip>索引号的使用（编号从0开始）</div> 
             <div class=code>
                 菜单：
                 <for cond={{foods}}>
@@ -37,7 +37,7 @@ export class MRepeat extends Module{
                 <div x-repeat={{foods.sort((a,b)=>{if(a.price>b.price)  return 1;return -1;})}}>
                     编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
                 </div>
-            </div>
+            </div> -->
         </div>
         `
     }
@@ -47,6 +47,7 @@ export class MRepeat extends Module{
         discount:{data:0.9},
         xxx:true,
         foods: [{
+            
             name: '夫妻肺片',
             price: 25
         }, {
@@ -84,17 +85,17 @@ export class MRepeat extends Module{
             }
             return a1;
         },
-        desc(){
-            this.foods.sort((a,b)=>{if(a.price>b.price)return -1;return 1;})
+        desc(model){
+            model.foods.sort((a,b)=>{if(a.price>b.price)return -1;return 1;})
         },
-        pop(){
-            this.foods.pop();
+        pop(model){
+            model.foods.pop();
         },
-        push(){
-            this.foods.push({name:'push菜单',price:50});
+        push(model){
+            model.foods.push({name:'push菜单',price:50});
         },
-        addFood(){
-            this.foods.splice(2,0,
+        addFood(model){
+            model.foods.splice(2,0,
                 {
                     name: '新增1',
                     price: 20

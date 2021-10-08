@@ -9,10 +9,10 @@ import { EventManager } from "../core/eventmanager";
 EventManager.regist('tap',{
     touchstart(dom:Element,module:Module,evtObj:NEvent,e: TouchEvent) {
         let tch = e.touches[0];
-        evtObj.dependEvent.setParam(dom,'pos', { sx: tch.pageX, sy: tch.pageY, t: Date.now() });
+        evtObj.dependEvent.setParam(module,dom,'pos', { sx: tch.pageX, sy: tch.pageY, t: Date.now() });
     },
     touchmove(dom:Element,module:Module,evtObj:NEvent,e: TouchEvent) {
-        let pos = evtObj.dependEvent.getParam(dom,'pos');
+        let pos = evtObj.dependEvent.getParam(module,dom,'pos');
         if(!pos){
             return;
         }
@@ -25,11 +25,11 @@ EventManager.regist('tap',{
         }
     },
     touchend(dom:Element,module:Module,evtObj:NEvent,e: TouchEvent) {
-        let pos = evtObj.dependEvent.getParam(dom,'pos');
+        let pos = evtObj.dependEvent.getParam(module,dom,'pos');
         if(!pos){
             return;
         }
-        evtObj.dependEvent.removeParam(dom,'pos');
+        evtObj.dependEvent.removeParam(module,dom,'pos');
         let dt = Date.now() - pos.t;
         
         //点下时间不超过200ms,触发事件
@@ -39,7 +39,7 @@ EventManager.regist('tap',{
                 foo = module.getMethod(foo);
             }
             if(foo){
-                foo.apply(dom.model,[dom, evtObj.module,evtObj.dependEvent, e]); 
+                foo.apply(module,[dom.model, dom,evtObj.dependEvent, e]); 
             }
         }
     }
@@ -52,7 +52,7 @@ EventManager.regist('tap',{
     touchstart(dom:Element,module:Module,evtObj:NEvent,e: TouchEvent){
         let tch = e.touches[0];
         let t = Date.now();
-        evtObj.dependEvent.setParam(dom,'swipe', {
+        evtObj.dependEvent.setParam(module,dom,'swipe', {
             oldTime: [t, t],
             speedLoc: [{ x: tch.pageX, y: tch.pageY }, { x: tch.pageX, y: tch.pageY }],
             oldLoc: { x: tch.pageX, y: tch.pageY }
@@ -61,7 +61,7 @@ EventManager.regist('tap',{
     touchmove(dom:Element,module:Module,evtObj:NEvent,e: TouchEvent){
         let nt = Date.now();
         let tch = e.touches[0];
-        let mv = evtObj.dependEvent.getParam(dom,'swipe');
+        let mv = evtObj.dependEvent.getParam(module,dom,'swipe');
         //50ms记录一次
         if (nt - mv.oldTime[1] > 50) {
             mv.speedLoc[0] = { x: mv.speedLoc[1].x, y: mv.speedLoc[1].y };
@@ -72,7 +72,7 @@ EventManager.regist('tap',{
         mv.oldLoc = { x: tch.pageX, y: tch.pageY };
     },
     touchend(dom:Element,module:Module,evtObj:NEvent,e: any){
-        let mv = evtObj.dependEvent.getParam(dom,'swipe');
+        let mv = evtObj.dependEvent.getParam(module,dom,'swipe');
         let nt = Date.now();
 
         //取值序号 0 或 1，默认1，如果释放时间与上次事件太短，则取0
@@ -112,7 +112,7 @@ EventManager.regist('tap',{
                     foo = module.getMethod(foo);
                 }
                 if(foo){
-                    foo.apply(dom.model,[dom, evtObj.module,evtObj.dependEvent, e]); 
+                    foo.apply(module,[dom.model, dom,evtObj.dependEvent, e]); 
                 }
             }
         }

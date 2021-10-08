@@ -1,3 +1,4 @@
+import { CssManager } from "./cssmanager";
 import { Directive } from "./directive";
 import { DirectiveManager } from "./directivemanager";
 import { NEvent } from "./event";
@@ -17,11 +18,10 @@ export class Element {
      */
     public key: string;
 
-
     /**
      * 别名，设置后，在模版中以别名方式使用，不再支持模块类名
      */
-    public alias:string;
+    // public alias:string;
 
     /**
      * 绑定模型
@@ -31,7 +31,7 @@ export class Element {
     /**
      * element为textnode时有效
      */
-    public textContent: string ;
+    public textContent: string;
 
     /**
      * 指令集
@@ -95,10 +95,23 @@ export class Element {
     public dontRender: boolean = false;
 
     /**
+     * 渲染前（获取model后）执行方法集合,可以是方法名（在module的methods中定义），也可以是函数
+     * 函数的this指向element的model，参数为(element,module)
+     */
+    private beforeRenderOps: any[] = [];
+
+    /**
+     * 渲染后（renderToHtml前）执行方法集合，可以是方法名（在module的methods中定义），也可以是函数
+     * 函数的this指向element的model，参数为(element,module)
+     */
+    private afterRenderOps: any[] = [];
+ 
+
+    /**
      * @param tag       标签名
      * @param key       key
      */
-    constructor(tag?: string,key?:string,module?:Module) {
+    constructor(tag?: string,key?:string) {
         this.tagName = tag; //标签
         if(key){
             this.key = key;
@@ -132,6 +145,9 @@ export class Element {
             let d = this.getDirective(module,'model');
             d.exec(module,this);
         }
+
+        //前置方法集合执行
+        this.doRenderOp(module, 'before');
         
         if (this.tagName) { //element
             if (!this.handleDirectives(module)) {
@@ -143,6 +159,8 @@ export class Element {
             if(this.exprProps.size>0){
                 this.staticNum = -1;
             }
+            //处理style 元素
+            CssManager.handleStyleDom(module,this);
         } else{ //textContent
             this.handleText(module);
         }
@@ -155,24 +173,31 @@ export class Element {
                 i--;
             }
         }
+
+        //后置方法集执行
+        this.doRenderOp(module, 'after');
         return true;
     }
 
     /**
      * 渲染到html element
-     * @param module 	模块
-     * @param params 	配置对象{}
-     *          type 		类型
-     *          parent 	父虚拟dom
+     * @param module 	        模块
+     * @param parentEl 	        父html
+     * @param isRenderChild     是否渲染子节点
      */
     public renderToHtml(module: Module, parentEl:HTMLElement,isRenderChild?:boolean) {
+        //style不添加到html
+        if(this.tagName === 'style'){
+            return;
+        }
+        
         let el = module.objectManager.getNode(this.key);
         if(el){   //html dom节点已存在
             if(this.tagName){
                 //设置属性
                 for(let v of this.props){
                     if (typeof v[1] != 'function'){
-                        (<HTMLElement>el).setAttribute(v[0], v[1]);
+                        (<HTMLElement>el).setAttribute(v[0], v[1]===undefined?'':v[1]);
                     }
                 }
                 this.handleAssets((<HTMLElement>el));
@@ -181,29 +206,30 @@ export class Element {
             }
         }else{
             if(this.tagName){
-                el = newEl(this,parentEl);
+                el = newEl(this);
             }else{
-                el = newText(this,parentEl);
+                el = newText(this);
             }
+            //先创建子节点，再添加到html dom树，避免频繁添加
             if(this.tagName  && isRenderChild){
                 genSub(el, this);
             }
+            parentEl.appendChild(el);
             return el;
         }
         
         /**
          * 新建element节点
          * @param vdom 		虚拟dom
-         * @param pEl 	    父element
          * @returns 		新的html element
          */
-        function newEl(vdom: Element,pEl:Node): any {
+        function newEl(vdom: Element): HTMLElement {
             //创建element
             let el= Util.newEl(vdom.tagName);
             //设置属性
             for(let v of vdom.props){
                 if (typeof v[1] != 'function'){
-                    el.setAttribute(v[0], v[1]);
+                    el.setAttribute(v[0], v[1]===undefined?'':v[1]);
                 }
             }
             
@@ -212,46 +238,40 @@ export class Element {
             //把el引用与key关系存放到cache中
             module.objectManager.saveNode(vdom.key,el);
             vdom.handleAssets(el);
-            vdom.handleEvents(module,pEl);
-            pEl.appendChild(el);
+            vdom.handleEvents(module);
             return el;
         }
 
         /**
          * 新建文本节点
+         * @param vdom  虚拟dom节点
          */
-        function newText(dom:Element,pEl:Node): any {
-            let node = document.createTextNode(<string>dom.textContent || '');
-            module.objectManager.saveNode(dom.key,node);
-            pEl.appendChild(node);
+        function newText(vdom:Element): Node {
+            //样式表处理，如果是样式表文本，则不添加到dom树
+            if(CssManager.handleStyleTextDom(module,vdom)){
+                return;
+            }
+            let node = document.createTextNode(<string>vdom.textContent || '');
+            module.objectManager.saveNode(vdom.key,node);
             return node;
         }
 
         /**
          * 生成子节点
          * @param pEl 	父节点
-         * @param vNode 虚拟dom父节点	
+         * @param vdom  虚拟dom节点	
          */
-        function genSub(pEl: Node, vNode: Element) {
-            if (vNode.children && vNode.children.length > 0) {
-                vNode.children.forEach(item => {
+        function genSub(pEl: Node, vdom: Element) {
+            if (vdom.children && vdom.children.length > 0) {
+                vdom.children.forEach(item => {
                     let el1;
                     if (item.tagName) {
-                        if(item.tagName==='style'){
-                            if (document.styleSheets.length === 0 || document.styleSheets[document.styleSheets.length - 1].href) {
-                                document.head.appendChild(document.createElement('style'));
-                            }
-                            let styleEl=document.getElementsByTagName('style');
-                            let last=styleEl[styleEl.length-1];
-                             last.appendChild(document.createTextNode(item.children[0].textContent||''));
-                        }else{
-                            el1 = newEl(item,pEl);
-                            genSub(el1, item);
-                        }
+                        el1 = newEl(item);
+                        genSub(el1, item);
                     } else {
-                        el1 = newText(item,pEl);
+                        el1 = newText(item);
                     }
-                   if(el1)pEl.appendChild(el1);
+                    pEl.appendChild(el1);
                 });
             }
         }
@@ -259,25 +279,58 @@ export class Element {
 
     /**
      * 克隆
+     * @param changeKey     是否更改key，如果为true，则生成的节点用新的key
      */
-    public clone(): Element {
-        let dst: Element = new Element();
+    public clone(changeKey?:boolean): Element {
+        let dst: Element = new Element(this.tagName,changeKey?Util.genId() + '':this.key);
+        
+        dst.expressions = this.expressions;
+        dst.textContent = this.textContent;
+        dst.staticNum = this.staticNum;
+
+        //普通属性
+        if(this.props.size>0){
+            for(let p of this.props){
+                dst.props.set(p[0],p[1]);
+            }
+        }
+
+        //表达式属性
+        if(this.exprProps.size>0){
+            for(let p of this.exprProps){
+                dst.exprProps.set(p[0],p[1]);
+            }
+        }
+
+        //assets
+        if(this.assets.size>0){
+            for(let p of this.assets){
+                dst.assets.set(p[0],p[1]);
+            }
+        }
+
+        //事件
+        if(this.events.size>0){
+            for(let p of this.events){
+                //复制数组
+                dst.events.set(p[0],p[1].slice(0));
+            }
+        }
+
+        //指令
+        for(let d of this.directives){
+            dst.directives.push({type:d.type,id:d.id});
+        }
+
+        //children
+        for(let c of this.children){
+            dst.add(c.clone(changeKey));
+        }
+
         //如果staticNum>0，则表示为新编译节点，第二次clone时预设为不再需要比较
         if(this.staticNum>0){
             this.staticNum--;
         }
-        //不直接拷贝的属性
-        let notCopyProps: string[] = ['parent', 'model'];
-        Util.getOwnProps(this).forEach((p) => {
-            if (notCopyProps.includes(p)) {
-                return;
-            }
-            if (typeof this[p] === 'object') {
-                dst[p] = Util.clone(this[p]);
-            } else {
-                dst[p] = this[p];
-            }
-        });
         return dst;
     }
 
@@ -372,23 +425,12 @@ export class Element {
     /**
      * 处理事件
      * @param module    模块
-     * @param el        html element
-     * @param parent    父virtual dom
-     * @param parentEl  父html element
      */
-    public handleEvents(module: Module, parentEl?: Node) {
+    public handleEvents(module: Module) {
         if (this.events.size === 0) {
             return;
         }
         EventManager.bind(module,this);
-        // for (let evt of this.events) {
-        //     if(evt[1]){
-        //         for (let eid of evt[1]) {
-        //             let ev = module.objectManager.getEvent(eid);
-        //             ev&&ev.bind(module, this,parentEl);
-        //         }
-        //     }
-        // }
     }
 
     /**
@@ -466,13 +508,24 @@ export class Element {
      * 移除子节点
      * @param dom   子dom
      */
-    public removeChild(module:Module,dom: Element) {
+    public removeChild(dom: Element) {
         let ind: number;
         // 移除
         if (Util.isArray(this.children) && (ind = this.children.findIndex(item=>item===dom)) !== -1) {
             this.children.splice(ind, 1);
-            //从对象管理器删除
-            module.objectManager.removeSavedNode(dom.key);
+        }
+    }
+
+    /**
+     * 替换子节点
+     * @param src   待替换dom
+     * @param dst   被替换dom
+     */
+     public replaceChild(src: Element,dst:Element) {
+        let ind: number;
+        // 移除
+        if (Util.isArray(this.children) && (ind = this.children.findIndex(item=>item===dst)) !== -1) {
+            this.children.splice(ind, 1,src);
         }
     }
 
@@ -513,13 +566,15 @@ export class Element {
     public addClass(cls: string) {
         let clazz = this.props.get('class');
         if (!clazz) {
-            this.props.set('class', cls);
+            this.setProp('class', cls);
+            this.setStaticOnce();
         } else {
             let sa: any[] = clazz.trim().split(/\s+/);
             if (!sa.includes(cls)) {
                 sa.push(cls);
                 clazz = sa.join(' ');
-                this.props.set('class',clazz);
+                this.setProp('class',clazz);
+                this.setStaticOnce();
             }
         }
     }
@@ -543,9 +598,9 @@ export class Element {
         this.props.set('class',clazz);
     }
     /**
-         * 查询style
-         * @param styStr style字符串
-         */
+     * 查询style
+     * @param styStr style字符串
+     */
     public hasStyle(styStr: string) {
         let styleStr = this.props.get('style');
         if (!styleStr) {
@@ -563,12 +618,14 @@ export class Element {
         let styleStr = this.props.get('style');
         if (!styleStr) {
             this.props.set('style', styStr);
+            this.setStaticOnce();
         } else {
             let sa: any[] = styleStr.trim().split(/;\s+/);
             if (!sa.includes(styStr)) {
                 sa.push(styStr);
                 styleStr = sa.join(';');
                 this.props.set('style',styleStr);
+                this.setStaticOnce();
             }
         }
     }
@@ -590,6 +647,7 @@ export class Element {
             }
         }
         this.props.set('style',styleStr);
+        this.setStaticOnce();
     }
 
     /**
@@ -640,7 +698,7 @@ export class Element {
             this.props.delete(<string>props);
         }
         //设置静态标志，至少要比较一次
-        this.staticNum = 1;
+        this.setStaticOnce();
     }
 
     /**
@@ -861,7 +919,7 @@ export class Element {
      */
     public doDontRender(module:Module,parent?:Element) {
         if(parent){
-            parent.removeChild(module,this);
+            parent.removeChild(this);
         }
         //对于模块容器，对应module需unactive
         if (this.hasDirective('module')) {
@@ -927,9 +985,44 @@ export class Element {
         module.objectManager.removeElementParam(this.key,name);
     }
 
-    public changeStatic(force?:boolean){
-        if(force){
+    /**
+     * 设置单次静态标志
+     */
+    private setStaticOnce(){
+        if(this.staticNum !== -1){
+            this.staticNum = 1;
+        }
+    }
 
+    /**
+     * 添加渲染附加操作
+     * @param method    方法名 
+     * @param type      类型 before,after
+     */
+     addRenderOp(method: any, type: string) {
+        if (type === 'before') {
+            this.beforeRenderOps.push(method);
+        } else {
+            this.afterRenderOps.push(method);
+        }
+    }
+
+    /**
+     * 执行渲染附加操作
+     * @param module    模块
+     * @param type      类型 before,after
+     */
+    doRenderOp(module: Module, type: string) {
+        // 否则执行注册在element上的前置渲染方法
+        let arr = type === 'before' ? this.beforeRenderOps : this.afterRenderOps;
+        for (let m of arr) {
+            //可能是字符串
+            if (typeof m === 'string') {
+                m = module.getMethod(m);
+            }
+            if (m) {
+                m.apply(this, [this.model, module]);
+            }
         }
     }
 }

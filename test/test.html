@@ -4,36 +4,27 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <style>
-        .red{
-            color:red;
-        }
-        
-    </style>
-    <!-- <link rel="stylesheet" type="text/css" href="css/1.css" /> -->
-    <style>
-        .bigger{
-            font-size:16px;
-        }
-    </style> 
-    <link rel="stylesheet" type="text/css" href="css/1.css" />
+    <style></style>
+    <style role='nodom'></style>
     <title>Document</title>
 </head>
 <body>
-    <div></div>
+    <div>
+        <p class='cls1'>cls1样式</p>
+        <p class='cls2'>cls2样式</p>
+        <p class='cls3'>cls2样式</p>
+        <div>aaaa
+    </div>
+    <button onclick='changeCls()'>修改样式</button>
+    <button onclick='changeCls1()'>修改样式1</button>
 </body>
 <script>
-    let p1 = document.querySelector('div');
-    let div1 = document.createElement('div');
-    div1.innerHTML = 'this is div1';
-    p1.appendChild(div1);
+    // let o = {b:{c:1,x:{y:2}},y:10}
+    // let foo = new Function('model','field','return model[field]');
 
-    let div2 = document.createElement('div');
-    div2.innerHTML = 'this is div2';
-    div1.appendChild(div2);
-    console.log(div2,div1);
-    
+    // console.log(eval('o.yy.c.d'));
+    // console.log(foo);
+    // console.log(foo(o,'oc'));
 </script>
 
 </html>

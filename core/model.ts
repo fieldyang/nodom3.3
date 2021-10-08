@@ -11,8 +11,12 @@ export class Model {
     /**
      * 模块id
      */
-    $moduleId: number;
+    public $moduleId: number;
 
+    /**
+     * model key
+     */
+    public $key:any;
     /**
      * @param data 		数据
      * @param module 	模块对象
@@ -28,8 +32,7 @@ export class Model {
                     return true;
                 }
                 //不处理原型属性 
-                let excludes = ['__proto__', 'constructor'];
-                if (excludes.includes(<string>key)) {
+                if (['__proto__', 'constructor'].includes(<string>key)) {
                     return true;
                 }
                 const excArr = ['$watch', "$moduleId", "$set","$get", "$key", "$index"];
@@ -48,7 +51,7 @@ export class Model {
                 if(Array.isArray(src) && ['sort','fill'].indexOf(<string>key) !== -1){ //强制渲染
                     mm.update(proxy,null,null,null,true);
                 }
-                let data = module.modelManager.getFromDataMap(src[key]);
+                let data = mm.getFromDataMap(src[key]);
                 if (data) {
                     return data;
                 }
@@ -149,15 +152,5 @@ export class Model {
             key = arr[arr.length - 1];
         }
         model[key] = value;
-    }
-
-    /**
-     * 执行模块方法
-     * @param methodName    方法名
-     * @param args          参数数组
-     */
-    $call(methodName:string,args:any[]){
-        let module:Module = ModuleFactory.get(this.$moduleId);
-        return module.invokeMethod(methodName,args);
     }
 }

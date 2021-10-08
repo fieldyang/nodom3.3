@@ -3,11 +3,11 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-		<title>if_else</title>
+		<title>nodom-example start</title>
 		</head>
 
 	<body>
-		<div class="view"></div> 
+		<div class="view">hahaha</div> 
 	</body>
 	<script type='module'>
 		import{nodom,Module} from '../dist/nodom.js'
@@ -15,8 +15,22 @@
 			template(){
 				return `
                     <div>
-					    <p>hello <span class='name'>hello:{{name}} hahaha</span></p>
+					    <p nid={{id}}>hello <span class='name'>hello:{{name}} hahaha</span></p>
                         <p>age is:<span class='age'>{{age}}</span></p>
+						<p p1 =  123 p2=p3='abc' v='hello world'>salary is:<span class='age'>{{Math.round(salary)}}</span></p>
+						<h3>html 转义字符</h3>
+						<p p1>x &amp;y &copy;nodom &nbsp;&nbsp;noomi</p>
+						<p p1>x &times; y &nbsp;&ensp;&emsp; x&divide;y &nbsp; x &gt;y &lt;z</p>
+						<h3>pre 测试</h3>
+						<pre>
+				data={
+					name:'nodom',
+					age:3,
+					id:1,
+					salary:3000.25
+				}
+ 
+						</pre>
                         <button e-click='change'>change</button>
 						<style>
 							@import url(css/a.css);
@@ -33,7 +47,9 @@
 			}
 			data={
 				name:'nodom',
-                age:3
+                age:3,
+				id:1,
+				salary:3000.25
 			}
 
             methods = {
@@ -43,18 +59,10 @@
                     this.age = 1;
                 }
             } 
-            css = [{
-                '.name':{
-                    'font-size':'16px',
-                    color:'red'
-                },
-                '.age':{
-                    'font-size':'16px',
-                    color:'blue'
-                }
-            }]
+            
 		}
     	nodom(Module1,'div');
+		console.log(document.querySelector('div').textContent);
 	</script>
 <<<<<<< HEAD
 

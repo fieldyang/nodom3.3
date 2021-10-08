@@ -1,4 +1,4 @@
-import { DefineElementManager } from "./defineelementmanager";
+import { DirectiveElementManager } from "./directiveelementmanager";
 import { Directive } from "./directive";
 import { Element } from "./element";
 import { NError } from "./error";
@@ -29,7 +29,6 @@ export class Compiler {
     * @returns              虚拟dom
     */
     public compile(elementStr: string): Element {
-        // 这里是把模板串通过正则表达式匹配 生成AST
         return this.compileTemplate(elementStr);
     }
 
@@ -46,12 +45,15 @@ export class Compiler {
         //不可见字符正则式
         const regSpace = /^[\s\n\r\t\v]+$/;
         // 1 识别标签
-        regExp = /(?<!\{\{[^<}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^>{{]*?\}\})/g;
+        // regExp = /(?<!\{\{[^<}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^>{{]*?\}\})/g;
+        regExp = /(?<!{{[^}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^{{]*}})/g;
         let st = 0;
         //标签串数组,含开始和结束标签
         let tagStack = [];
         //独立文本串数组，对应需要的标签串前面
         let textStack = [];
+        //pre标签标志
+        let isPreTag:boolean = false;
         let r;
         while((r = regExp.exec(srcStr)) !== null){
             tagStack.push(r[0]);
@@ -60,14 +62,13 @@ export class Compiler {
             if(st < r.index-1){
                 tmp = srcStr.substring(st,r.index);
                 //全为不可见字符，则保存空字符串
-                if(regSpace.test(tmp)){ 
+                if(!isPreTag && regSpace.test(tmp)){ 
                     tmp = '';
                 }
             }
             textStack.push(tmp);
             st = regExp.lastIndex;
         }
-
         // 标签名数组
         let tagNames = [];
         // 标签对象数组
@@ -105,6 +106,9 @@ export class Compiler {
                     if(tagObjs.length>0){
                         tagObjs[tagObjs.length-1].children.push(po);
                     }
+                    if(isPreTag && etg === 'pre'){
+                        isPreTag = false;
+                    }
                 }else{
                     throw new NError('wrongTempate');
                 }
@@ -113,7 +117,10 @@ export class Compiler {
                 let tmpS = tag.endsWith('\/>')?tag.substring(1,tag.length-2):tag.substring(1,tag.length-1);
                 //处理标签头，返回dom节点和原始标签名
                 const[dom,tagName] = this.handleTag(tmpS.trim());
-
+                //设置pre标签标志
+                if(tagName === 'pre'){
+                    isPreTag = true;
+                }
                 //前一个文本节点存在，则作为前一个节点的孩子
                 if(ii>0 && textStack[ii] !== ''){
                     tagObjs[tagObjs.length-1].children.push(this.handleText(textStack[ii]));
@@ -150,95 +157,70 @@ export class Compiler {
         const me = this;
         let ele:Element;
         //字符串和表达式替换
-        let reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|({{[\S\s]*?\}{0,2}\s*}})/g;
+        const reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|({{[\S\s]*?\}{0,2}\s*}})|([\w$-]+(\s*=)?)/g;
         let pName:string;
         //标签原始名
         let tagName:string;
         let startValue:boolean;
-        let finded:boolean = false; //是否匹配了有效的reg
-        let st = 0;
-        let r;
+        let r:RegExpExecArray;
+        //属性名正则式
+        const regName = /[a-zA-Z$_]\S*/;
         while((r=reg.exec(tagStr))!==null){
-            if(r.index>st){
-                let tmp = tagStr.substring(st,r.index).trim();
-                if(tmp === ''){
-                    continue;
+            let s = r[0];
+            if(regName.test(s)){ //属性名
+                if(!tagName){
+                    tagName = s;
+                    ele = new Element(tagName,me.genKey());
+                }else if(s.endsWith('=')) { //带等号
+                    if(pName){  //前一个属性名存在，设置空值
+                        setValue();
+                    }
+                    pName = s.substring(0,s.length-1).trim();
+                    startValue = true; 
+                }else if(!pName){ //不带等号
+                    pName = s;
+                }else if(startValue){  //属性名存在，设置属性值
+                    setValue(s);
                 }
-                finded = true;
-                handle(tmp);
-                if(startValue){
-                    setValue(r[0]);
+            }else{ //属性值
+                if(pName && startValue){
+                    setValue(s);
                 }
-                st = reg.lastIndex;
             }
-            st = reg.lastIndex;
         }
-        if(!finded){
-            handle(tagStr);
+        //存在空属性
+        if(pName){
+            setValue();
         }
+        
         //后置处理
         this.postHandleNode(ele);
         ele.sortDirective();
-        
         return [ele,tagName];
-
-        /**
-         * 处理串（非字符串和表达式）
-         * @param s 
-         */
-        function handle(s){
-            let reg = /([^ \f\n\r\t\v=]+)|(\=)/g;
-            let r;
-            while((r=reg.exec(s))!== null){
-                if(!tagName){
-                    tagName = r[0];
-                    ele = new Element(tagName,me.genKey());
-                }else if(!pName){
-                    pName = r[0];
-                }else if(startValue){
-                    setValue(r[0]);
-                }else if(pName && r[0] === '='){
-                    startValue = true;
-                }else if(pName && !startValue){ //无值属性
-                    setValue();
-                    pName=r[0];
-                }
-            }
-            //只有名无值
-            if(pName && !startValue){
-                setValue();
-            }
-        }
 
         /**
          * 设置属性值
          * @param value     属性值
          */
         function setValue(value?:any){
-            //属性名判断
-            if(!/^[A-Za-z][\w\d-]*$/.test(pName)){
-                return;
-            }
             if(value){
                 let r;
                 //去掉字符串两端
                 if(((r=/((?<=^')(.*?)(?='$))|((?<=^")(.*?)(?="$)|((?<=^`)(.*?)(?=`$)))/.exec(value)) !== null)){
                     value = r[0].trim();
                 }
-                
                 //表达式编译
                 if(/^\{\{[\S\s]*\}\}$/.test(value)){
                     value = me.compileExpression(value)[0];
                     value = GlobalCache.getExpression(value);
                 }
             }
-            
             //指令
             if (pName.startsWith("x-")) {
                 //不排序
-                ele.addDirective(new Directive(me.module,pName.substr(2), value));
+                ele.addDirective(new Directive(pName.substr(2), value));
             } else if (pName.startsWith("e-")) { //事件
-                ele.addEvent(new NEvent(me.module,pName.substr(2), value));
+                ele.addEvent(new NEvent(pName.substr(2), value));
             } else { //普通属性
                 ele.setProp(pName, value);
             }
@@ -261,7 +243,7 @@ export class Compiler {
                 }
                 if(!slotCt){
                     slotCt = new Element('div',this.genKey());
-                    slotCt.addDirective(new Directive(this.module,'slot',null));
+                    slotCt.addDirective(new Directive('slot',null));
                     //当前位置，用slot替代
                     dom.children.splice(j,1,slotCt);
                 }else{
@@ -279,6 +261,7 @@ export class Compiler {
      */
     private handleText(txt:string) {
         let ele = new Element(null,this.genKey());
+        txt = this.preHandleText(txt);
         if(/\{\{[\s\S]+\}\}/.test(txt)){  //检查是否含有表达式
             ele.expressions = <any[]>this.compileExpression(txt);
         }else{
@@ -327,13 +310,27 @@ export class Compiler {
     private postHandleNode(node:Element){
         // 模块类判断
         if (ModuleFactory.hasClass(node.tagName)) {
-            node.addDirective(new Directive(this.module,'module',node.tagName));
-            // node.setProp('role','module');
+            node.addDirective(new Directive('module',node.tagName));
             node.tagName = 'div';
-        }else if(DefineElementManager.has(node.tagName)){ //自定义元素
-            let clazz = DefineElementManager.get(node.tagName);
+        }else if(DirectiveElementManager.has(node.tagName)){ //自定义元素
+            let clazz = DirectiveElementManager.get(node.tagName);
             Reflect.construct(clazz,[node,this.module]);
         }
+    }
+
+    /**
+     * 预处理html保留字符 如 &nbsp;,&lt;等
+     * @param str   待处理的字符串
+     * @returns     解析之后的串
+     */
+    private preHandleText(str: string): string {
+        let reg = /&[a-z]+;/;
+        if(reg.test(str)){
+            let div = document.createElement('div');
+            div.innerHTML = str;
+            return div.textContent;
+        }
+        return str;
     }
 
     /**

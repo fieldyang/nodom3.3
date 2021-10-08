@@ -33,7 +33,7 @@ export default (function () {
                 if(!dom.hasProp('once')){
                     dom.handleProps(module);
                     //设置props，如果改变了props，启动渲染
-                    m.setProps(dom.props);    
+                    m.setProps(Object.fromEntries(dom.props));
                 }
             } else {
                 m = ModuleFactory.get(this.value);
@@ -50,11 +50,7 @@ export default (function () {
                 m.active();
                 //设置props，如果改变了props，启动渲染
                 dom.handleProps(module);
-                let props = Object.create(null);
-                for(let o of dom.props){
-                    props[o[0]] = o[1];
-                }
-                m.setProps(props);
+                m.setProps(Object.fromEntries(dom.props));
             }
         },
         8
@@ -90,7 +86,6 @@ export default (function () {
             }
             dom.dontRender = false;
             let chds = [];
-            let key = dom.key;
             // 移除指令
             dom.removeDirectives(['repeat']);
             for (let i = 0; i < rows.length; i++) {
@@ -98,12 +93,7 @@ export default (function () {
                 //设置modelId
                 node.model = rows[i];
                 //设置key
-                if (rows[i].$key) {
-                    setKey(node, key, rows[i].$key);
-                }
-                else {
-                    setKey(node, key, Util.genId());
-                }
+                Util.setNodeKey(node,node.model.$key, true);
                 rows[i].$index = i;
                 chds.push(node);
             }
@@ -119,70 +109,69 @@ export default (function () {
             }
             // 不渲染该节点
             dom.dontRender = true;
-
-            /**
-             * 修改repeat下的dom key
-             * @param node  节点
-             * @param key   原始key
-             * @param id    数据id
-             */
-            function setKey(node, key, id) {
-                node.key = key + '_' + id;
-                node.children.forEach((dom) => {
-                    setKey(dom, dom.key, id);
-                });
-            }
         },
         2
     );
 
     /**
      * 递归指令
-     * 作用：在dom内部递归，即根据数据层复制节点作为前一层的子节点
-     * 数据格式：
-     * data:{
-     *     recurItem:{
-    *          title:'第一层',
-    *          recurItem:{
-    *              title:'第二层',
-    *              recurItem:{...}
-    *          }
-    *      }
-     * }
-     * 模版格式：
-     * <div x-recursion='items'><span>{{title}}</span></div>
+     * 作用：在dom内部递归，用于具有相同数据结构的节点递归生成
+     * 递归指令不允许嵌套
+     * 典型模版
+     * ```
+     * <recur name='r1'>
+     *      <div>...</div>
+     *      <p>...</p>
+     *      <recur ref='r1' />
+     * </recur>
+     * ```
+     * name表示递归名字，必须与内部的recur标签的ref保持一致，名字默认为default
      */
     createDirective(
         'recur',
         function(module:Module,dom:Element){
-            let model = dom.model;
-            if (!model) {
-                return;
-            }
-            let data = model[this.value];
-            // 渲染时，去掉model指令，避免被递归节点使用
-            dom.removeDirectives('model');
+            //递归节点存放容器
+            if(dom.hasProp('ref')){
+                const name = '$recurs.' + (dom.getProp('ref') || 'default');
+                let node = module.objectManager.get(name);
+                if(!node){
+                    dom.dontRender=true;
+                    return;
+                }
+                let model = dom.model;
+                let cond = node.getDirective(module,'recur');
+                let m = model[cond.value];
+                if(!m){
+                    dom.dontRender=true;
+                    return;
+                }
 
-            //处理内部递归节点
-            if (data) {
-                if (Array.isArray(data)) { //为数组，则遍历生成多个节点
-                    // 先克隆一个用作基本节点，避免在循环中为基本节点增加子节点
-                    let node: Element = dom.clone();
-                    for (let d of data) {
-                        let nod: Element = node.clone();
-                        nod.model = d;
-                        //作为当前节点子节点
-                        dom.add(nod);
+                if(node){
+                    //克隆，后续可以继续用
+                    let node1 = node.clone();
+                    let key:string;
+                    if(!Array.isArray(m)){  //recur子节点不为数组
+                        node1.model = m;
+                        key = m.$key;
+                    }else{
+                        key = dom.model.$key
                     }
-                } else {
-                    let node: Element = dom.clone();
-                    node.model = data;
-                    //作为当前节点子节点
-                    dom.add(node);
+                    Util.setNodeKey(node1,key,true);
+                    dom.add(node1);
+                }
+            }else { //递归节点
+                let data = dom.model[this.value];
+                if(!data){
+                    return;
+                }
+                //递归名，默认default
+                const name = '$recurs.' + (dom.getProp('name') || 'default');
+                if(!module.objectManager.get(name)){
+                    module.objectManager.set(name,dom.clone());
                 }
             }
         },
-        3
+        2
     );
 
     /**
@@ -288,10 +277,14 @@ export default (function () {
                 } else {
                     field = obj[p];
                 }
-
+                
                 let d = model.$get(field);
                 //数据赋值
                 if (d !== undefined) {
+                    //对象需要克隆
+                    if(typeof d === 'object'){
+                        d = Util.clone(d,/^\$/);
+                    }
                     m[p] = d;
                 }
                 //反向处理
@@ -355,7 +348,7 @@ export default (function () {
 
             //初始化
             if(!this.getParam(module,dom,'inited')){
-                dom.addEvent(new NEvent(module,'change',
+                dom.addEvent(new NEvent('change',
                     function(dom, module, e, el){
                         if (!el) {
                             return;
@@ -423,7 +416,7 @@ export default (function () {
             //添加click事件,避免重复创建事件对象，创建后缓存
             let event:NEvent = module.objectManager.get('$routeClickEvent');
             if(!event){
-                event = new NEvent(module,'click',
+                event = new NEvent('click',
                     (dom, module, e) => {
                         let path = dom.getProp('path');
                         if (!path) {
@@ -447,7 +440,7 @@ export default (function () {
      */
     createDirective('router',
         function(module:Module,dom:Element){
-            const parent = dom.parent;
+            dom.setProp('role','module');
             Router.routerKeyMap.set(module.id, dom.key);
         }
     );

@@ -1,4 +1,6 @@
+import { NCache } from "./cache";
 import { Compiler } from "./compiler";
+import { CssManager } from "./cssmanager";
 import { Element } from "./element";
 import { Model } from "./model";
 import { ModelManager } from "./modelmanager";
@@ -24,42 +26,37 @@ export class Module {
     /**
      * 模型，代理过的data
      */
-    public model:any;
+    public model:Model;
 
     /**
      * 方法集合，函数或对象
+     * 模版内使用的方法，包括事件，都在这里面定义
+     * 方法this： 指向module实例
+     * 事件参数: model(当前按钮对应model),dom(事件对应虚拟dom),eventObj(事件对象),e(实际触发的html event)
+     * 表达式方法：参数按照表达式方式给定即可
      */
     public methods: any;
 
     /**
-     * 子模块，类名数组，函数或数组
+     * 子模块类集合，模版中引用的模块类需要声明
+     * 如果类已经通过registModule注册过，这里不再需要定义，只需import即可
      */
     public modules: any;
 
     /**
-     * css样式
-     * 函数或数组，如果数组元素为object，则为样式名和键值对，否则为url,url为主页面相对路径
-     * [{
-     *  '.cls1:{
-     *      color:'red',
-     *      font-size:'12px'
-     *  },
-     *  '.cls2':{
-     *      ...
-     *  }
-     * },'css1.css']
-     */
-    public css: any;
-
-    /**
      * 父模块通过dom节点传递的属性
      */
-     private props:any;
+    private props:any;
+
+    /**
+     * 编译后的dom树
+     */
+     public originTree:Element;
 
     /**
      * 渲染树
      */
-    private renderTree: Element;
+    public renderTree: Element;
 
     /**
      * 父模块 id
@@ -102,12 +99,7 @@ export class Module {
     private postRenderOps:any[] = [];
 
     /**
-     * 编译后的dom树
-     */
-    public originTree:Element;
-
-    /**
-     * 对象管理器，用于管理虚拟dom节点、指令、表达式、事件对象
+     * 对象管理器，用于管理虚拟dom节点、指令、表达式、事件对象及其运行时参数
      */
     public objectManager:ObjectManager;
 
@@ -142,9 +134,6 @@ export class Module {
             }
             delete this.modules;
         }
-        
-        //处理css配置
-        this.handleCss();
     }
 
     /**
@@ -157,40 +146,6 @@ export class Module {
     }
     
     /**
-     * 处理css
-     */
-    private handleCss() {
-        if(!this.css){
-            return;
-        }
-        let cssArr = (typeof this.css === 'function' ? this.css.apply(this.model) : this.css);
-        if (Array.isArray(cssArr) && cssArr.length > 0) {
-            //如果不存在stylesheet或最后一个stylesheet是link src，则新建一个style标签
-            if (document.styleSheets.length === 0 || document.styleSheets[document.styleSheets.length - 1].href) {
-                document.head.appendChild(document.createElement('style'));
-            }
-            //得到最后一个sheet
-            let sheet: CSSStyleSheet = document.styleSheets[document.styleSheets.length - 1];
-            for (let css of cssArr) {
-                if (typeof css === 'string') {
-                    sheet.insertRule("@import '" + css + "'");
-                } else if (typeof css === 'object') {
-                    for (let p in css) {
-                        let style = p + '{';
-                        for (let p1 in css[p]) {  //多个样式
-                            style += p1 + ':' + css[p][p1] + ';'
-                        }
-                        style += p + '}';
-                        //加入样式表
-                        sheet.insertRule(style);
-                    }
-                }
-            }
-        }
-        delete this.css;
-    }
-
-    /**
      * 模型渲染
      * @return false 渲染失败 true 渲染成功
      */
@@ -199,8 +154,7 @@ export class Module {
         if (this.state === 2) {
             return true;
         }
-        
-
+    
         //容器没就位或state不为active则不渲染，返回渲染失败
         if (this.state < 3 || !this.getContainer()) {
             return false;
@@ -238,7 +192,6 @@ export class Module {
                     switch(item[0]){
                         case 1: //添加
                             //把新dom缓存添加到旧dom缓存
-                            // this.objectManager.saveOldElement(this.objectManager.getNewElement(item[1].key));
                             item[1].renderToHtml(this,pEl,true);
                             n1 = this.objectManager.getNode(item[1].key);
                             if(!n2){ //不存在添加节点或为索引号
@@ -363,7 +316,10 @@ export class Module {
         delete this.container;
         //删除渲染树
         delete this.renderTree;
-        
+
+        //清理缓存
+        this.clearCache();
+
         //处理子节点
         for(let id of this.children){
             let m = ModuleFactory.get(id);
@@ -405,15 +361,10 @@ export class Module {
     /**
      * 执行模块事件
      * @param eventName 	事件名
-     * @param param 		参数，为数组
      */
-    private doModuleEvent(eventName: string, param?: Array<any>) {
-        if (param) {
-            param.unshift(this);
-        } else {
-            param = [this];
-        }
-        this.invokeMethod(eventName, param);
+    private doModuleEvent(eventName: string) {
+        
+        this.invokeMethod(eventName, this.model);
     }
 
     /**
@@ -482,12 +433,15 @@ export class Module {
     /**
      * 调用方法
      * @param methodName    方法名
-     * @param args          参数数组
      */
-    public invokeMethod(methodName: string, args: any[]) {
+    public invokeMethod(methodName: string,arg1?:any,arg2?:any,arg3?:any) {
         let foo = this.getMethod(methodName);
         if (foo && typeof foo === 'function') {
-            return foo.apply(this.model, args);
+            let args = [];
+            for(let i=1;i<arguments.length;i++){
+                args.push(arguments[i]);
+            }
+            return foo.apply(this, args);
         }
     }
 
@@ -536,10 +490,9 @@ export class Module {
         //为提升性能，只进行浅度比较
         //如果相同且属性值不含对象，则返回
         let change:boolean = !Util.compare(this.props,props);
-        
         if(!change){
             if(props){
-                for(let p in props){
+                for(let p of Object.keys(props)){
                     if(typeof p === 'object' && !Util.isFunction(p)){
                         change = true;
                         break;
@@ -559,9 +512,28 @@ export class Module {
      */
     public compile(){
         //清除缓存
-        this.objectManager.clearDirectives();
-        this.objectManager.clearExpressions();
-        this.objectManager.clearEvents();
+        this.clearCache();
         this.originTree = new Compiler(this).compile(this.template(this.props));
+    }
+
+
+    /**
+     * 清理缓存
+     * @param force 强力清除 
+     */
+    public clearCache(force?:boolean){
+        if(force){ //强力清除，后续不再使用
+            this.objectManager.cache = new NCache();
+            return;
+        }
+        
+        //清理指令
+        this.objectManager.clearDirectives();
+        //清理表达式
+        this.objectManager.clearExpressions();
+        //清理事件
+        this.objectManager.clearEvents();
+        //清理css url
+        CssManager.clearModuleRules(this);
     }
 }
