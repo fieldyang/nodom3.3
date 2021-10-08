@@ -1,7 +1,7 @@
-import {Module} from '../../dist/nodom.js'
-export class MRepeat extends Module{
-    template(){
-        return `
+import { Module } from "../../dist/nodom.js";
+export class MRepeat extends Module {
+	template() {
+		return `
         <div class="view">
             <button e-click='pop'>pop</button>
             <button e-click='push'>push</button>
