@@ -35,12 +35,12 @@
 			<div>判断数组中有没有‘num’: <span x-if="new Set(arr).has(num)">true</span></div>
 			<div>价格求和: {{$sum(1,2)+price}}</div>
 			<div>
-				{{(new Date().getTime())|date:'yyyy-MM-dd'}} 是否为工作日：<span x-if="new Date().getDay()<6"
+				{{(new Date().getTime())|date:'yyyy-MM-dd'}} 是否工作日：<span x-if="new Date().getDay()<6"
 					>true</span
 				>
 			</div>
 			<div>货币过滤器：{{(price*discount)|currency:¥}}</div>
-			<div x-if="price>30 && discount !== undefined">是否是低价商品并且还有折扣</div>
+			<div x-if="price>30 && discount !== undefined">是否是低价商品并且有部分折扣</div>
 			<div>计算：{{$cac(1,2)+ (Math.round((price * discount)))|number:1 + 1}}</div>
 			<div>instanceof用法:{{arr instanceof Array}}</div>
 			<div>{{num+1}}</div>

@@ -6,24 +6,11 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Document</title>
 	</head>
-
-	<style>
-		div {
-			width: 100px;
-			height: 100px;
-			background: #bababa;
-			> {
-				background: red;
-			}
-		}
-	</style>
-	<body>
-		<div></div>
-	</body>
+	<body></body>
 
 	<script>
-		let str = "{{a<b && a>c}}<div a={{a<b && a>c && a<d && a>c}}>{{a<b && a>c}}";
-		const tagReg = /(?<!{{[^}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^{{]*}})/;
-		console.log(str.match(tagReg));
+		let reg = /([a-zA-Z][a-zA-Z0-9-_]*)=?('.*?'|".*?"|{{.*?}})?/;
+		let str = `div a=' v"as"v' b='{{asdasd}}'`;
+		console.log(reg.exec(str));
 	</script>
 </html>

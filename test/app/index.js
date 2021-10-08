@@ -1,3 +1,1 @@
-let s = `           
-                `
-console.log(/^[\s\n\r\t\v]+$/.test(s));
+import { ModuleFactory } from "../../dist/nodom.js";
