@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<title>event</title>
+    
+	<style>
+		.cls1{
+			color:red;
+		}
+		.cls2{
+			font-size:20pt;
+		}
+	</style>
+</head>
+<body>
+	<div>
+		
+	</div>
+</body>
+	<script type='module'>
+		import{nodom,Module} from '../dist/nodom.js'
+		class Module1 extends Module{
+			template(){
+				return `
+				<div>
+					<div>hello</div>
+					<!-- e-swipedown='swipedown' touch设备下测试-->
+					<ul x-show='show' e-click='clickP' >
+						<li x-repeat={{edus}} e-click='clickItem:delg:once' e-mousewheel='clickItem:delg:once'><span>{{eduName}}</span></li>
+					</ul>
+				</div>
+				`
+			}
+			data = {
+				show:0,
+				edus:[
+					{eduId:1,eduName:'高中'},
+					{eduId:2,eduName:'本科'},
+					{eduId:3,eduName:'硕士研究生'},
+					{eduId:4,eduName:'博士研究生'}
+				],
+				sum:function(){
+					console.log(this);
+				}
+			}
+			methods = {
+				clickP:function(d,module,evo,e){
+					console.log('parent',this);
+				},
+				swipedown:function(d,module,evo,e){
+					console.log(e.v0);
+				},
+				outP:function(dom,module,evo,e){
+					console.log('out parent',this);
+				},
+				clickItem:function(d,module,evo,e){
+					console.log('child',this);
+				},
+				show:function(dom,module,evo,e){
+					this.show = !this.show;
+					this.sum();
+				},
+				change:function(model,dom,evo,e){
+					model.edus.push({
+						eduId:5,eduName:'博士后'
+					})
+				},
+				change1:function(model,dom,evo,e){
+					model.edus[0].eduName = '幼儿园';
+					
+				}
+			}
+		}
+		nodom(Module1,'div');
+	</script>
+</html>

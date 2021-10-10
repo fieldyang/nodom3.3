@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>show</title>
+
+    <style>
+        .code {
+            margin: 20px;
+        }
+
+        .tip {
+            color: darkorange;
+        }
+
+        .red {
+            color: red;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        
+    </div>
+</body>
+    <script type='module'>
+		import{nodom,Module} from '../dist/nodom.js'
+		class Module1 extends Module{
+			template(){
+				return `
+					<div>
+                        <button e-click='change'>change</button>
+						<div x-show={{show}}>价格：{{price}}</div>
+	                </div>
+                `
+            }
+
+            data = {
+                show:true,
+                price:2000
+            }
+
+            methods = {
+                change(model){
+                    model.show = !model.show;
+                }
+            }
+
+        }
+
+        nodom(Module1,'div')
+
+</script>
+
+</html>

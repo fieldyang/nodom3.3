@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style></style>
+    <style role='nodom'></style>
+    <title>Document</title>
+</head>
+<body>
+    <div>
+        
+    </div>
+    <button onclick='send1()'>发送消息1</button>
+    <button onclick='send2()'>发送消息2</button>
+</body>
+<script>
+    // class M1{
+    //     constructor(x){
+    //         this.x = x;
+    //     }
+    //     show(){
+    //         document.querySelector('div').innerHTML = this.x;
+    //     }
+    // }
+    
+    // let blob = new Blob([`
+    // self.onmessage = (e)=>{
+    //     e.data.m.change('测试反向')
+
+        
+    // }`],{type : 'text/javascript'});
+    // console.log(blob);
+    // let m1 = new M1(20);
+    // // let worker = new Worker(URL.createObjectURL(blob));
+    // let worker = new Worker('./js/worker.js');
+
+    
+
+    // worker.onmessage = (e)=>{
+    //     console.log(e.data);
+    // }
+    // let map = new Map();
+    // map.set('x',1);
+    // let o1 = {x:2}
+    // let o2 = {o1:o1,m:new M1(10),map:map}
+    // o1.o2 = o2;
+    // function send1(){
+    //     // worker.postMessage({op:1,msg:'这是消息1'});
+    //     worker.postMessage(o2);
+    // }
+
+    // function send2(){
+    //     worker.postMessage({op:2,msg:'这是消息2'});
+    // }
+
+    
+
+    // let o = {b:{c:1,x:{y:2}},y:10}
+    // let foo = new Function('model','field','return model[field]');
+
+    // console.log(eval('o.yy.c.d'));
+    // console.log(foo);
+    // console.log(foo(o,'oc'));
+    let map = new Map();
+    let k;
+    let k1;
+    let o = {x:1}
+    for(let i=0;i<100000;i++){
+        k = Math.random();
+        if(i===6000){
+            k1 = k;
+        }
+        map.set(k,o);
+        // o[k] = i;
+    }
+    o1 = {obj:o};
+
+    // console.time('t1');
+    for(let i=0;i<10000000;i++){
+        let p = map.get(k1);
+        // let p = o1.obj;
+        // o[k1];
+    }
+    // console.timeEnd('t1');
+</script>
+
+</html>
