@@ -85,19 +85,6 @@ export class Element {
     public staticNum:number = 0;
 
     /**
-     * 渲染前（获取model后）执行方法集合,可以是方法名（在module的methods中定义），也可以是函数
-     * 函数的this指向element的model，参数为(element,module)
-     */
-    private beforeRenderOps: any[];
-
-    /**
-     * 渲染后（renderToHtml前）执行方法集合，可以是方法名（在module的methods中定义），也可以是函数
-     * 函数的this指向element的model，参数为(element,module)
-     */
-    private afterRenderOps: any[];
- 
-
-    /**
      * 对应的所有表达式的字段都属于dom model内
      */
     public allModelField:boolean=true;
@@ -112,10 +99,6 @@ export class Element {
      */
     public dontAddToTree:boolean;
 
-    /**
-     * 不渲染子节点
-     */
-    public dontRenderChildren:boolean;
     /**
      * 子模块id
      */
@@ -222,7 +205,6 @@ export class Element {
         if(!this.directives){
             return;
         }
-        console.log(this.directives);
         return this.directives.find(item => item.type.name === directiveType);
     }
 
@@ -775,43 +757,54 @@ export class Element {
     }
 
     /**
-     * 添加渲染附加操作
-     * @param method    方法名 
-     * @param type      类型 before,after
+     * 克隆
+     * @param changeKey     是否更改key，如果为true，则生成的节点用新的key
      */
-     addRenderOp(method: any, type: string) {
-        if (type === 'before') {
-            if(!this.beforeRenderOps){
-                this.beforeRenderOps = [];
-            }
-            this.beforeRenderOps.push(method);
-        } else {
-            if(!this.afterRenderOps){
-                this.afterRenderOps = [];
-            }
-            this.afterRenderOps.push(method);
-        }
-    }
+     public clone(): Element {
+        let dst: Element = new Element(this.tagName);
+        dst.key = this.key;
+        dst.expressions = this.expressions;
+        dst.textContent = this.textContent;
+        dst.staticNum = this.staticNum;
+        dst.directives = this.directives;
 
-    /**
-     * 执行渲染附加操作
-     * @param module    模块
-     * @param type      类型 before,after
-     */
-    doRenderOp(module: Module, type: string) {
-        // 否则执行注册在element上的前置渲染方法
-        let arr = type === 'before' ? this.beforeRenderOps : this.afterRenderOps;
-        if(!arr){
-            return;
-        }
-        for (let m of arr) {
-            //可能是字符串
-            if (typeof m === 'string') {
-                m = module.getMethod(m);
-            }
-            if (m) {
-                m.apply(this, [this.model, module]);
+        //普通属性
+        if(this.props && this.props.size>0){
+            for(let p of this.props){
+                dst.setProp(p[0],p[1]);
             }
         }
+
+        //表达式属性
+        if(this.exprProps && this.exprProps.size>0){
+            for(let p of this.exprProps){
+                dst.setProp(p[0],p[1]);
+            }
+        }
+
+        //assets
+        if(this.assets && this.assets.size>0){
+            for(let p of this.assets){
+                dst.setAsset(p[0],p[1]);
+            }
+        }
+
+        //事件
+        if(this.events && this.events.size>0){
+            dst.events = new Map();
+            for(let p of this.events){
+                //复制数组
+                dst.events.set(p[0],p[1].slice(0));
+            }
+        }
+        
+        //子节点clone
+        if(this.children && this.children.length>0){
+            for(let c of this.children){
+                dst.add(c.clone());
+            }
+        }
+    
+        return dst;
     }
 }

@@ -463,7 +463,7 @@ export default (function () {
                 let m = ModuleFactory.get(mid);
                 if(m){
                     //缓存当前替换节点
-                    m.objectManager.set('$slots.' + this.value,{rendered:dom,origin:src});
+                    m.objectManager.set('$slots.' + this.value,{rendered:dom,origin:src.clone()});
                 }
                 //设置不添加到dom树
                 dom.dontAddToTree = true;
