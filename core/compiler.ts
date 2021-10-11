@@ -4,7 +4,6 @@ import { Element } from "./element";
 import { NError } from "./error";
 import { NEvent } from "./event";
 import { Expression } from "./expression";
-import { GlobalCache } from "./globalcache";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
 
@@ -19,6 +18,10 @@ export class Compiler {
      */
     private module:Module;
 
+    /**
+     * 构造器
+     * @param module 
+     */
     constructor(module:Module){
         this.elementId = 0;
         this.module = module;
@@ -38,14 +41,12 @@ export class Compiler {
      * @returns         
      */
     private compileTemplate(srcStr:string):Element{
-        const me = this;
         // 清理comment
         let regExp = /\<\!\-\-[\s\S]*?\-\-\>/g;
         srcStr = srcStr.replace(regExp,'');
         //不可见字符正则式
         const regSpace = /^[\s\n\r\t\v]+$/;
         // 1 识别标签
-        // regExp = /(?<!\{\{[^<}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^>{{]*?\}\})/g;
         regExp = /(?<!{{[^}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^{{]*}})/g;
         let st = 0;
         //标签串数组,含开始和结束标签
@@ -197,6 +198,7 @@ export class Compiler {
         //后置处理
         this.postHandleNode(ele);
         ele.sortDirective();
+        ele.allModelField = allModelField;
         return [ele,tagName];
 
         /**

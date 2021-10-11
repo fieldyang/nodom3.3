@@ -26,7 +26,7 @@ export class ModuleA extends Module{
                         hello plug
                     </slot>
                     <div>这是外部数据x1:{{x1}}</div>
-                    <div>nodom
+                    <div>
                         <p>这是外部数据x2:{{x2}}</p>
                         <slot name='s2'>第二个slot</slot>
                     </div>

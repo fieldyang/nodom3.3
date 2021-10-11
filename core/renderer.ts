@@ -39,14 +39,8 @@ export class Renderer {
      * 队列渲染
      */
     public static render() {
-        //调用队列渲染
-        for (let i=0; i<this.waitList.length; i++) {
-            let m = ModuleFactory.get(this.waitList[i]);
-            //渲染成功，从队列移除
-            if(!m || m.render()){
-                this.waitList.shift();
-                i--;
-            }
+        for(;this.waitList.length>0;){
+            ModuleFactory.get(this.waitList.shift()).render();
         }
     }
 
@@ -103,7 +97,7 @@ export class Renderer {
             }
         }
 
-        if(parent){
+        if(parent && !dst.dontAddToTree){
             parent.add(dst);
         }
         
@@ -141,10 +135,9 @@ export class Renderer {
         
         return dst;
 
-
         /**
          * 处理指令
-         * @returns     如果为false，则表示后续渲染不再执行
+         * @returns     true继续执行，false不执行后续渲染代码
          */
         function handleDirectives():boolean {
             if(!src.directives || src.directives.length===0){
@@ -155,7 +148,7 @@ export class Renderer {
                 if(d.expression){
                     d.value = d.expression.val(module,dst.model);
                 }
-                if(d.exec(module,dst)){
+                if(!d.exec(module,dst)){
                     return false;
                 }
             }
@@ -208,6 +201,7 @@ export class Renderer {
                 (<any>el).textContent = src.textContent;
             }
         }else{
+            
             if(src.tagName){
                 el = newEl(src);
             }else{
@@ -217,10 +211,9 @@ export class Renderer {
             if(src.tagName  && isRenderChild){
                 genSub(el, src);
             }
-            if(src.tagName.toLowerCase()!=='style'){
+            if(!src.tagName || src.tagName.toLowerCase()!=='style'){
                 parentEl.appendChild(el);
             }
-            
         }
         return el;
         

@@ -153,16 +153,7 @@ export class Module {
      * @return false 渲染失败 true 渲染成功
      */
     public render(): boolean {
-        //状态为2，不渲染
-        if (this.state === 2) {
-            return true;
-        }
-        
-        //容器没就位或state不为active则不渲染，返回渲染失败
-        if (this.state < 3 || !this.getContainer()) {
-            return false;
-        }
-        
+        this.getContainer();
         //编译
         if(!this.originTree){
             this.compile();
@@ -170,6 +161,7 @@ export class Module {
         //执行前置方法
         this.doRenderOps(0);
         this.doModuleEvent('onBeforeRender');
+                
         if (!this.renderTree) {
             this.doFirstRender();
         } else { //增量渲染
@@ -528,7 +520,7 @@ export class Module {
             return;
         }
         //清理dom key map
-        this.keyNodeMap.clear();
+        // this.keyNodeMap.clear();
         //清理dom相关
         this.objectManager.clearSaveDoms();
         //清理指令

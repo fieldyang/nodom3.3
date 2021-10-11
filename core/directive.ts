@@ -59,6 +59,7 @@ export  class Directive {
      * 执行指令
      * @param module    模块
      * @param dom       dom节点
+     * @returns         true/false
      */
     public exec(module:Module,dom:Element):boolean {
         return this.type.handle.apply(this,[module,dom]);

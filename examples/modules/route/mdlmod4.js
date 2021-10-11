@@ -7,10 +7,10 @@ export class MdlMod4 extends Module {
         return `
         <div test='1'>
             这是{{$route.data.page}}页,编号是{{$route.data.id}}
-            <div>
+            <!--<div>
                 <a x-repeat='routes' x-route={{path}}  class={{active?'colorimp':''}} active='active'>{{title}}</a>
                 <div x-router></div>
-            </div>
+            </div>-->
         </div>`
     }
     data =  {

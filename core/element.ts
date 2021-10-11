@@ -108,6 +108,11 @@ export class Element {
     public notChange:boolean;
 
     /**
+     * 不添加到dom树
+     */
+    public dontAddToTree:boolean;
+    
+    /**
      * @param tag       标签名
      * @param key       key
      */
@@ -204,14 +209,12 @@ export class Element {
      * @param directiveType 	指令类型名
      * @returns                 指令对象
      */
-    public getDirective(module:Module,directiveType:string): Directive {
+    public getDirective(directiveType:string): Directive {
         if(!this.directives){
             return;
         }
-        let r:any = this.directives.find(item => item.type.name === directiveType);
-        if(r){
-            return module.objectManager.getDirective(r.id);
-        }
+        console.log(this.directives);
+        return this.directives.find(item => item.type.name === directiveType);
     }
 
     /**

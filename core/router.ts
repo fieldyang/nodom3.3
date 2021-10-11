@@ -355,12 +355,7 @@ export class Router {
         for(let o of arr){
             o.model[o.field] = o.path === path;
         }
-        //渲染，因为当前模块还在渲染队列中，需要延迟加载
-        if(module.state !== 4){
-            setTimeout(()=>{
-                Renderer.add(module);
-            },0)
-        }
+        console.log(module,arr,path);
     }
 
     /**

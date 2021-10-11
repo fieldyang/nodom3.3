@@ -1,7 +1,6 @@
 import { Directive } from "../core/directive";
 import { Element } from "../core/element";
 import { NEvent } from "../core/event";
-import { GlobalCache } from "../core/globalcache";
 import { Model } from "../core/model";
 import { Module } from "../core/module";
 import { ModuleFactory } from "../core/modulefactory";
@@ -13,10 +12,11 @@ import { Util } from "../core/util";
 export default (function () {
 
     /**
-     *  指令类型初始化
-     *  每个指令类型都有一个init和handle方法，init和handle都可选
-     *  init 方法在编译时执行，包含两个参数 directive(指令)、dom(虚拟dom)，无返回
-     *  handle方法在渲染时执行，包含四个参数 directive(指令)、dom(虚拟dom)、module(模块)、parent(父虚拟dom)
+     * 指令类型初始化
+     * 每个指令类型都有一个名字、处理函数和优先级，处理函数不能用箭头函数
+     * 处理函数在渲染时执行，包含两个参数 module(模块)、dom(虚拟dom)
+     * 处理函数的this指向指令
+     * 处理函数的返回值 true 表示继续，false 表示后续指令不再执行 
      */
 
     /**
@@ -37,10 +37,11 @@ export default (function () {
             } else {
                 m = ModuleFactory.get(this.value);
                 if (!m) {
-                    return;
+                    return true;
                 }
                 //保留modelId
                 this.setParam(module,dom,'moduleId',m.id);
+                dom.setParam(module,'moduleId',m.id);
                 //添加到父模块
                 module.addChild(m.id);
                 //设置容器
@@ -64,6 +65,7 @@ export default (function () {
                     m.setProps(o);
                 }
             }
+            return true;
         },
         8
     );
@@ -78,6 +80,7 @@ export default (function () {
             if (model) {
                 dom.model = model;
             }
+            return true;
         },
         1
     );
@@ -92,7 +95,7 @@ export default (function () {
             let rows = this.value;
             // 无数据，不渲染
             if (!Util.isArray(rows) || rows.length === 0) {
-                return;
+                return true;
             }
             const parent = dom.parent;
             //从源树获取，才可能得到子节点
@@ -104,7 +107,7 @@ export default (function () {
                     this.removeDirective('repeat');
                 });
             }
-            return true;
+            return false;
         },
         2
     );
@@ -131,13 +134,13 @@ export default (function () {
                 const name = '$recurs.' + (dom.getProp('ref') || 'default');
                 let node = module.objectManager.get(name);
                 if(!node){
-                    return true;
+                    return false;
                 }
                 let model = dom.model;
                 let cond = node.getDirective(module,'recur');
                 let m = model[cond.value];
                 if(!m){
-                    return true;
+                    return false;
                 }
 
                 if(node){
@@ -156,7 +159,7 @@ export default (function () {
             }else { //递归节点
                 let data = dom.model[this.value];
                 if(!data){
-                    return;
+                    return true;
                 }
                 //递归名，默认default
                 const name = '$recurs.' + (dom.getProp('name') || 'default');
@@ -164,6 +167,7 @@ export default (function () {
                     // module.objectManager.set(name,dom.clone(module,null,null));
                 }
             }
+            return true;
         },
         2
     );
@@ -175,7 +179,7 @@ export default (function () {
     createDirective('if',
         function(module:Module,dom:Element){
             dom.parent.setParam(module,'$if',this.value);
-            return !this.value;
+            return this.value;
         },
         5
     );
@@ -188,7 +192,7 @@ export default (function () {
         'else',
         function(module:Module,dom:Element){
             //如果前面的if/elseif值为true，则隐藏，否则显示
-            return dom.parent.getParam(module,'$if') === true;
+            return dom.parent.getParam(module,'$if') === false;
         },
         5
     );
@@ -200,14 +204,15 @@ export default (function () {
         function(module:Module,dom:Element){
             let v = dom.parent.getParam(module,'$if');
             if(v === true){
-                return true;
+                return false;
             }else{
                 if(!this.value){
-                    return true;
+                    return false;
                 }else{
                     dom.parent.setParam(module,'$if',true);
                 }
             }
+            return true;
         },
         5
     );
@@ -219,6 +224,7 @@ export default (function () {
          'endif', 
         function(module:Module,dom:Element){
             dom.parent.removeParam(module,'$if');
+            return true;
         },
         5
     );
@@ -230,7 +236,7 @@ export default (function () {
     createDirective(
         'show',
         function(module:Module,dom:Element){
-            return !this.value;
+            return this.value;
         },
         5
     );
@@ -303,7 +309,7 @@ export default (function () {
             const model = dom.model;
             
             if (!model) {
-                return;
+                return true;
             }
 
             let dataValue = model.$get(this.value);
@@ -379,6 +385,7 @@ export default (function () {
                 ));
                 this.setParam(module,dom,'inited',true);
             }
+            return true;
         },
         10
     );
@@ -389,7 +396,7 @@ export default (function () {
     createDirective('route',
         function(module:Module,dom:Element){
             if(!this.value){
-                return;
+                return true;
             }
             //a标签需要设置href
             if (dom.tagName.toLowerCase() === 'a') {
@@ -426,6 +433,7 @@ export default (function () {
                 module.objectManager.set('$routeClickEvent',event);
             }
             dom.addEvent(event);
+            return true;
         }
     );
 
@@ -436,6 +444,7 @@ export default (function () {
         function(module:Module,dom:Element){
             dom.setProp('role','module');
             Router.routerKeyMap.set(module.id, dom.key);
+            return true;
         }
     );
 
@@ -447,27 +456,25 @@ export default (function () {
         function(module:Module,dom:Element){
             const parent = dom.parent;
             this.value = this.value || 'default';
-            let pd:Directive = parent.getDirective(module,'module');
+            let mid = dom.parent.getParam(module,'moduleId');
             //父dom有module指令，表示为替代节点，替换子模块中的对应的slot节点；否则为子模块定义slot节点
-            if(pd){
-                if(module.children.length===0){
-                    return;
-                }
-                let m = ModuleFactory.get(pd.getParam(module,parent,'moduleId'));
+            if(mid){
+                let m = ModuleFactory.get(mid);
                 if(m){
                     //缓存当前替换节点
                     m.objectManager.set('$slots.' + this.value,dom);
                 }
-                
-                //设置不渲染
-                return true;
+                //设置不添加到dom树
+                dom.dontAddToTree = true;
             }else{ //源slot节点
                 //获取替换节点进行替换
                 let rdom = module.objectManager.get('$slots.' + this.value);
                 if(rdom){
+                    console.log(rdom.children);
                     dom.children = rdom.children;
                 }
             }
+            return true;
         },
         5
     );
