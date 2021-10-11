@@ -13,14 +13,14 @@ export class ModuleMain extends Module{
                 <h2>默认slot</h2>
                 <p>第一个子模块</p> 
                 <mod-a p1='true' xxx='111'>
-                    <!--<mod-b p2='false'>
-                         <modc>
-                            <div>hahaha</div>
+                    <mod-b p2='false' xxx='222'>
+                        <modc>
+                            <div>name is:{{name}}</div>
                         </modc>
-                    </mod-b>-->
-                    <slot>
+                    </mod-b>
+                    <!--<slot>
                         <h3 style='color:blue'> hello change plug 1</h3>    
-                    </slot>
+                    </slot>-->
                     <slot name='s2'>替换的第二个slot  {{name}}</slot>
                 
                 </mod-a>

@@ -32,7 +32,10 @@ export  class Directive {
      */
     public expression:Expression;
 
-    
+    /**
+     * 禁用
+     */
+    public disabled:boolean;
     /**
      * 构造方法
      * @param type  	类型名
@@ -58,11 +61,16 @@ export  class Directive {
     /**
      * 执行指令
      * @param module    模块
-     * @param dom       dom节点
+     * @param dom       渲染目标节点
+     * @param src       源节点
      * @returns         true/false
      */
-    public exec(module:Module,dom:Element):boolean {
-        return this.type.handle.apply(this,[module,dom]);
+    public exec(module:Module,dom:Element,src:Element):boolean {
+        //禁用，不执行
+        if(this.disabled){
+            return true;
+        }
+        return this.type.handle.apply(this,[module,dom,src]);
     }
 
     /**

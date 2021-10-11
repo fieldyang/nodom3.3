@@ -6,6 +6,7 @@ export class ModuleB extends Module{
         return `
             <div>
                 <div>这是子模块B</div>
+                <p>模块B的内容</p>
                 <slot>haha slot b</slot>
             </div>
         `

@@ -111,7 +111,16 @@ export class Element {
      * 不添加到dom树
      */
     public dontAddToTree:boolean;
-    
+
+    /**
+     * 不渲染子节点
+     */
+    public dontRenderChildren:boolean;
+    /**
+     * 子模块id
+     */
+    public subModuleId:number;
+
     /**
      * @param tag       标签名
      * @param key       key

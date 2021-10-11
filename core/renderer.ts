@@ -2,7 +2,6 @@ import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
 import { Element } from "./element";
 import { Model } from "./model";
-import { Directive } from "./directive";
 import { Expression } from "./expression";
 import { CssManager } from "./cssmanager";
 import { EventManager } from "./eventmanager";
@@ -20,7 +19,7 @@ export class Renderer {
      * 添加到渲染列表
      * @param module 模块
      */
-    public static add(module:Module,force?:boolean) {
+    public static add(module:Module) {
         //如果已经在列表中，不再添加
         if (!this.waitList.includes(module.id)) {
             //计算优先级
@@ -51,10 +50,11 @@ export class Renderer {
      * @param model             模型
      * @param parent            父dom
      * @param key               key
-     * @param beforeRenderOp    前置操作 
+     * @param beforeRenderOp    前置操作，渲染前执行 
+     * @param afterRenderOp     后置操作，渲染后执行
      * @returns 
      */
-    public static renderDom(module:Module,src:Element,model:Model,parent?:Element,key?:string,beforeRenderOp?:Function){
+    public static renderDom(module:Module,src:Element,model:Model,parent?:Element,key?:string,beforeRenderOp?:Function,afterRenderOp?:Function){
         //首次渲染，staticNum = 1;
         if(!module.renderTree){
             src.staticNum = 1;
@@ -62,6 +62,7 @@ export class Renderer {
         let dst: Element = new Element(src.tagName,key||src.key);
         dst.staticNum = src.staticNum;
         dst.model = model;
+        dst.subModuleId = src.subModuleId;
         
         //如果staticNum>0，则表示为新编译节点，第二次clone时预设为不再需要比较
         if(src.staticNum>0){
@@ -148,7 +149,7 @@ export class Renderer {
                 if(d.expression){
                     d.value = d.expression.val(module,dst.model);
                 }
-                if(!d.exec(module,dst)){
+                if(!d.exec(module,dst,src)){
                     return false;
                 }
             }
@@ -201,7 +202,6 @@ export class Renderer {
                 (<any>el).textContent = src.textContent;
             }
         }else{
-            
             if(src.tagName){
                 el = newEl(src);
             }else{
@@ -225,6 +225,15 @@ export class Renderer {
         function newEl(dom:Element): HTMLElement {
             //创建element
             let el= Util.newEl(dom.tagName);
+            //模块容器，向目标模块设置容器
+            if(dom.subModuleId){
+                let m:Module = ModuleFactory.get(dom.subModuleId);
+                if(m){
+                    m.setContainer(el);
+                }
+                //添加到父模块
+                module.addChild(m.id);
+            }
             //设置属性
             if(dom.props){
                 for(let v of dom.props){

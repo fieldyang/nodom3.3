@@ -78,11 +78,6 @@ export class Module {
     private container: HTMLElement;
 
     /**
-     * 容器key
-     */
-    private containerKey:string;
-
-    /**
      * 后置渲染序列
      */
     private preRenderOps:any[] = [];
@@ -153,7 +148,6 @@ export class Module {
      * @return false 渲染失败 true 渲染成功
      */
     public render(): boolean {
-        this.getContainer();
         //编译
         if(!this.originTree){
             this.compile();
@@ -161,7 +155,7 @@ export class Module {
         //执行前置方法
         this.doRenderOps(0);
         this.doModuleEvent('onBeforeRender');
-                
+        
         if (!this.renderTree) {
             this.doFirstRender();
         } else { //增量渲染
@@ -173,55 +167,9 @@ export class Module {
                 let changeDoms = [];
                 // 比较节点
                 this.renderTree.compare(oldTree, changeDoms);
-                //刪除和替換
-                for(let item of changeDoms){
-                    let[n1,n2,pEl] = [
-                        item[1]?this.getNode(item[1].key):null,
-                        item[2]&&typeof item[2]==='object'?this.getNode(item[2].key):null,
-                        item[3]?this.getNode(item[3].key):null
-                    ];
-                    switch(item[0]){
-                        case 1: //添加
-                            //把新dom缓存添加到旧dom缓存
-                            Renderer.renderToHtml(this,item[1],<HTMLElement>pEl,true);
-                            n1 = this.getNode(item[1].key);
-                            if(!n2){ //不存在添加节点或为索引号
-                                if(typeof item[2] === 'number' && pEl.childNodes.length-1>item[2]){
-                                    pEl.insertBefore(n1,pEl.childNodes[item[2]]);
-                                }else{
-                                    pEl.appendChild(n1);
-                                }
-                            }else{
-                                pEl.insertBefore(n1,n2);
-                            }
-                            break;
-                        case 2: //修改
-                            Renderer.renderToHtml(this,item[1],null,false);
-                            break;
-                        case 3: //删除
-                            //清除缓存
-                            this.objectManager.removeSavedNode(item[1].key);
-                            this.keyNodeMap.delete(item[1].key);
-                            //从html dom树移除
-                            pEl.removeChild(n1);
-                            break;
-                        case 4: //移动
-                            if(item[4] ){  //相对节点后
-                                if(n2&&n2.nextSibling){
-                                    pEl.insertBefore(n1,n2.nextSibling);
-                                }else{
-                                    pEl.appendChild(n1);
-                                }
-                            }else{
-                                pEl.insertBefore(n1,n2);
-                            }
-                            break;
-                        default: //替换
-                            //替换之前的dom缓存
-                            Renderer.renderToHtml(this,item[1],<HTMLElement>pEl,true);
-                            n1 = this.getNode(item[1].key);
-                            pEl.replaceChild(n1,n2);
-                    }
+                //执行更改
+                if(changeDoms.length>0){
+                    this.handleChangedDoms(changeDoms);
                 }
             }
         }
@@ -251,6 +199,61 @@ export class Module {
         Renderer.renderToHtml(this,this.renderTree,this.container,true);
         //执行首次渲染后事件
         this.doModuleEvent('onFirstRender');
+    }
+
+    /**
+     * 处理更改的dom节点
+     * @param changeDoms    更改的dom参数数组
+     */
+    private handleChangedDoms(changeDoms:any[]){
+        for(let item of changeDoms){
+            let[n1,n2,pEl] = [
+                item[1]?this.getNode(item[1].key):null,
+                item[2]&&typeof item[2]==='object'?this.getNode(item[2].key):null,
+                item[3]?this.getNode(item[3].key):null
+            ];
+            switch(item[0]){
+                case 1: //添加
+                    //把新dom缓存添加到旧dom缓存
+                    Renderer.renderToHtml(this,item[1],<HTMLElement>pEl,true);
+                    n1 = this.getNode(item[1].key);
+                    if(!n2){ //不存在添加节点或为索引号
+                        if(typeof item[2] === 'number' && pEl.childNodes.length-1>item[2]){
+                            pEl.insertBefore(n1,pEl.childNodes[item[2]]);
+                        }else{
+                            pEl.appendChild(n1);
+                        }
+                    }else{
+                        pEl.insertBefore(n1,n2);
+                    }
+                    break;
+                case 2: //修改
+                    Renderer.renderToHtml(this,item[1],null,false);
+                    break;
+                case 3: //删除
+                    //清除缓存
+                    this.objectManager.removeSavedNode(item[1].key);
+                    this.keyNodeMap.delete(item[1].key);
+                    //从html dom树移除
+                    pEl.removeChild(n1);
+                    break;
+                case 4: //移动
+                    if(item[4] ){  //相对节点后
+                        if(n2&&n2.nextSibling){
+                            pEl.insertBefore(n1,n2.nextSibling);
+                        }else{
+                            pEl.appendChild(n1);
+                        }
+                    }else{
+                        pEl.insertBefore(n1,n2);
+                    }
+                    break;
+                default: //替换
+                    Renderer.renderToHtml(this,item[1],<HTMLElement>pEl,true);
+                    n1 = this.getNode(item[1].key);
+                    pEl.replaceChild(n1,n2);
+            }
+        }
     }
 
     /**
@@ -304,6 +307,8 @@ export class Module {
         //删除渲染树
         delete this.renderTree;
 
+        // 清理dom key map
+        this.keyNodeMap.clear();
         //清理缓存
         this.clearCache();
 
@@ -390,31 +395,11 @@ export class Module {
     }
 
     /**
-     * 获取模块容器
-     */
-    public getContainer(): HTMLElement {
-        if(!this.container){
-            if(this.containerKey){
-                this.container = <HTMLElement>this.getParent().getNode(this.containerKey);
-            }
-        }
-        return this.container;
-    }
-
-    /**
      * 设置渲染容器
      * @param el    容器
      */
     public setContainer(el:HTMLElement){
         this.container = el;
-    }
-
-    /**
-     * 设置渲染容器key
-     * @param key   容器key
-     */
-    public setContainerKey(key:string){
-        this.containerKey = key;
     }
 
     /**
@@ -519,8 +504,7 @@ export class Module {
             this.objectManager.cache = new NCache();
             return;
         }
-        //清理dom key map
-        // this.keyNodeMap.clear();
+        
         //清理dom相关
         this.objectManager.clearSaveDoms();
         //清理指令

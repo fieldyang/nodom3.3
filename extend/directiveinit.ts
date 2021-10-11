@@ -14,7 +14,7 @@ export default (function () {
     /**
      * 指令类型初始化
      * 每个指令类型都有一个名字、处理函数和优先级，处理函数不能用箭头函数
-     * 处理函数在渲染时执行，包含两个参数 module(模块)、dom(虚拟dom)
+     * 处理函数在渲染时执行，包含两个参数 module(模块)、dom(目标虚拟dom)、src(源虚拟dom)
      * 处理函数的this指向指令
      * 处理函数的返回值 true 表示继续，false 表示后续指令不再执行 
      */
@@ -26,7 +26,7 @@ export default (function () {
      */
     createDirective(
         'module',
-        function(module:Module,dom:Element){
+        function(module:Module,dom:Element,src:Element){
             let m: Module;
             //存在moduleId，表示已经渲染过，不渲染
             let mid = this.getParam(module,dom,'moduleId');
@@ -39,16 +39,15 @@ export default (function () {
                 if (!m) {
                     return true;
                 }
+                mid = m.id;
                 //保留modelId
-                this.setParam(module,dom,'moduleId',m.id);
-                dom.setParam(module,'moduleId',m.id);
-                //添加到父模块
-                module.addChild(m.id);
-                //设置容器
-                m.setContainerKey(dom.key);
+                this.setParam(module,dom,'moduleId',mid);
+                //保存到dom上，提升渲染性能
                 //添加到渲染器
                 m.active();
             }
+            dom.subModuleId = mid;
+                
             if(handle){ //需要处理
                 //设置props，如果改变了props，启动渲染
                 let o={$data:{}};
@@ -75,7 +74,7 @@ export default (function () {
      */
     createDirective(
         'model',
-        function(module:Module,dom:Element){
+        function(module:Module,dom:Element,src:Element){
             let model: Model = dom.model.$get(this.value);
             if (model) {
                 dom.model = model;
@@ -91,22 +90,24 @@ export default (function () {
      */
     createDirective(
         'repeat',
-        function(module:Module,dom:Element){
+        function(module:Module,dom:Element,src:Element){
             let rows = this.value;
             // 无数据，不渲染
             if (!Util.isArray(rows) || rows.length === 0) {
                 return true;
             }
             const parent = dom.parent;
+            //禁用该指令
+            this.disabled = true;
             //从源树获取，才可能得到子节点
-            let dom1 = module.originTree.query(dom.key);
             for (let i = 0; i < rows.length; i++) {
                 rows[i].$index = i;
-                dom1.staticNum++;
-                Renderer.renderDom(module,dom1,rows[i],parent,dom1.key + '_' + rows[i].$key,function(){
-                    this.removeDirective('repeat');
-                });
+                //渲染一次-1，所以需要加一
+                src.staticNum++;
+                Renderer.renderDom(module,src,rows[i],parent,src.key + '_' + rows[i].$key);
             }
+            //启用该指令
+            this.disabled = false;
             return false;
         },
         2
@@ -128,7 +129,7 @@ export default (function () {
      */
     createDirective(
         'recur',
-        function(module:Module,dom:Element){
+        function(module:Module,dom:Element,src:Element){
             //递归节点存放容器
             if(dom.hasProp('ref')){
                 const name = '$recurs.' + (dom.getProp('ref') || 'default');
@@ -177,7 +178,7 @@ export default (function () {
      * 描述：条件指令
      */
     createDirective('if',
-        function(module:Module,dom:Element){
+        function(module:Module,dom:Element,src:Element){
             dom.parent.setParam(module,'$if',this.value);
             return this.value;
         },
@@ -190,7 +191,7 @@ export default (function () {
      */
     createDirective(
         'else',
-        function(module:Module,dom:Element){
+        function(module:Module,dom:Element,src:Element){
             //如果前面的if/elseif值为true，则隐藏，否则显示
             return dom.parent.getParam(module,'$if') === false;
         },
@@ -201,7 +202,7 @@ export default (function () {
      * elseif 指令
      */
     createDirective('elseif', 
-        function(module:Module,dom:Element){
+        function(module:Module,dom:Element,src:Element){
             let v = dom.parent.getParam(module,'$if');
             if(v === true){
                 return false;
@@ -222,7 +223,7 @@ export default (function () {
      */
      createDirective(
          'endif', 
-        function(module:Module,dom:Element){
+        function(module:Module,dom:Element,src:Element){
             dom.parent.removeParam(module,'$if');
             return true;
         },
@@ -235,7 +236,7 @@ export default (function () {
      */
     createDirective(
         'show',
-        function(module:Module,dom:Element){
+        function(module:Module,dom:Element,src:Element){
             return this.value;
         },
         5
@@ -246,7 +247,7 @@ export default (function () {
      * 描述：从当前模块获取数据并用于子模块，dom带module指令时有效
      */
     // createDirective('data',
-    //     function(module:Module,dom:Element){
+    //     function(module:Module,dom:Element,src:Element){
     //         if (typeof this.value !== 'object' || !dom.hasDirective('module')){
     //             return;
     //         }
@@ -302,7 +303,7 @@ export default (function () {
      * 描述：字段指令
      */
     createDirective('field',
-        function(module:Module,dom:Element){
+        function(module:Module,dom:Element,src:Element){
             const me = this;
             const type: string = dom.getProp('type');
             const tgname = dom.tagName.toLowerCase();
@@ -394,7 +395,7 @@ export default (function () {
      * route指令
      */
     createDirective('route',
-        function(module:Module,dom:Element){
+        function(module:Module,dom:Element,src:Element){
             if(!this.value){
                 return true;
             }
@@ -441,7 +442,7 @@ export default (function () {
      * 增加router指令
      */
     createDirective('router',
-        function(module:Module,dom:Element){
+        function(module:Module,dom:Element,src:Element){
             dom.setProp('role','module');
             Router.routerKeyMap.set(module.id, dom.key);
             return true;
@@ -453,25 +454,36 @@ export default (function () {
      * 用于模块中，可实现同名替换
      */
     createDirective('slot',
-        function(module:Module,dom:Element){
+        function(module:Module,dom:Element,src:Element){
             const parent = dom.parent;
             this.value = this.value || 'default';
-            let mid = dom.parent.getParam(module,'moduleId');
+            let mid = dom.parent.subModuleId;
             //父dom有module指令，表示为替代节点，替换子模块中的对应的slot节点；否则为子模块定义slot节点
             if(mid){
                 let m = ModuleFactory.get(mid);
                 if(m){
                     //缓存当前替换节点
-                    m.objectManager.set('$slots.' + this.value,dom);
+                    m.objectManager.set('$slots.' + this.value,{rendered:dom,origin:src});
                 }
                 //设置不添加到dom树
                 dom.dontAddToTree = true;
             }else{ //源slot节点
                 //获取替换节点进行替换
-                let rdom = module.objectManager.get('$slots.' + this.value);
-                if(rdom){
-                    console.log(rdom.children);
-                    dom.children = rdom.children;
+                let cfg = module.objectManager.get('$slots.' + this.value);
+                if(cfg){
+                    let rdom;
+                    if(dom.hasProp('innerRender')){ //内部渲染
+                        rdom = cfg.origin;
+                    }else{ //父模块渲染
+                        rdom = cfg.rendered;
+                    }
+                
+                    //避免key重复，更新key，如果为origin，则会修改原来的key？？？
+                    for(let d of rdom.children){
+                        Util.setNodeKey(d,dom.key,true);
+                    }
+                    //更改渲染子节点
+                    src.children = rdom.children;
                 }
             }
             return true;
