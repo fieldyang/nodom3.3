@@ -1,6 +1,6 @@
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
-import { Element } from "./element";
+import { VirtualDom } from "./virtualdom";
 import { Model } from "./model";
 import { Expression } from "./expression";
 import { CssManager } from "./cssmanager";
@@ -21,7 +21,7 @@ export class Renderer {
      */
     public static add(module:Module) {
         //如果已经在列表中，不再添加
-        if (!this.waitList.includes(module.id)) {
+        if (!module.dontAddToRender && !this.waitList.includes(module.id)) {
             //计算优先级
             this.waitList.push(module.id);
         }
@@ -50,37 +50,67 @@ export class Renderer {
      * @param model             模型
      * @param parent            父dom
      * @param key               key
-     * @param beforeRenderOp    前置操作，渲染前执行 
-     * @param afterRenderOp     后置操作，渲染后执行
      * @returns 
      */
-    public static renderDom(module:Module,src:Element,model:Model,parent?:Element,key?:string,beforeRenderOp?:Function,afterRenderOp?:Function){
-        //首次渲染，staticNum = 1;
-        if(!module.renderTree){
-            src.staticNum = 1;
+    public static renderDom(module:Module,src:VirtualDom,model:Model,parent?:VirtualDom,key?:string):any{
+        let dst:any = {
+            tagName:src.tagName,
+            key:key||src.key,
+            model:model,
+            subModuleId:src.subModuleId
         }
-        let dst: Element = new Element(src.tagName,key||src.key);
-        dst.staticNum = src.staticNum;
-        dst.model = model;
-        dst.subModuleId = src.subModuleId;
-        
-        //如果staticNum>0，则表示为新编译节点，第二次clone时预设为不再需要比较
-        if(src.staticNum>0){
-            src.staticNum--;
-        }
-        
         // 设置父对象
         if(parent) {
             dst.parent = parent;
         }
         
+        //先处理model指令
+        if(src.directives && src.directives.length>0 && src.directives[0].type.name === 'model'){
+            src.directives[0].exec(module,dst,src);
+        }
+
+        // 增量渲染时，如果所有字段都为model字段，model未修改且上次已渲染，则不渲染
+        if(module.renderTree && src.allModelField && !module.changedModelMap.has(model.$key)/* && module.renderDomMap.has(src.key)*/){
+            dst.notChange = true;
+        }
+
         if(src.tagName){
-            handleProps();
-            let r = handleDirectives();
-            if(!r){
-                return;
+            dst.props = {};
+            dst.assets = {};
+            dst.children = [];
+            if(!dst.notChange){
+                handleProps();
+                let r = handleDirectives();
+                if(!r){
+                    return;
+                }
+                //assets
+                if(src.assets.size>0){
+                    for(let p of src.assets){
+                        dst.assets[p[0]] = p[1];
+                    }
+                }
+
+                //事件
+                if(src.events.size>0){
+                    dst.events = {};
+                    for(let p of src.events){
+                        //复制数组
+                        dst.events[p[0]] = p[1].slice(0);
+                    }
+                }
             }
-        }else{ //文本节点
+            //children
+            if(src.children && src.children.length>0){
+                for(let c of src.children){
+                    if(c instanceof VirtualDom){ //未编译节点
+                        Renderer.renderDom(module,c,dst.model,dst,key?c.key + '_' + key:null);
+                    }else{ //已编译节点
+                        dst.children.push(c);
+                    }
+                }
+            }
+        }else if(!dst.notChange){ //文本节点
             if(src.expressions){
                 let value = '';
                 src.expressions.forEach((v) => {
@@ -97,41 +127,9 @@ export class Renderer {
                 dst.textContent = src.textContent;
             }
         }
-
+        
         if(parent && !dst.dontAddToTree){
-            parent.add(dst);
-        }
-        
-        
-        //增量渲染时，如果model未修改，则不渲染
-        // if(module.renderTree && this.allModelField && !module.changedModelMap.has(this.model.$key) && this.staticNum === 0){
-        //     this.notChange = true;
-        //     console.log(this);
-        //     return;
-        // }
-        
-        //assets
-        if(src.assets && src.assets.size>0){
-            dst.assets = new Map();
-            for(let p of src.assets){
-                dst.setAsset(p[0],p[1]);
-            }
-        }
-
-        //事件
-        if(src.events && src.events.size>0){
-            dst.events = new Map();
-            for(let p of src.events){
-                //复制数组
-                dst.events.set(p[0],p[1].slice(0));
-            }
-        }
-
-        //children
-        if(src.children && src.children.length>0){
-            for(let c of src.children){
-                Renderer.renderDom(module,c,dst.model,dst,key?c.key + '_' + key:null);
-            }
+            parent.children.push(dst);
         }
         
         return dst;
@@ -146,8 +144,9 @@ export class Renderer {
             }
             dst.staticNum = -1;
             for(let d of src.directives){
-                if(d.expression){
-                    d.value = d.expression.val(module,dst.model);
+                //model指令不执行
+                if(d.type.name==='model'){
+                    continue;
                 }
                 if(!d.exec(module,dst,src)){
                     return false;
@@ -160,20 +159,16 @@ export class Renderer {
          * 处理属性（带表达式）
          */
         function handleProps() {
-            if(src.props || src.exprProps){
-                dst.props = new Map();
+            if(src.props.size === 0){
+                return;
             }
-            if(src.props){
-                for(let k of src.props){
-                    dst.props.set(k[0],k[1]);
+            for(let k of src.props){
+                if(k[1] instanceof Expression){
+                    dst.props[k[0]] = k[1].val(module,dst.model);
+                    dst.staticNum = -1;
+                }else{
+                    dst.props[k[0]] = k[1];
                 }
-            }
-            if(src.exprProps && src.exprProps.size>0){
-                dst.staticNum = -1;
-                for (let k of src.exprProps) {
-                    let v = k[1].val(module,dst.model);
-                    dst.props.set(k[0],v);
-                }    
             }
         }
     }
@@ -182,19 +177,18 @@ export class Renderer {
     /**
      * 渲染到html element
      * @param module 	        模块
+     * @param src               渲染节点
      * @param parentEl 	        父html
      * @param isRenderChild     是否渲染子节点
      */
-     public static renderToHtml(module: Module,src:Element, parentEl:HTMLElement,isRenderChild?:boolean) {
+     public static renderToHtml(module: Module,src:any, parentEl:HTMLElement,isRenderChild?:boolean) {
         let el = module.getNode(src.key);
         if(el){   //html dom节点已存在
             if(src.tagName){
                 if(src.props){
                     //设置属性
-                    for(let v of src.props){
-                        if (typeof v[1] != 'function'){
-                            (<HTMLElement>el).setAttribute(v[0], v[1]===undefined?'':v[1]);
-                        }
+                    for(let p in src.props){
+                        (<HTMLElement>el).setAttribute(p, src.props[p]===undefined?'':src.props[p]);
                     }
                 }
                 handleAssets(src,<HTMLElement>el);
@@ -222,9 +216,12 @@ export class Renderer {
          * @param dom 		虚拟dom
          * @returns 		新的html element
          */
-        function newEl(dom:Element): HTMLElement {
+        function newEl(dom:any): HTMLElement {
             //创建element
             let el= Util.newEl(dom.tagName);
+            //保存虚拟dom
+            el['vdom'] = dom;
+        
             //模块容器，向目标模块设置容器
             if(dom.subModuleId){
                 let m:Module = ModuleFactory.get(dom.subModuleId);
@@ -236,10 +233,8 @@ export class Renderer {
             }
             //设置属性
             if(dom.props){
-                for(let v of dom.props){
-                    if (typeof v[1] != 'function'){
-                        el.setAttribute(v[0], v[1]===undefined?'':v[1]);
-                    }
+                for(let p in dom.props){
+                    el.setAttribute(p, dom.props[p]===undefined?'':dom.props[p]);
                 }
             }
             
@@ -247,7 +242,13 @@ export class Renderer {
             el.setAttribute('key', dom.key);
             //把el引用与key关系存放到cache中
             module.saveNode(dom.key,el);
-            handleAssets(dom,el);
+            
+            //asset
+            if(dom.assets){
+                for (let p in dom.assets) {
+                    el[p] = dom.assets[p];
+                }
+            }
             //处理event
             if(dom.events){
                 EventManager.bind(module,dom);
@@ -258,7 +259,7 @@ export class Renderer {
         /**
          * 新建文本节点
          */
-        function newText(dom:Element): Node {
+        function newText(dom:VirtualDom): Node {
             //样式表处理，如果是样式表文本，则不添加到dom树
             if(CssManager.handleStyleTextDom(module,dom)){
                 return;
@@ -273,7 +274,7 @@ export class Renderer {
          * @param pEl 	父节点
          * @param vdom  虚拟dom节点	
          */
-        function genSub(pEl: Node, vdom: Element) {
+        function genSub(pEl: Node, vdom: VirtualDom) {
             if (vdom.children && vdom.children.length > 0) {
                 vdom.children.forEach(item => {
                     let el1;
@@ -294,11 +295,11 @@ export class Renderer {
         /**
          * 处理assets
          */
-        function handleAssets(dom:Element,el:HTMLElement){
+        function handleAssets(dom:VirtualDom,el:HTMLElement){
             //处理asset
             if (dom.assets) {
-                for (let key of dom.assets) {
-                    el[key[0]] = key[1];
+                for (let k in dom.assets) {
+                    el[k] = dom.assets[k];
                 }    
             }
         }

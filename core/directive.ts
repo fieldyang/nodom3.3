@@ -1,10 +1,9 @@
 import { DirectiveManager } from "./directivemanager";
 import { DirectiveType } from "./directivetype";
-import { Element } from "./element";
+import { VirtualDom } from "./virtualdom";
 import { Module } from "./module";
 import { Util } from "./util";
 import { Expression } from "./expression";
-import { GlobalCache } from "./globalcache";
 import { NError } from "./error";
 import { NodomMessage } from "./nodom";
 
@@ -61,14 +60,17 @@ export  class Directive {
     /**
      * 执行指令
      * @param module    模块
-     * @param dom       渲染目标节点
+     * @param dom       渲染目标节点对象
      * @param src       源节点
      * @returns         true/false
      */
-    public exec(module:Module,dom:Element,src:Element):boolean {
+    public exec(module:Module,dom:any,src:VirtualDom):boolean {
         //禁用，不执行
         if(this.disabled){
             return true;
+        }
+        if(this.expression){
+            this.value = this.expression.val(module,dom.model);
         }
         return this.type.handle.apply(this,[module,dom,src]);
     }
@@ -80,7 +82,7 @@ export  class Directive {
      * @param name      参数名
      * @param value     参数值
      */
-    public setParam(module:Module,dom:Element,name:string,value:any){
+    public setParam(module:Module,dom:VirtualDom,name:string,value:any){
         module.objectManager.setDirectiveParam(this.id,dom.key,name,value);
     }
 
@@ -91,7 +93,7 @@ export  class Directive {
      * @param name      参数名
      * @returns         参数值
      */
-    public getParam(module:Module,dom:Element,name:string){
+    public getParam(module:Module,dom:VirtualDom,name:string){
         return module.objectManager.getDirectiveParam(this.id,dom.key,name);
     }
 
@@ -101,7 +103,7 @@ export  class Directive {
      * @param dom       指令对应的虚拟dom
      * @param name      参数名
      */
-    public removeParam(module:Module,dom:Element,name:string){
+    public removeParam(module:Module,dom:VirtualDom,name:string){
         module.objectManager.removeDirectiveParam(this.id,dom.key,name);
     }
 }

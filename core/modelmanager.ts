@@ -1,4 +1,4 @@
-import { Element } from "./element";
+import { VirtualDom } from "./virtualdom";
 import { Model } from "./model";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
@@ -103,7 +103,7 @@ export class ModelManager {
         }
         //添加watchers属性
         if (!this.modelMap.get(model).watchers) {
-            this.modelMap.get(model).watchers = Object.create(null);
+            this.modelMap.get(model).watchers = {};
         }
         let watchers = this.modelMap.get(model).watchers;
         //添加观察器数组
@@ -232,7 +232,7 @@ export class ModelManager {
      * @param newValue  新值
      * @param force     强制渲染
      */
-    public static update(model: Model, key: string, oldValue?: any, newValue?: Element, force?:boolean) {
+    public static update(model: Model, key: string, oldValue?: any, newValue?: VirtualDom, force?:boolean) {
         //处理观察器函数
         let obj = this.modelMap.get(model);
         if(!obj){

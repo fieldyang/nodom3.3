@@ -1,7 +1,7 @@
 import { NCache } from "./cache";
 import { Directive } from "./directive";
 import { NEvent } from "./event";
-import { Element } from "./element";
+import { VirtualDom } from "./virtualdom";
 import { Expression } from "./expression";
 
 /**
@@ -199,7 +199,7 @@ export class GlobalCache{
      * 保存旧虚拟dom
      * @param dom       dom对象
      */
-    public static saveElement(dom:Element){
+    public static saveElement(dom:VirtualDom){
         this.cache.set('$doms.' + dom.key,dom);
     }
     /**
@@ -207,7 +207,7 @@ export class GlobalCache{
      * @param key       dom key
      * @returns         dom对象
      */
-    public static getElement(key:string):Element{
+    public static getElement(key:string):VirtualDom{
         return this.cache.get('$doms.' + key);
     }
 

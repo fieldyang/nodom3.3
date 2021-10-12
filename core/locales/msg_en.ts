@@ -25,7 +25,7 @@ export const NodomMessage_en = {
         plugin:'Plugin',
         resource:'Resource',
         root:'Root',
-        element:'Element'
+        element:'VirtualDom'
     },
     /**
      * error info

@@ -1,6 +1,7 @@
 import { NError } from "./error";
+import { NEvent } from "./event";
 import { NodomMessage } from "./nodom";
-import { Element } from "./element";
+import { VirtualDom } from "./virtualdom";
 /**
  * 基础服务库
  * @since       1.0.0
@@ -535,7 +536,7 @@ export class Util {
     public static empty(el: HTMLElement) {
         const me = this;
         if (!me.isEl(el)) {
-            throw new NError('invoke', 'this.empty', '0', 'Element');
+            throw new NError('invoke', 'this.empty', '0', 'VirtualDom');
         }
         let nodes: NodeList = el.childNodes;
         for (let i = nodes.length - 1; i >= 0; i--) {
@@ -567,7 +568,7 @@ export class Util {
     public static attr(el, param: string | Object, value?: any): any {
         const me = this;
         if (!me.isEl(el)) {
-            throw new NError('invoke', 'this.attr', '0', 'Element');
+            throw new NError('invoke', 'this.attr', '0', 'VirtualDom');
         }
         if (this.isEmpty(param)) {
             throw new NError('invoke', 'this.attr', '1', 'string', 'object');
@@ -714,12 +715,28 @@ export class Util {
      * @param id    附加id
      * @param deep  是否深度处理
      */
-    public static setNodeKey(node:Element, id?:string,deep?:boolean){
+    public static setNodeKey(node:VirtualDom, id?:string,deep?:boolean){
         node.key += '_' + (id||Util.genId());
         if(deep && node.children){
             for(let c of node.children) {
                 Util.setNodeKey(c,id,deep);
             }
+        }
+    }
+
+    /**
+     * 给dom添加事件
+     * @param dom   dom节点
+     * @param ev    事件对象
+     */
+    public static addEvent(dom:any,ev:NEvent){
+        if(!dom.events){
+            dom.events = {};
+        }
+        if(!dom.events[ev.name]){
+            dom.events[ev.name] = [ev.id];
+        }else{
+            dom.events[ev.name].push(ev.id);
         }
     }
 }

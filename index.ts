@@ -1,11 +1,12 @@
 export { Compiler } from "./core/compiler";
 export { CssManager } from "./core/cssmanager";
 export { Directive } from "./core/directive";
+export { DiffTool } from "./core/difftool";
 export { DirectiveManager } from "./core/directivemanager";
 export { DirectiveType } from "./core/directivetype";
 export { DirectiveElement } from "./core/directiveelement";
 export { DirectiveElementManager } from "./core/directiveelementmanager";
-export { Element } from "./core/element";
+export { VirtualDom } from "./core/virtualdom";
 export { NError } from "./core/error";
 export { NEvent } from "./core/event";
 export { EventManager } from "./core/eventmanager";
@@ -15,7 +16,7 @@ export { NFactory } from "./core/factory";
 
 export { NodomMessage_en } from "./core/locales/msg_en";
 export { NodomMessage_zh } from "./core/locales/msg_zh";
-// export { MethodFactory } from "./core/methodfactory";
+
 export { Model } from "./core/model";
 export { ModelManager } from "./core/modelmanager";
 export { Module } from "./core/module";

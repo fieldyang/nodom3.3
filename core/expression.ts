@@ -75,13 +75,17 @@ export class Expression {
                     }
                 }else { //字段
                     if(s.startsWith('this.')){
-                        this.allModelField = false;
                         retS += s;
                     }else if(Util.isKeyWord(s)){
                         retS += s;
                     }else{
                         retS += '$model.' + s;   
                     }
+                    //存在‘.’，则变量不全在在模型中
+                    if(s.indexOf('.') === -1){
+                        this.allModelField = false;
+                    }
+                        
                 }
             } 
             index = reg.lastIndex;

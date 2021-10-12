@@ -1,12 +1,13 @@
 import { NCache } from "./cache";
 import { Compiler } from "./compiler";
 import { CssManager } from "./cssmanager";
-import { Element } from "./element";
+import { VirtualDom } from "./virtualdom";
 import { Model } from "./model";
 import { ModuleFactory } from "./modulefactory";
 import { ObjectManager } from "./objectmanager";
 import { Renderer } from "./renderer";
 import { Util } from "./util";
+import { DiffTool } from "./difftool";
 
 /**
  * 模块类
@@ -50,12 +51,12 @@ export class Module {
     /**
      * 编译后的dom树
      */
-     public originTree:Element;
+     public originTree:VirtualDom;
 
     /**
      * 渲染树
      */
-    public renderTree: Element;
+    public renderTree: VirtualDom;
 
     /**
      * 父模块 id
@@ -103,6 +104,16 @@ export class Module {
     public keyNodeMap:Map<string,Node> = new Map();
 
     /**
+     * 不允许加入渲染队列标志，在renderdom前设置，避免render前修改数据引发二次渲染
+     */
+    public dontAddToRender:boolean;
+
+    /**
+     * 上次渲染dommap，{key:true}
+     */
+    public renderDomMap:Map<string,boolean> = new Map();
+
+    /**
      * 构造器
      */
     constructor() {
@@ -148,17 +159,21 @@ export class Module {
      * @return false 渲染失败 true 渲染成功
      */
     public render(): boolean {
+        this.dontAddToRender = true;
         //编译
         if(!this.originTree){
             this.compile();
         }
+
+        
         //执行前置方法
         this.doRenderOps(0);
         this.doModuleEvent('onBeforeRender');
-        
+        let renderDomMap = new Map();
         if (!this.renderTree) {
             this.doFirstRender();
         } else { //增量渲染
+            this.dontAddToRender = false;
             //执行每次渲染前事件
             if (this.model) {
                 let oldTree = this.renderTree;
@@ -166,7 +181,7 @@ export class Module {
                 this.doModuleEvent('onBeforeRenderToHtml');
                 let changeDoms = [];
                 // 比较节点
-                this.renderTree.compare(oldTree, changeDoms);
+                DiffTool.compare(this.renderTree,oldTree, changeDoms);
                 //执行更改
                 if(changeDoms.length>0){
                     this.handleChangedDoms(changeDoms);
@@ -190,6 +205,7 @@ export class Module {
      */
     private doFirstRender() {
         this.doModuleEvent('onBeforeFirstRender');
+        this.dontAddToRender = false;
         //渲染树
         this.renderTree = Renderer.renderDom(this,this.originTree,this.model);
         this.doModuleEvent('onBeforeFirstRenderToHTML');
@@ -235,6 +251,7 @@ export class Module {
                     this.objectManager.removeSavedNode(item[1].key);
                     this.keyNodeMap.delete(item[1].key);
                     //从html dom树移除
+                    console.log(pEl,n1,item[1]);
                     pEl.removeChild(n1);
                     break;
                 case 4: //移动
@@ -254,14 +271,6 @@ export class Module {
                     pEl.replaceChild(n1,n2);
             }
         }
-    }
-
-    /**
-     * 数据改变
-     * @param model 	改变的model
-     */
-    public dataChange() {
-        Renderer.add(this);
     }
 
     /**
@@ -312,7 +321,7 @@ export class Module {
         //清理缓存
         this.clearCache();
 
-        //处理子节点
+        //处理子模块
         for(let id of this.children){
             let m = ModuleFactory.get(id);
             if(m){
@@ -333,6 +342,7 @@ export class Module {
                 }
             });
         }
+        this.clearCache(true);
         //从工厂释放
         ModuleFactory.remove(this.id);
     }
@@ -348,14 +358,11 @@ export class Module {
         return ModuleFactory.get(this.parentId);
     }
 
-    /*************事件**************/
-
     /**
      * 执行模块事件
      * @param eventName 	事件名
      */
     private doModuleEvent(eventName: string) {
-        
         this.invokeMethod(eventName, this.model);
     }
 
@@ -383,15 +390,6 @@ export class Module {
      */
     public removeMethod(name: string) {
         delete this.methods[name];
-    }
-
-    /**
-     * 获取虚拟dom节点
-     * @param key               dom key
-     * @param fromVirtualDom    是否从源虚拟dom数获取，否则从渲染树获取
-     */
-    public getElement(key: string | Object) :Element{
-        return this.renderTree.query(<string>key);
     }
 
     /**
@@ -459,25 +457,30 @@ export class Module {
      * @param props     属性值
      */
     public setProps(props:any){
-        const keys = Object.getOwnPropertyNames(props);
-        let len1 = keys.indexOf('$data')===-1?keys.length:keys.length-1;
-        const keys1 = this.props?Object.getOwnPropertyNames(this.props):[];
-        let len2 = keys.indexOf('$data')===-1?keys1.length:keys1.length-1;
         let change:boolean = false;
-        if(len1 !== len2){
+        if(!this.props){
             change = true;
         }else{
-            for(let k of keys){
-                if(k !== '$data'){
-                    continue;
-                }
-                // object 默认改变
-                if(props[k] !== this.props[k] || typeof(props[k]) === 'object'){
-                    change = true;
-                    break;
+            const keys = Object.getOwnPropertyNames(props);
+            let len1 = keys.indexOf('$data')===-1?keys.length:keys.length-1;
+            const keys1 = this.props?Object.getOwnPropertyNames(this.props):[];
+            let len2 = keys.indexOf('$data')===-1?keys1.length:keys1.length-1;
+            if(len1 !== len2){
+                change = true;
+            }else{
+                for(let k of keys){
+                    if(k !== '$data'){
+                        continue;
+                    }
+                    // object 默认改变
+                    if(props[k] !== this.props[k] || typeof(props[k]) === 'object'){
+                        change = true;
+                        break;
+                    }
                 }
             }
         }
+        
         this.props = props;
         if(change){ //有改变，进行编译并激活
             this.compile();

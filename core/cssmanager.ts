@@ -1,5 +1,5 @@
 import {Module} from "./module";
-import {Element} from "./element";
+import {VirtualDom} from "./virtualdom";
 /**
  * css 管理器
  * 针对不同的rule，处理方式不同
@@ -32,7 +32,7 @@ export class CssManager{
      * @param dom 
      * @returns 
      */
-    public static handleStyleDom(module:Module,dom:Element){
+    public static handleStyleDom(module:Module,dom:VirtualDom){
         if(!dom || dom.tagName.toLowerCase() !== 'style' || dom.getProp('scope') !== 'this'){
             return;
         }
@@ -46,7 +46,7 @@ export class CssManager{
      * @param dom       style text element
      * @returns         true:style text节点,false:非style text节点
      */
-    public static handleStyleTextDom(module:Module,dom:Element):boolean{
+    public static handleStyleTextDom(module:Module,dom:any):boolean{
         if(!dom.parent || dom.parent.tagName.toLowerCase() !== 'style'){
             return false;
         }
