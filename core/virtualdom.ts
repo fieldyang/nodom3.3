@@ -11,6 +11,11 @@ import { Util } from "./util";
  */
 export class VirtualDom {
     /**
+     * 元素名，如div
+     */
+    public tagName: string;
+
+    /**
      * key，整颗虚拟dom树唯一
      */
     public key: string;
@@ -24,6 +29,11 @@ export class VirtualDom {
      * element为textnode时有效
      */
     public textContent: string;
+
+    /**
+     * 表达式+字符串数组，用于textnode
+     */
+    public expressions: Array<Expression | string>;
 
     /**
      * 指令集
@@ -48,12 +58,7 @@ export class VirtualDom {
     public events: Map<string, number[]>;
 
     /**
-     * 表达式+字符串数组，用于textnode
-     */
-    public expressions: Array<Expression | string>;
-
-    /**
-     * 子element [key1,key2,key3...]
+     * 子节点数组[]
      */
     public children: Array<VirtualDom>;
 
@@ -61,11 +66,6 @@ export class VirtualDom {
      * 父虚拟dom
      */
     // public parent: VirtualDom;
-
-    /**
-     * 元素名，如div
-     */
-    public tagName: string;
 
     /**
      * staticNum 静态标识数
@@ -81,12 +81,12 @@ export class VirtualDom {
     public allModelField:boolean=true;
 
     /**
-     * 未改变
+     * 未改变标志，本次不渲染
      */
     public notChange:boolean;
 
     /**
-     * 子模块id
+     * 子模块id，模块容器时有效
      */
     public subModuleId:number;
 
@@ -520,7 +520,7 @@ export class VirtualDom {
             }
 
             for(let d of this.directives){
-                dst.directives.push(d);
+                dst.directives.push(d.clone());
             }
             
             //子节点clone

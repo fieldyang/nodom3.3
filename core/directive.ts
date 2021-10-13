@@ -40,12 +40,15 @@ export  class Directive {
      * @param type  	类型名
      * @param value 	指令值
      */
-    constructor(type:string,value:string|Expression) {
+    constructor(type?:string,value?:string|Expression) {
         this.id = Util.genId();
-        this.type = DirectiveManager.getType(type);
-        if(!this.type){
-            throw new NError('notexist1',NodomMessage.TipWords['directive'],type);
+        if(type){
+            this.type = DirectiveManager.getType(type);
+            if(!this.type){
+                throw new NError('notexist1',NodomMessage.TipWords['directive'],type);
+            }
         }
+        
         if (Util.isString(value)) {
             this.value = (<string>value).trim();
         }else if(value instanceof Expression){
@@ -53,8 +56,6 @@ export  class Directive {
         }else{
             this.value = value;
         }
-        //存入指令缓存
-        // GlobalCache.saveDirective(this);
     }
 
     /**
@@ -105,5 +106,16 @@ export  class Directive {
      */
     public removeParam(module:Module,dom:VirtualDom,name:string){
         module.objectManager.removeDirectiveParam(this.id,dom.key,name);
+    }
+
+    /**
+     * 克隆
+     */
+    public clone():Directive{
+        let d = new Directive();
+        d.type = this.type;
+        d.expression = this.expression;
+        d.value = this.value;
+        return d;
     }
 }

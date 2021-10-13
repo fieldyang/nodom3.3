@@ -133,33 +133,32 @@ export default (function () {
         'recur',
         function(module:Module,dom:any,src:VirtualDom){
             //递归节点存放容器
-            if(dom.props.ref){
-                const name = '$recurs.' + dom.props.ref || 'default';
+            if(dom.props.hasOwnProperty('ref')){
+                const name = '$recurs.' + (dom.props.ref || 'default');
                 let node = module.objectManager.get(name);
                 if(!node){
-                    return false;
+                    return true;
                 }
+                
                 let model = dom.model;
-                let cond = src.getDirective('recur');
-                console.log(cond,node);
+                let cond = node.getDirective('recur');
+                console.log(cond);
                 let m = model[cond.value];
                 if(!m){
-                    return false;
+                    return true;
                 }
-
-                if(node){
-                    //克隆，后续可以继续用
-                    let node1 = Renderer.renderDom(module,node,m,dom);
-                    let key:string;
-                    if(!Array.isArray(m)){  //recur子节点不为数组
-                        node1.model = m;
-                        key = m.$key;
-                    }else{
-                        key = dom.model.$key
-                    }
-                    Util.setNodeKey(node1,key,true);
-                    // dom.add(node1);
+                console.log(m);
+                //克隆，后续可以继续用
+                let node1 = node.clone();
+                let key:string;
+                if(!Array.isArray(m)){  //recur子节点不为数组
+                    node1.model = m;
+                    key = m.$key;
+                }else{
+                    key = dom.model.$key
                 }
+                Util.setNodeKey(node1,key,true);
+                src.children = [node1];
             }else { //递归节点
                 let data = dom.model[this.value];
                 if(!data){

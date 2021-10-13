@@ -47,12 +47,14 @@ export class Renderer {
      * 渲染dom
      * @param module            模块 
      * @param src               源dom
-     * @param model             模型
+     * @param model             模型，如果src已经带有model，则此参数无效
      * @param parent            父dom
      * @param key               key
      * @returns 
      */
     public static renderDom(module:Module,src:VirtualDom,model:Model,parent?:VirtualDom,key?:string):any{
+        //节点自带model优先级高
+        model = src.model?src.model:model;
         let dst:any = {
             tagName:src.tagName,
             key:key||src.key,
