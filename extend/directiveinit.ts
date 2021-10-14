@@ -104,9 +104,9 @@ export default (function () {
             //从源树获取，才可能得到子节点
             for (let i = 0; i < rows.length; i++) {
                 rows[i].$index = i;
-                //渲染一次-1，所以需要加一
+                //渲染一次-1，所以需要+1
                 src.staticNum++;
-                Renderer.renderDom(module,src,rows[i],parent,src.key + '_' + rows[i].$key);
+                Renderer.renderDom(module,src,rows[i],parent,rows[i].$key);
             }
             //启用该指令
             this.disabled = false;
@@ -119,6 +119,7 @@ export default (function () {
      * 递归指令
      * 作用：在dom内部递归，用于具有相同数据结构的节点递归生成
      * 递归指令不允许嵌套
+     * name表示递归名字，必须与内部的recur标签的ref保持一致，名字默认为default
      * 典型模版
      * ```
      * <recur name='r1'>
@@ -127,37 +128,38 @@ export default (function () {
      *      <recur ref='r1' />
      * </recur>
      * ```
-     * name表示递归名字，必须与内部的recur标签的ref保持一致，名字默认为default
      */
     createDirective(
         'recur',
         function(module:Module,dom:any,src:VirtualDom){
             //递归节点存放容器
             if(dom.props.hasOwnProperty('ref')){
+                //如果出现在repeat中，src为单例，需要在使用前清空子节点，避免沿用上次的子节点
+                src.children = [];
+                //递归存储名
                 const name = '$recurs.' + (dom.props.ref || 'default');
                 let node = module.objectManager.get(name);
                 if(!node){
                     return true;
                 }
-                
                 let model = dom.model;
                 let cond = node.getDirective('recur');
-                console.log(cond);
                 let m = model[cond.value];
+                //不存在子层数组，不再递归
                 if(!m){
                     return true;
                 }
-                console.log(m);
                 //克隆，后续可以继续用
                 let node1 = node.clone();
                 let key:string;
-                if(!Array.isArray(m)){  //recur子节点不为数组
+                if(!Array.isArray(m)){  //recur子节点不为数组，依赖子层数据
                     node1.model = m;
                     key = m.$key;
+                    Util.setNodeKey(node1,key,true);
                 }else{
                     key = dom.model.$key
                 }
-                Util.setNodeKey(node1,key,true);
+                
                 src.children = [node1];
             }else { //递归节点
                 let data = dom.model[this.value];
@@ -349,7 +351,8 @@ export default (function () {
             //初始化
             if(!this.getParam(module,dom,'inited')){
                 Util.addEvent(dom,new NEvent('change',
-                    function(model,dom, e, el){
+                    function(model,dom){
+                        let el = <any>module.getNode(dom.key);
                         if (!el) {
                             return;
                         }
@@ -368,16 +371,18 @@ export default (function () {
                                 v = undefined;
                             }
                         }
+                        
                         //修改字段值,需要处理.运算符
                         let temp = this;
                         let arr = field.split('.')
                         if (arr.length === 1) {
                             model[field] = v;
                         } else {
-                            for (let i = 0; i < arr.length - 1; i++) {
+                            field = arr.pop();
+                            for (let i = 0; i < arr.length; i++) {
                                 temp = temp[arr[i]];
                             }
-                            temp[arr[arr.length - 1]] = v;
+                            temp[field] = v;
                         }
                         //修改value值，该节点不重新渲染
                         if (type !== 'radio') {
@@ -456,7 +461,7 @@ export default (function () {
      */
     createDirective('slot',
         function(module:Module,dom:any,src:VirtualDom){
-            const parent = dom.parent;
+            // const parent = dom.parent;
             this.value = this.value || 'default';
             let mid = dom.parent.subModuleId;
             //父dom有module指令，表示为替代节点，替换子模块中的对应的slot节点；否则为子模块定义slot节点

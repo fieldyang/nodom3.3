@@ -66,15 +66,15 @@
 				watchSexy: function (oldValue, value) {
 					console.log(this, oldValue, value);
 				},
-				change: function (dom, module, e) {
-					this.married = 0;
-					this.sexy = "F";
-					this.edu = 3;
-					this.name = "aaaa";
-					this.intro = '这是nodom简介';
+				change: function (model,dom) {
+					model.married = 0;
+					model.sexy = "F";
+					model.edu = 3;
+					model.name = "aaaa";
+					model.intro = '这是nodom简介';
 				},
-				change1: function (dom, module, e) {
-					this.name = "nodom123";
+				change1: function (model,dom) {
+					model.name = "nodom123";
 				},
 				onFirstRender: function () {
 					console.log("dddd");

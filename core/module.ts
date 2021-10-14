@@ -251,7 +251,6 @@ export class Module {
                     this.objectManager.removeSavedNode(item[1].key);
                     this.keyNodeMap.delete(item[1].key);
                     //从html dom树移除
-                    console.log(pEl,n1,item[1]);
                     pEl.removeChild(n1);
                     break;
                 case 4: //移动
@@ -469,7 +468,7 @@ export class Module {
                 change = true;
             }else{
                 for(let k of keys){
-                    if(k !== '$data'){
+                    if(k === '$data'){
                         continue;
                     }
                     // object 默认改变
@@ -480,7 +479,6 @@ export class Module {
                 }
             }
         }
-        
         this.props = props;
         if(change){ //有改变，进行编译并激活
             this.compile();

@@ -11,46 +11,43 @@ export class DiffTool{
      * @returns	            [[type(add 1, upd 2,del 3,move 4 ,rep 5),dom(操作节点),dom1(被替换或修改节点),parent(父节点),loc(位置)]]
      */
     public static compare(src:any,dst:any,changeArr:Array<any>) {
-        if(!src.notChange){ //改变了进行比较
-            if (!src.tagName) { //文本节点
-                if (!dst.tagName) {
-                    if ((src.staticNum || dst.staticNum) && src.textContent !== dst.textContent) {
-                        addChange(2,src,null,dst.parent);
-                    }
-                } else { //节点类型不同
-                    addChange(5,src,null, dst.parent);
+        if (!src.tagName) { //文本节点
+            if (!dst.tagName) {
+                if ((src.staticNum || dst.staticNum) && src.textContent !== dst.textContent) {
+                    addChange(2,src,null,dst.parent);
                 }
-            } else { //element节点
-                if (src.tagName !== dst.tagName) { //节点类型不同
-                    addChange(5,src,null, dst.parent);
-                }else if(src.staticNum || dst.staticNum){ //节点类型相同，但有一个不是静态节点，进行属性和asset比较
-                    console.log(src,dst);
-                    let change = false;
-                    for(let p of ['props','assets']){
-                        //属性比较
-                        if(src[p] && dst[p] || src[p] && !dst[p]){
+            } else { //节点类型不同
+                addChange(5,src,null, dst.parent);
+            }
+        } else { //element节点
+            if (src.tagName !== dst.tagName) { //节点类型不同
+                addChange(5,src,null, dst.parent);
+            }else if(src.staticNum || dst.staticNum){ //节点类型相同，但有一个不是静态节点，进行属性和asset比较
+                let change = false;
+                for(let p of ['props','assets']){
+                    //属性比较
+                    if(src[p] && dst[p] || src[p] && !dst[p]){
+                        change = true;
+                    }else if(src[p] && dst[p]){
+                        if(Object.keys(src[p]).length !== Object.keys(dst[p]).length){
                             change = true;
-                        }else if(src[p] && dst[p]){
-                            if(Object.keys(src[p]).length !== Object.keys(dst[p]).length){
-                                change = true;
-                            }else{
-                                for(let k in src[p]){
-                                    if(src[p][k] !== dst[p][k]){
-                                        change = true;
-                                        break;
-                                    }
+                        }else{
+                            for(let k in src[p]){
+                                if(src[p][k] !== dst[p][k]){
+                                    change = true;
+                                    break;
                                 }
                             }
                         }
-                        if(change){
-                            addChange(2,src,null,dst.parent);    
-                        }
+                    }
+                    if(change){
+                        addChange(2,src,null,dst.parent);    
                     }
                 }
             }
-            if(src.staticNum>0){
-                src.staticNum--;
-            }
+        }
+        if(src.staticNum>0){
+            src.staticNum--;
         }
         
         //子节点处理

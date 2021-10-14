@@ -10,15 +10,19 @@ export class ModuleMain extends Module{
                 <div>y is {{y}}</div>
                 <div>x.y is {{x.y}}</div>
                 <h2>默认slot</h2>
+                
                 <p>第一个子模块</p>
-                <mod-a p1='true' xxx='111'>
+               
+                <mod-a p1=1 xxx='111'>
                     <mod-b p2='false' xxx='222'>
                         <modc>
                             <div>name is:{{name}}</div>
                         </modc>
                     </mod-b>
-                    <slot name='s2'>替换的第二个slot  {{name}}</slot>
+                    <slot name='s2'><p  style='color:red'>替换的第二个slot  {{name}}</p></slot>
+                    
                 </mod-a>
+                
                 
                 <hr/>
                 <p>第二个子模块</p>
@@ -27,6 +31,7 @@ export class ModuleMain extends Module{
                     <slot>
                         <h3 style='color:red'> hello change plug 2</h3>    
                     </slot>
+                    <slot name='s2'>替换的第二个slot  {{name}}</slot>
                 </ModuleA> 
                 
                 <p>第三个子模块</p>

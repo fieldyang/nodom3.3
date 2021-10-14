@@ -241,10 +241,10 @@ export class Compiler {
             let slotCt:VirtualDom;
             for(let j=0;j<dom.children.length;j++){
                 let c = dom.children[j];
-                if(c.hasDirective('slot')){
+                if(c.hasDirective('slot')){ //带slot的不处理
                     continue;
                 }
-                if(!slotCt){
+                if(!slotCt){//第一个直接被slotCt替换
                     slotCt = new VirtualDom('div',this.genKey());
                     slotCt.addDirective(new Directive('slot',null));
                     //当前位置，用slot替代

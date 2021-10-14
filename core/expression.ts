@@ -82,7 +82,7 @@ export class Expression {
                         retS += '$model.' + s;   
                     }
                     //存在‘.’，则变量不全在在模型中
-                    if(s.indexOf('.') === -1){
+                    if(s.indexOf('.') !== -1){
                         this.allModelField = false;
                     }
                         
@@ -103,13 +103,6 @@ export class Expression {
      * @returns 		计算结果
      */
     public val(module:Module,model: Model) {
-        // if(this.value !== undefined && this.allModelField && module.renderTree && !module.changedModelMap.has(model.$key)){
-        //     console.log(this.value,model,this.execFunc,module.changedModelMap);
-        //     return this.value;
-        // }
-        if(!this.execFunc){
-            return '';
-        }
         if (!model){
             model = module.model;
         } 

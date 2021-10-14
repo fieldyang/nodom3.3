@@ -71,11 +71,6 @@ export class Renderer {
             src.directives[0].exec(module,dst,src);
         }
 
-        // 增量渲染时，如果所有字段都为model字段，model未修改且上次已渲染，则不渲染
-        if(module.renderTree && src.allModelField && !module.changedModelMap.has(model.$key)/* && module.renderDomMap.has(src.key)*/){
-            dst.notChange = true;
-        }
-
         if(src.tagName){
             dst.props = {};
             dst.assets = {};
