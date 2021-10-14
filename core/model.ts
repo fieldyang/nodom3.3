@@ -6,11 +6,6 @@ import { Util } from "./util";
  */
 export class Model {
     /**
-     * 模块id
-     */
-    // public $moduleId: number;
-
-    /**
      * model key
      */
     public $key:any;
@@ -64,11 +59,12 @@ export class Model {
             },
             deleteProperty: function (src: any, key: any) {
                 //如果删除对象，从mm中同步删除
-                if (src[key] != null && typeof src[key] === 'object') {
-                    ModelManager.delToDataMap(src[key]);
+                if (src[key] !== null && typeof src[key] === 'object') {
+                    ModelManager.delFromDataMap(src[key]);
                     ModelManager.delModel(src[key]);
                 }
                 delete src[key];
+                ModelManager.update(proxy,key,null,null,true);
                 return true;
             }
         });

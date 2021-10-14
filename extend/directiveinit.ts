@@ -96,9 +96,8 @@ export default (function () {
             let rows = this.value;
             // 无数据，不渲染
             if (!Util.isArray(rows) || rows.length === 0) {
-                return true;
+                return false;
             }
-            console.log(rows);
             const parent = dom.parent;
             //禁用该指令
             this.disabled = true;

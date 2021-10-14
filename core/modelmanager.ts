@@ -30,12 +30,13 @@ export class ModelManager {
     }
 
     /**
-  * 删除从 dataNModelMap
-  * @param data      数据对象
-  * @param model     模型
-  */
-    public static delToDataMap(data: Object) {
+     * 删除从 dataNModelMap
+     * @param data      数据对象
+     * @param model     模型
+     */
+    public static delFromDataMap(data: Object) {
         this.dataMap.delete(data);
+
     }
 
     /**
@@ -75,7 +76,7 @@ export class ModelManager {
    * @param srcNModel  源模型
    */
     public static delModel(model: any) {
-        this.modelMap.delete(model)
+        this.modelMap.delete(model);
     }
     /**
      * 从模型Map获取源数据
@@ -262,7 +263,6 @@ export class ModelManager {
                 }
             }
         }
-
         if(oldValue !== newValue || force){
             for(let m of modules){
                 Renderer.add(m);

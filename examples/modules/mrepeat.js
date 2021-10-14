@@ -110,6 +110,7 @@ export class MRepeat extends Module{
         },
         clear(model){
             delete model.foods;
+            console.log(model);
         }
     }
 }
