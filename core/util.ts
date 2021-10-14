@@ -329,7 +329,9 @@ export class Util {
      * @returns true/false
      */
     public static isString(v): boolean {
-        return typeof v === 'string';
+        let rtnValue=typeof v === 'string';
+        return rtnValue;
+        // return typeof v === 'string';
     }
 
     /**
