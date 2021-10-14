@@ -338,7 +338,9 @@ export class Util {
      * @returns true/false
      */
     public static isNumberString(v): boolean {
-        return /^\d+\.?\d*$/.test(v);
+        let rtnValue=/^\d+\.?\d*$/.test(v);
+        return rtnValue;
+        // return /^\d+\.?\d*$/.test(v);
     }
 
     /**
