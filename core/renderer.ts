@@ -57,7 +57,7 @@ export class Renderer {
         model = src.model?src.model:model;
         let dst:any = {
             tagName:src.tagName,
-            key:key||src.key,
+            key:key?src.key+'_'+key:src.key,
             model:model,
             subModuleId:src.subModuleId
         }
@@ -101,7 +101,7 @@ export class Renderer {
             if(src.children && src.children.length>0){
                 for(let c of src.children){
                     if(c instanceof VirtualDom){ //未编译节点
-                        Renderer.renderDom(module,c,dst.model,dst,key?c.key + '_' + key:null);
+                        Renderer.renderDom(module,c,dst.model,dst,key?key:null);
                     }else{ //已编译节点
                         dst.children.push(c);
                     }

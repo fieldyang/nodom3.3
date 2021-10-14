@@ -7,6 +7,7 @@ export class MRepeat extends Module{
             <button e-click='push'>push</button>
             <button e-click='addFood'>addFood</button>
             <button e-click='desc'>价格降序</button>
+            <button e-click='clear'>清空</button>
             
             <!-- <div class="tip">基本使用</div> -->
             <div class="code">
@@ -106,6 +107,9 @@ export class MRepeat extends Module{
                     price: 30
                 }
             )
+        },
+        clear(model){
+            delete model.foods;
         }
     }
 }

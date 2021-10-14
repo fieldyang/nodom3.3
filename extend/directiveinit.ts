@@ -98,6 +98,7 @@ export default (function () {
             if (!Util.isArray(rows) || rows.length === 0) {
                 return true;
             }
+            console.log(rows);
             const parent = dom.parent;
             //禁用该指令
             this.disabled = true;
