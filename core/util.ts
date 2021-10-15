@@ -329,8 +329,6 @@ export class Util {
      * @returns true/false
      */
     public static isString(v): boolean {
-        // let rtnValue=typeof v === 'string';
-        // return rtnValue;
         return typeof v === 'string';
     }
 
@@ -340,8 +338,6 @@ export class Util {
      * @returns true/false
      */
     public static isNumberString(v): boolean {
-        // let rtnValue=/^\d+\.?\d*$/.test(v);
-        // return rtnValue;
         return /^\d+\.?\d*$/.test(v);
     }
 
@@ -460,8 +456,7 @@ export class Util {
      * @returns     true/false
      */
     public static isEl(el: any): boolean {
-        let rtnValue=el instanceof HTMLElement || el instanceof SVGElement;
-        return rtnValue;
+        return el instanceof HTMLElement || el instanceof SVGElement;
     }
 
     /**
