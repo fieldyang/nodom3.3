@@ -355,7 +355,6 @@ export class Router {
         for(let o of arr){
             o.model[o.field] = o.path === path;
         }
-        console.log(module,arr,path);
     }
 
     /**

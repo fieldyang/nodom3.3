@@ -28,7 +28,7 @@ export class Model {
                 }
                 const excArr = ['$watch', "$set","$get", "$key", "$index"];
                 //不进行赋值
-                if (typeof value !== 'object' || (value === null || !value.$watch)) {
+                if (typeof value !== 'object' || (value === null || !value.$key)) {
                     //更新渲染
                     if (excArr.indexOf(key) == -1) {
                         ModelManager.update(proxy, key, src[key], value);
