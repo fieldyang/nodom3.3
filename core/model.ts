@@ -26,13 +26,10 @@ export class Model {
                 if (['__proto__', 'constructor'].includes(<string>key)) {
                     return true;
                 }
-                const excArr = ['$watch', "$set","$get", "$key", "$index"];
-                //不进行赋值
-                if (typeof value !== 'object' || (value === null || !value.$key)) {
-                    //更新渲染
-                    if (excArr.indexOf(key) == -1) {
-                        ModelManager.update(proxy, key, src[key], value);
-                    }
+                const excArr = ['$watch', "$set","$get", "$key","$index"];
+                //非对象，null，非model更新渲染
+                if(typeof value !== 'function' && excArr.indexOf(key) === -1){
+                    ModelManager.update(proxy, key, src[key], value);
                 }
                 return Reflect.set(src, key, value, receiver);
             },
@@ -131,8 +128,9 @@ export class Model {
      * 设置值
      * @param key       子属性，可以分级，如 name.firstName
      * @param value     属性值
+     * @param module    需要绑定的新模块
      */
-    $set(key:string,value:any){
+    $set(key:string,value:any,module?:Module){
         let model: Model = this;
         let mids = ModelManager.getModuleIds(this);
         if (key.indexOf('.') !== -1) {    //层级字段
@@ -146,6 +144,10 @@ export class Model {
                 }
             }
             key = arr[arr.length - 1];
+        }
+        //绑定model到模块
+        if(typeof value === 'object' && module){
+            value.bindToModule(module);
         }
         model[key] = value;
     }

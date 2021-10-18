@@ -212,6 +212,32 @@ export class ModelManager {
     }
 
     /**
+     * model从module解绑
+     * @param model     模型 
+     * @param module    模块
+     * @returns 
+     */
+     public static unbindFromModule(model:Model,module:Module|number){
+        let obj = this.modelMap.get(model);
+        if(!obj || !obj.modules){
+            return;
+        }
+        let mid = typeof module === 'number'?module:module.id;
+        let arr = obj.modules;
+        let ind;
+        if((ind=arr.indexOf(mid)) === -1){
+            arr.splice(ind);
+        }
+        
+        //级联解绑
+        Object.getOwnPropertyNames(model).forEach(item=>{
+            if(typeof model[item] === 'object' && model[item].$key){
+                ModelManager.unbindFromModule(model[item],module);
+            }
+        });
+    }
+
+    /**
      * 获取model绑定的moduleId
      * @param model     模型
      * @returns model绑定的模块id数组
@@ -265,6 +291,7 @@ export class ModelManager {
         }
         if(oldValue !== newValue || force){
             for(let m of modules){
+                console.log(model,key,oldValue,force)
                 Renderer.add(m);
             }
         }

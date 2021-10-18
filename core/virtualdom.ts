@@ -91,6 +91,16 @@ export class VirtualDom {
     public subModuleId:number;
 
     /**
+     * 不添加到树
+     */
+    public dontAddToTree:boolean;
+
+    /**
+     * 父dom
+     */
+    public parent:VirtualDom;
+
+    /**
      * @param tag       标签名
      * @param key       key
      */
@@ -101,11 +111,6 @@ export class VirtualDom {
         }
         if(tag){
             this.tagName = tag;
-            this.props = new Map();
-            this.events = new Map();
-            this.assets = new Map();
-            this.children = [];
-            this.directives = [];
         }
     }
 
@@ -180,10 +185,7 @@ export class VirtualDom {
      * @returns             true/false
      */
     public hasDirective(typeName:string): boolean {
-        if(!this.directives){
-            return false;
-        }
-        return this.directives.findIndex(item => item.type.name === typeName) !== -1;
+        return this.directives && this.directives.findIndex(item => item.type.name === typeName) !== -1;
     }
 
     /**
@@ -200,52 +202,21 @@ export class VirtualDom {
     }
 
     /**
-     * 移除子节点
-     * @param dom   子dom
-     */
-    // public removeChild(dom: VirtualDom) {
-    //     let ind: number;
-    //     // 移除
-    //     if (Util.isArray(this.children) && (ind = this.children.findIndex(item=>item===dom)) !== -1) {
-    //         this.children.splice(ind, 1);
-    //     }
-    // }
-
-    // /**
-    //  * 替换子节点
-    //  * @param src   待替换dom
-    //  * @param dst   被替换dom
-    //  */
-    //  public replaceChild(src: VirtualDom,dst:VirtualDom) {
-    //     let ind: number;
-    //     // 移除
-    //     if (Util.isArray(this.children) && (ind = this.children.findIndex(item=>item===dst)) !== -1) {
-    //         this.children.splice(ind, 1,src);
-    //     }
-    // }
-
-    /**
      * 添加子节点
      */
     public add(dom:VirtualDom){
+        if(!this.children){
+            this.children = [];
+        }
         this.children.push(dom);
     }
-    /**
-     * 是否包含节点
-     * @param dom 	包含的节点 
-     */
-    // public contains(dom: VirtualDom) {
-    //     for (; dom !== undefined && dom !== this; dom = dom.parent);
-    //     return dom !== undefined;
-    // }
-
     /**
      * 是否存在某个class
      * @param cls   classname
      * @return      true/false
      */
     public hasClass(cls: string): boolean {
-        let clazz = this.props.get('class');
+        let clazz = this.getProp('class');
         if (!clazz) {
             return false;
         } else {
@@ -258,8 +229,8 @@ export class VirtualDom {
      * @param cls class名
      */
     public addClass(cls: string) {
-        let clazz = this.props.get('class');
-        if (!clazz) {
+        let clazz = this.getProp('class');
+        if (!clazz || clazz === '') {
             this.setProp('class', cls);
             this.setStaticOnce();
         } else {
@@ -278,8 +249,8 @@ export class VirtualDom {
      * @param cls class名
      */
     public removeClass(cls: string) {
-        let clazz = this.props.get('class');
-        if (!clazz) {
+        let clazz = this.getProp('class');
+        if (!clazz || clazz === '') {
             return;
         } else {
             let sa: string[] = clazz.trim().split(/\s+/);
@@ -289,14 +260,14 @@ export class VirtualDom {
                 clazz = sa.join(' ');
             }
         }
-        this.props.set('class',clazz);
+        this.setProp('class',clazz);
     }
     /**
      * 查询style
      * @param styStr style字符串
      */
     public hasStyle(styStr: string) {
-        let styleStr = this.props.get('style');
+        let styleStr = this.getProp('style');
         if (!styleStr) {
             return false;
         } else {
@@ -309,7 +280,7 @@ export class VirtualDom {
      *  @param styStr style字符串
      */
     public addStyle(styStr: string) {
-        let styleStr = this.props.get('style');
+        let styleStr = this.getProp('style');
         if (!styleStr) {
             this.setProp('style', styStr);
             this.setStaticOnce();
@@ -350,7 +321,9 @@ export class VirtualDom {
      * @param isExpr    是否只检查表达式属性
      */
     public hasProp(propName: string) {
-        return this.props.has(propName);
+        if(this.props){
+            return this.props.has(propName);
+        }
     }
 
     /**
@@ -359,7 +332,9 @@ export class VirtualDom {
      * @param isExpr    是否只获取表达式属性
      */
     public getProp(propName: string,isExpr?:boolean) {
-        return this.props.get(propName);
+        if(this.props){
+            return this.props.get(propName);
+        }
     }
 
     /**
@@ -368,6 +343,9 @@ export class VirtualDom {
      * @param v         属性值
      */
     public setProp(propName: string, v: any) {
+        if(!this.props){
+            this.props = new Map();
+        }
         this.props.set(propName,v);
     }
 
@@ -376,6 +354,9 @@ export class VirtualDom {
      * @param props     属性名或属性名数组 
      */
     public delProp(props: string | string[]) {
+        if(!this.props){
+            return;
+        }
         if (Util.isArray(props)) {
             for (let p of <string[]>props) {
                 this.props.delete(p);
@@ -393,6 +374,9 @@ export class VirtualDom {
      * @param value         asset value
      */
     public setAsset(assetName: string, value: any) {
+        if(!this.assets){
+            this.assets = new Map();
+        }
         this.assets.set(assetName, value);
     }
 
@@ -401,6 +385,9 @@ export class VirtualDom {
      * @param assetName     asset name
      */
     public delAsset(assetName: string) {
+        if(!this.assets){
+            return;
+        }
         this.assets.delete(assetName);
     }
 
@@ -411,6 +398,9 @@ export class VirtualDom {
      * @param event     事件对象
      */
     public addEvent(event: NEvent) {
+        if(!this.events){
+            this.events = new Map();
+        }
         if(!this.events.has(event.name)){
             this.events.set(event.name, [event.id]);
         }else{
@@ -423,12 +413,26 @@ export class VirtualDom {
     }
 
     /**
-     * 获取事件
+     * 获取事件集
      * @param eventName     事件名
      * @returns             事件对象或事件对象数组
      */
-    public getEvent(eventName:string){
-        return this.events.get(eventName);
+    public getEvent(eventName:string):number[]{
+        if(this.events){
+            return this.events.get(eventName);
+        }
+    }
+
+    /**
+     * 设置事件集
+     * @param eventName     事件名
+     * @param events        事件数组
+     */
+    public setEvent(eventName:string,events:number[]){
+        if(!this.events){
+            this.events = new Map();
+        }
+        this.events.set(eventName,events);
     }
 
     /**
@@ -505,27 +509,38 @@ export class VirtualDom {
         let dst: VirtualDom = new VirtualDom(this.tagName,this.key);
         if(this.tagName){
             //属性
-            for(let p of this.props){
-                dst.setProp(p[0],p[1]);
+            if(this.props && this.props.size>0){
+                for(let p of this.props){
+                    dst.setProp(p[0],p[1]);
+                }
             }
-
-            for(let p of this.assets){
-                dst.setAsset(p[0],p[1]);
+            
+            if(this.assets && this.assets.size>0){
+                for(let p of this.assets){
+                    dst.setAsset(p[0],p[1]);
+                }
             }
             
             //事件
-            for(let p of this.events){
-                //复制数组
-                dst.events.set(p[0],p[1].slice(0));
+            if(this.events && this.events.size>0){
+                for(let p of this.events){
+                    //复制数组
+                    dst.setEvent(p[0],p[1].slice(0));
+                }    
             }
-
-            for(let d of this.directives){
-                dst.directives.push(d.clone());
+            
+            if(this.directives && this.directives.length>0){
+                dst.directives = [];
+                for(let d of this.directives){
+                    dst.directives.push(d.clone());
+                }
             }
             
             //子节点clone
-            for(let c of this.children){
-                dst.add(c.clone());
+            if(this.children){
+                for(let c of this.children){
+                    dst.add(c.clone());
+                }
             }
         }else{
             dst.expressions = this.expressions;

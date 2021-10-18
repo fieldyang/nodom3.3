@@ -15,7 +15,7 @@ export class EventManager{
      * @param module 
      * @param dom 
      */
-    public static bind(module:Module,dom:any){
+    public static bind(module:Module,dom:VirtualDom){
         if(!dom.events){
             return;
         }
@@ -26,8 +26,8 @@ export class EventManager{
         }
         el['bindEvent'] = true;
         
-        for (let evt in dom.events) {
-            let arr = dom.events[evt];
+        for (let evt of dom.events) {
+            let arr = evt[1];
             //同一个事件名可能对应多个事件对象
             if(arr.length === 0) return;
             //获取usecapture
@@ -72,14 +72,14 @@ export class EventManager{
                     if(!eh){
                         // 保存handler
                         saveCfg(parent,ev.name,handler,ev.capture);
-                        module.getNode(parent.key).addEventListener(evt,handler,ev.capture);
+                        module.getNode(parent.key).addEventListener(evt[0],handler,ev.capture);
                     }
                     hasDelg = true;
                 }else if(!hasBound){
                     hasBound = true;
                     // 保存handler
                     saveCfg(dom,evt,handler,capture);
-                    el.addEventListener(evt,handler,capture);
+                    el.addEventListener(evt[0],handler,capture);
                 }
             }
         }
@@ -115,10 +115,10 @@ export class EventManager{
             let el = e.currentTarget;
             // let dom = module.getElement(el.getAttribute('key'));
             const dom = el['vdom'];
-            if(!dom || !dom.events || !dom.events[e.type]){
+            if(!dom || !dom.events || !dom.events.has(e.type)){
                 return;
             }
-            const evts = dom.events[e.type];
+            const evts = dom.getEvent(e.type);
             
             //已执行事件map，不重复执行
             let execMap = new Map();
@@ -184,7 +184,7 @@ export class EventManager{
     public static unbind(module:Module,dom:any,ev:NEvent){
         let evts;
         if(ev.delg){
-            evts = dom.parent.events[ev.name];
+            evts = dom.parent.getEvent(ev.name);
             let delgs = ev.getParam(module,dom.parent,'$delgs');
             delete delgs[dom.key];
             //如果代理不为空，则不删除事件
@@ -192,7 +192,7 @@ export class EventManager{
                 return;
             }
         }else{
-            evts = dom.events[ev.name];
+            evts = dom.getEvent(ev.name);
         }
         if(!evts){
             return;

@@ -7,6 +7,7 @@
     <style></style>
     <style role='nodom'></style>
     <title>Document</title>
+    
 </head>
 <body>
     <div>
@@ -15,7 +16,8 @@
     <button onclick='send1()'>发送消息1</button>
     <button onclick='send2()'>发送消息2</button>
 </body>
-<script>
+<script type='module'>
+    import{VirtualDom} from '../dist/nodom.js'
     // class M1{
     //     constructor(x){
     //         this.x = x;
@@ -63,27 +65,25 @@
     // console.log(eval('o.yy.c.d'));
     // console.log(foo);
     // console.log(foo(o,'oc'));
-    let map = new Map();
-    let k;
-    let k1;
-    let o = {x:1}
-    for(let i=0;i<100000;i++){
-        k = Math.random();
-        if(i===6000){
-            k1 = k;
-        }
-        map.set(k,o);
-        // o[k] = i;
-    }
-    o1 = {obj:o};
-
-    // console.time('t1');
-    for(let i=0;i<10000000;i++){
-        let p = map.get(k1);
-        // let p = o1.obj;
-        // o[k1];
-    }
     // console.timeEnd('t1');
+    let s1 = 'aaa bbb nd-xxx-class1 ccc'
+    
+    init111();
+    function init111(){
+        for(let i=0;i<10000;i++){
+            if(s1){
+                
+            }
+            // let a = new VirtualDom('div','1');
+            // let s = 'nd-xxx-class1';
+            // let a = s1.split(' ');
+            // let ind = a.indexOf(s);
+            // let reg = new RegExp(s);
+            // let r = reg.test(s1);
+            // let o = {tagName:'div',key:'1',props:{},events:{},assets:{},children:[],directives:[]}
+            // let o = {tagName:'div',key:'1'}
+        }
+    }
 </script>
 
 </html>

@@ -164,8 +164,7 @@ export class Module {
         if(!this.originTree){
             this.compile();
         }
-
-        
+        console.log(this);
         //执行前置方法
         this.doRenderOps(0);
         this.doModuleEvent('onBeforeRender');

@@ -5,7 +5,6 @@ import { Model } from "./model";
 import { Expression } from "./expression";
 import { CssManager } from "./cssmanager";
 import { EventManager } from "./eventmanager";
-import { Util } from "./util";
 
 /**
  * 渲染器
@@ -15,6 +14,11 @@ export class Renderer {
      * 等待渲染列表（模块名）
      */
     private static waitList: Array < number > = [];
+
+    /**
+     * 当前模块根dom
+     */
+    private static currentModuleRoot:VirtualDom;
     /**
      * 添加到渲染列表
      * @param module 模块
@@ -52,15 +56,17 @@ export class Renderer {
      * @param key               key
      * @returns 
      */
-    public static renderDom(module:Module,src:VirtualDom,model:Model,parent?:VirtualDom,key?:string):any{
+    public static renderDom(module:Module,src:VirtualDom,model:Model,parent?:VirtualDom,key?:string):VirtualDom{
         //节点自带model优先级高
         model = src.model?src.model:model;
-        let dst:any = {
-            tagName:src.tagName,
-            key:key?src.key+'_'+key:src.key,
-            model:model,
-            subModuleId:src.subModuleId
+        let dst:VirtualDom = new VirtualDom(src.tagName,key?src.key+'_'+key:src.key);
+        //设置当前根root
+        if(!parent){
+            this.currentModuleRoot = dst;
         }
+        dst.model = model;
+        dst.subModuleId = src.subModuleId;
+        
         // 设置父对象
         if(parent) {
             dst.parent = parent;
@@ -72,33 +78,33 @@ export class Renderer {
         }
 
         if(src.tagName){
-            dst.props = {};
-            dst.assets = {};
-            dst.children = [];
             if(!dst.notChange){
                 handleProps();
                 let r = handleDirectives();
                 if(!r){
                     return;
                 }
-                //assets
-                if(src.assets.size>0){
-                    for(let p of src.assets){
-                        dst.assets[p[0]] = p[1];
+                //处理style，如果为style，则不处理assets和events
+                if(!CssManager.handleStyleDom(module,src,Renderer.currentModuleRoot,src.getProp('scope') === 'this')){
+                    //assets
+                    if(src.assets && src.assets.size>0){
+                        for(let p of src.assets){
+                            dst.setAsset(p[0],p[1]);
+                        }
                     }
-                }
 
-                //事件
-                if(src.events.size>0){
-                    dst.events = {};
-                    for(let p of src.events){
-                        //复制数组
-                        dst.events[p[0]] = p[1].slice(0);
+                    //事件
+                    if(src.events && src.events.size>0){
+                        for(let p of src.events){
+                            //复制数组
+                            dst.setEvent(p[0],p[1].slice(0));
+                        }
                     }
                 }
             }
-            //children
+            // 子节点
             if(src.children && src.children.length>0){
+                dst.children = [];
                 for(let c of src.children){
                     if(c instanceof VirtualDom){ //未编译节点
                         Renderer.renderDom(module,c,dst.model,dst,key?key:null);
@@ -124,11 +130,10 @@ export class Renderer {
                 dst.textContent = src.textContent;
             }
         }
-        
+        //添加到dom tree
         if(parent && !dst.dontAddToTree){
             parent.children.push(dst);
         }
-        
         return dst;
 
         /**
@@ -156,15 +161,15 @@ export class Renderer {
          * 处理属性（带表达式）
          */
         function handleProps() {
-            if(src.props.size === 0){
+            if(!src.props || src.props.size === 0){
                 return;
             }
             for(let k of src.props){
                 if(k[1] instanceof Expression){
-                    dst.props[k[0]] = k[1].val(module,dst.model);
+                    dst.setProp(k[0],k[1].val(module,dst.model));
                     dst.staticNum = -1;
                 }else{
-                    dst.props[k[0]] = k[1];
+                    dst.setProp(k[0],k[1]);
                 }
             }
         }
@@ -178,14 +183,16 @@ export class Renderer {
      * @param parentEl 	        父html
      * @param isRenderChild     是否渲染子节点
      */
-     public static renderToHtml(module: Module,src:any, parentEl:HTMLElement,isRenderChild?:boolean) {
+     public static renderToHtml(module: Module,src:VirtualDom, parentEl:HTMLElement,isRenderChild?:boolean) {
         let el = module.getNode(src.key);
         if(el){   //html dom节点已存在
             if(src.tagName){
                 if(src.props){
                     //设置属性
-                    for(let p in src.props){
-                        (<HTMLElement>el).setAttribute(p, src.props[p]===undefined?'':src.props[p]);
+                    for(let p of src.props){
+                        if(p[1]!== undefined){
+                            (<HTMLElement>el).setAttribute(p[0],p[1]);
+                        }
                     }
                 }
                 handleAssets(src,<HTMLElement>el);
@@ -199,10 +206,10 @@ export class Renderer {
                 el = newText(src);
             }
             //先创建子节点，再添加到html dom树，避免频繁添加
-            if(src.tagName  && isRenderChild){
+            if(el && src.tagName  && isRenderChild){
                 genSub(el, src);
             }
-            if(!src.tagName || src.tagName.toLowerCase()!=='style'){
+            if(el && parentEl){
                 parentEl.appendChild(el);
             }
         }
@@ -213,9 +220,13 @@ export class Renderer {
          * @param dom 		虚拟dom
          * @returns 		新的html element
          */
-        function newEl(dom:any): HTMLElement {
+        function newEl(dom:VirtualDom): HTMLElement {
+            //style不处理
+            if(dom.tagName.toLowerCase() === 'style'){
+                return;
+            }
             //创建element
-            let el= Util.newEl(dom.tagName);
+            let el= document.createElement(dom.tagName);
             //保存虚拟dom
             el['vdom'] = dom;
         
@@ -230,20 +241,21 @@ export class Renderer {
             }
             //设置属性
             if(dom.props){
-                for(let p in dom.props){
-                    el.setAttribute(p, dom.props[p]===undefined?'':dom.props[p]);
+                for(let p of dom.props){
+                    if(p[1] !== undefined){
+                        el.setAttribute(p[0],p[1]);     
+                    }
                 }
             }
             
             //如果存储node，则不需要key
-            el.setAttribute('key', dom.key);
+            // el.setAttribute('key', dom.key);
             //把el引用与key关系存放到cache中
             module.saveNode(dom.key,el);
-            
             //asset
-            if(dom.assets){
+            if(dom.assets && dom.assets.size>0){
                 for (let p in dom.assets) {
-                    el[p] = dom.assets[p];
+                    el[p] = p[1];
                 }
             }
             //处理event
@@ -259,7 +271,7 @@ export class Renderer {
         function newText(dom:VirtualDom): Node {
             //样式表处理，如果是样式表文本，则不添加到dom树
             if(CssManager.handleStyleTextDom(module,dom)){
-                return;
+                 return;
             }
             let node = document.createTextNode(<string>dom.textContent || '');
             module.saveNode(dom.key,node);
@@ -281,9 +293,8 @@ export class Renderer {
                     } else {
                         el1 = newText(item);
                     }
-                    //style 不处理
-                    if(vdom.tagName.toLowerCase() !== 'style'){
-                        pEl.appendChild(el1);    
+                    if(el1){
+                        pEl.appendChild(el1);
                     }
                 });
             }
@@ -295,8 +306,8 @@ export class Renderer {
         function handleAssets(dom:VirtualDom,el:HTMLElement){
             //处理asset
             if (dom.assets) {
-                for (let k in dom.assets) {
-                    el[k] = dom.assets[k];
+                for (let k of dom.assets) {
+                    el[k[0]] = k[1];
                 }    
             }
         }
