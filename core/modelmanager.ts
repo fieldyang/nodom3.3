@@ -291,7 +291,6 @@ export class ModelManager {
         }
         if(oldValue !== newValue || force){
             for(let m of modules){
-                console.log(model,key,oldValue,force)
                 Renderer.add(m);
             }
         }
