@@ -26,7 +26,7 @@ export class Model {
                 if (['__proto__', 'constructor'].includes(<string>key)) {
                     return true;
                 }
-                const excArr = ['$watch', "$set","$get", "$key","$index"];
+                const excArr = ["$key","$index"];
                 //非对象，null，非model更新渲染
                 if(typeof value !== 'function' && excArr.indexOf(key) === -1){
                     ModelManager.update(proxy, key, src[key], value);

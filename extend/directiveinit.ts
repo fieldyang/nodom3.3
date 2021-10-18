@@ -440,7 +440,7 @@ export default (function () {
                 );
                 module.objectManager.set('$routeClickEvent',event);
             }
-            Util.addEvent(dom,event);
+            dom.addEvent(event);
             return true;
         }
     );

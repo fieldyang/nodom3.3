@@ -48,11 +48,6 @@ export class Router {
     static routerKeyMap:Map<number,string> = new Map();
 
     /**
-     * 路由模块依赖map {依赖模块id:被依赖模块id}
-     */
-    static moduleDependMap:Map<number,number> = new Map();
-    
-    /**
      * 根路由
      */
     static root:Route;
@@ -123,7 +118,6 @@ export class Router {
             }
             // 清理map映射
             this.activeFieldMap.delete(module.id);
-            this.moduleDependMap.delete(module.id);
             //module置为不激活
             module.unactive();
         }
@@ -132,7 +126,7 @@ export class Router {
             if (route !== null) {
                 let module:Module = await this.getModule(route);
                 // 模块处理
-                this.dependHandle(module,route,diff[3]?.module);
+                this.dependHandle(module,route,diff[3]?diff[3].module:null);
             }
         } else { //路由不同
             //加载模块
@@ -145,8 +139,6 @@ export class Router {
                 }
                 
                 let module:Module = await this.getModule(route);
-                //添加路由容器依赖
-                this.moduleDependMap.set(module.id,parentModule.id);
                 
                 // 模块处理
                 this.dependHandle(module,route,parentModule);
@@ -178,10 +170,10 @@ export class Router {
     }
 
     /*
-        * 重定向
-        * @param path 	路径
-        */
-    static redirect(path:string) {
+     * 重定向
+     * @param path 	路径
+     */
+    public static redirect(path:string) {
         this.go(path);
     }
 
