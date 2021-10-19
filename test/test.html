@@ -18,71 +18,13 @@
 </body>
 <script type='module'>
     import{VirtualDom} from '../dist/nodom.js'
-    // class M1{
-    //     constructor(x){
-    //         this.x = x;
-    //     }
-    //     show(){
-    //         document.querySelector('div').innerHTML = this.x;
-    //     }
-    // }
     
-    // let blob = new Blob([`
-    // self.onmessage = (e)=>{
-    //     e.data.m.change('测试反向')
-
-        
-    // }`],{type : 'text/javascript'});
-    // console.log(blob);
-    // let m1 = new M1(20);
-    // // let worker = new Worker(URL.createObjectURL(blob));
-    // let worker = new Worker('./js/worker.js');
-
-    
-
-    // worker.onmessage = (e)=>{
-    //     console.log(e.data);
-    // }
-    // let map = new Map();
-    // map.set('x',1);
-    // let o1 = {x:2}
-    // let o2 = {o1:o1,m:new M1(10),map:map}
-    // o1.o2 = o2;
-    // function send1(){
-    //     // worker.postMessage({op:1,msg:'这是消息1'});
-    //     worker.postMessage(o2);
-    // }
-
-    // function send2(){
-    //     worker.postMessage({op:2,msg:'这是消息2'});
-    // }
-
-    
-
-    // let o = {b:{c:1,x:{y:2}},y:10}
-    // let foo = new Function('model','field','return model[field]');
-
-    // console.log(eval('o.yy.c.d'));
-    // console.log(foo);
-    // console.log(foo(o,'oc'));
-    // console.timeEnd('t1');
-    let s1 = 'aaa bbb nd-xxx-class1 ccc'
-    
-    init111();
-    function init111(){
-        for(let i=0;i<10000;i++){
-            if(s1){
-                
-            }
-            // let a = new VirtualDom('div','1');
-            // let s = 'nd-xxx-class1';
-            // let a = s1.split(' ');
-            // let ind = a.indexOf(s);
-            // let reg = new RegExp(s);
-            // let r = reg.test(s1);
-            // let o = {tagName:'div',key:'1',props:{},events:{},assets:{},children:[],directives:[]}
-            // let o = {tagName:'div',key:'1'}
-        }
+    const reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|([a-zA-Z$_][\w$]*\s*?:)|(\.?[a-zA-Z$_][\w$]*(\.[a-zA-Z$_][\w$]*)*(\s*[\[\(](\s*\))?)?)/g;
+    // const reg = /(\.[a-zA-Z$_][\w$]*?\s*(\((\s*\))?)?)/g;
+    let s = 'Object.keys(goods).length>0  ac.age.as'
+    let r;
+    while((r=reg.exec(s)) !== null){
+        console.log(r);
     }
 </script>
 

@@ -8,15 +8,15 @@ export class MRepeat extends Module{
             <button e-click='addFood'>addFood</button>
             <button e-click='desc'>价格降序</button>
             <button e-click='clear'>清空</button>
-            
-            <!-- <div class="tip">基本使用</div> -->
+            <!--
+            <div class="tip">基本使用</div>
             <div class="code">
                 菜单：
                 <for cond="{{foods}}">
                     <span>菜名：{{name}}，价格：{{price}}</span>
                 </for>
             </div>
-            <!-- <div class=tip>索引号的使用（编号从0开始）</div> 
+            <div class=tip>索引号的使用（编号从0开始）</div> 
             <div class=code>
                 菜单：
                 <for cond={{foods}}>
@@ -30,16 +30,14 @@ export class MRepeat extends Module{
                 <for cond={{getOdd(foods)}}>
                     菜名：{{name}}，价格：{{price}}
                 </for>
-            </div>
-            
+            </div>-->
             <div class=tip>价格升序排序（编号从1开始）</div>
             <div class=code>
                 菜单：
-                <div x-repeat={{foods.sort((a,b)=>{if(a.price>b.price) 
-                    return 1;return -1;})}}>
+                <div x-repeat={{sort1(foods)}}>
                     编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
                 </div>
-            </div> -->
+            </div>
         </div>
         `
     }
@@ -86,6 +84,9 @@ export class MRepeat extends Module{
                 }
             }
             return a1;
+        },
+        sort1(arr){
+            return arr.sort((a,b)=> a.price>b.price);
         },
         desc(model){
             model.foods.sort((a,b)=>{if(a.price>b.price)return -1;return 1;})

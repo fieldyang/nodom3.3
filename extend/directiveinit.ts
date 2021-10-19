@@ -101,7 +101,6 @@ export default (function () {
             const parent = dom.parent;
             //禁用该指令
             this.disabled = true;
-            //从源树获取，才可能得到子节点
             for (let i = 0; i < rows.length; i++) {
                 rows[i].$index = i;
                 //渲染一次-1，所以需要+1

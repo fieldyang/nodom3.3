@@ -164,7 +164,6 @@ export class Module {
         if(!this.originTree){
             this.compile();
         }
-        console.log(this);
         //执行前置方法
         this.doRenderOps(0);
         this.doModuleEvent('onBeforeRender');
@@ -172,7 +171,6 @@ export class Module {
         if (!this.renderTree) {
             this.doFirstRender();
         } else { //增量渲染
-            this.dontAddToRender = false;
             //执行每次渲染前事件
             if (this.model) {
                 let oldTree = this.renderTree;
@@ -195,6 +193,7 @@ export class Module {
         //执行每次渲染后事件
         this.doModuleEvent('onRender');
         this.changedModelMap.clear();
+        this.dontAddToRender = false;
         return true;
     }
 

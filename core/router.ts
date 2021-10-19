@@ -309,7 +309,6 @@ export class Router {
      */
     private static dependHandle(module:Module,route:Route,pm:Module){
         const me = this;
-        
         //激活
         module.active();
         //设置参数
