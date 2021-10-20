@@ -102,17 +102,20 @@ export class ModelManager {
         if (!this.modelMap.has(model)) {
             this.modelMap.set(model, {});
         }
-        //添加watchers属性
-        if (!this.modelMap.get(model).watchers) {
-            this.modelMap.get(model).watchers = {};
-        }
         let watchers = this.modelMap.get(model).watchers;
+        //添加watchers属性
+        if (!watchers) {
+            watchers = {};
+            this.modelMap.get(model).watchers = watchers;
+        }
+        
         //添加观察器数组
         if (!watchers[key]) {
-            watchers[key] = [];
+            watchers[key] = [foo];
+        }else{
+            //把处理函数加入观察器数组
+            watchers[key].push(foo);
         }
-        //把处理函数加入观察器数组
-        watchers[key].push(foo);
     }
 
     /**
@@ -145,7 +148,7 @@ export class ModelManager {
      */
     public static getWatcher(model: Model, key: string): Array<Function> {
         if (!this.modelMap.has(model)) {
-            return undefined;
+            return;
         }
         let watchers = this.modelMap.get(model).watchers;
         if (watchers) {

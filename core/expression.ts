@@ -37,7 +37,6 @@ export class Expression {
         if (!module || !exprStr) {
             return;
         }
-        
         const funStr = this.compile(exprStr);
         this.execFunc = new Function('$model','$module',`return ` + funStr);
     }
