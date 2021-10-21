@@ -62,9 +62,9 @@ export default (function () {
                             o[p[0]] = p[1];
                         }
                     }
-                    //传递给模块
-                    m.setProps(o);
                 }
+                //传递给模块
+                m.setProps(o);
             }
             return true;
         },
