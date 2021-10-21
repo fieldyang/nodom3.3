@@ -2,6 +2,7 @@ import {Module} from '../../dist/nodom.js'
 import {ModuleA} from './modulea.js'
 import {ModuleB} from './moduleb.js'
 import {ModuleC} from './modulec.js'
+import {ModuleD} from './moduled.js'
 export class ModuleMain extends Module{
     template(){
         return `
@@ -12,7 +13,6 @@ export class ModuleMain extends Module{
                 <h2>默认slot</h2>
                 
                 <p>第一个子模块</p>
-               
                 <mod-a p1=1 xxx='111'>
                     <mod-b p2='false' xxx='222'>
                         <modc>
@@ -20,9 +20,7 @@ export class ModuleMain extends Module{
                         </modc>
                     </mod-b>
                     <slot name='s2'><p  style='color:red'>替换的第二个slot  {{name}}</p></slot>
-                    
                 </mod-a>
-                
                 
                 <hr/>
                 <p>第二个子模块</p>
@@ -42,8 +40,11 @@ export class ModuleMain extends Module{
                     </h3>
                 </ModuleA>
                 <h2>传递模版</h2>
-                <mod-a temp={{genTemp(show)}}>
-                </mod-a>
+                <mod-a temp={{genTemp(show)}} />
+                
+                <h3>repeat module</h3>
+                <mod-d x-repeat={{rows}} />
+                
            </div>
         `
     }

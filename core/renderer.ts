@@ -64,6 +64,9 @@ export class Renderer {
         if(!parent){
             this.currentModuleRoot = dst;
         }
+        if(src.staticNum>0){
+            src.staticNum--;
+        }
         dst.model = model;
         dst.subModuleId = src.subModuleId;
         

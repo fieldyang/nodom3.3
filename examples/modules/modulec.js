@@ -18,7 +18,7 @@ export class ModuleC extends Module{
 
     methods = {
         onBeforeFirstRender(){
-            console.log(this);
+            // console.log(this);
         },
         changeX2(dom,module){
             console.log(this);

@@ -29,7 +29,7 @@ export default (function () {
         function(module:Module,dom:VirtualDom,src:VirtualDom){
             let m: Module;
             //存在moduleId，表示已经渲染过，不渲染
-            let mid = src.subModuleId;
+            let mid = dom.getParam(module,'moduleId');
             let handle:boolean = true;
             if (mid) {
                 m = ModuleFactory.get(mid);
@@ -41,7 +41,8 @@ export default (function () {
                 }
                 mid = m.id;
                 //保留modelId
-                src.subModuleId = mid;
+                // src.subModuleId = mid;
+                dom.setParam(module,'moduleId',mid);
             }
             //保存到dom上，提升渲染性能
             dom.subModuleId = mid;

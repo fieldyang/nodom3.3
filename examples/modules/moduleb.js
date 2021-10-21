@@ -20,10 +20,10 @@ export class ModuleB extends Module{
 
     methods = {
         onBeforeFirstRender(){
-            console.log(this);
+            // console.log(this);
         },
         changeX2(model,dom){
-            console.log(this);
+            // console.log(this);
             model.x2 = 'hahaha'
         }
     }
