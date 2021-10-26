@@ -25,7 +25,7 @@ export class EventManager{
             return;
         }
         el['bindEvent'] = true;
-        
+
         for (let evt of dom.events) {
             let arr = evt[1];
             //同一个事件名可能对应多个事件对象
@@ -51,35 +51,37 @@ export class EventManager{
                 if(hasBound && hasDelg){
                     break;
                 }
-                
                 //代理事件
-                if(ev.delg && !hasDelg){
-                    //事件加入父对象
-                    Util.addEvent(dom.parent,ev);
-                    
-                    // 保存代理dom信息
-                    let delgs = ev.getParam(module,dom.parent,'$delgs');
-                    if(!delgs){
-                        delgs = {};
-                        ev.setParam(module,dom.parent,'$delgs',delgs);
+                if(ev.delg){
+                    if(!hasDelg){
+                        const parent = dom.parent;
+                        //事件加入父对象
+                        parent.addEvent(ev);
+                        
+                        // 保存代理dom信息
+                        let delgs = ev.getParam(module,parent,'$delgs');
+                        if(!delgs){
+                            delgs = {};
+                            ev.setParam(module,parent,'$delgs',delgs);
+                        }
+                        delgs[dom.key] = dom;
+                        //从本地移除
+                        arr.splice(ii--,1);
+                        
+                        //如果父无此事件，则需要绑定到父事件
+                        let eh = getCfg(parent,ev.name);
+                        if(!eh){
+                            // 保存handler
+                            saveCfg(parent,ev.name,handler,ev.capture);
+                            module.getNode(parent.key).addEventListener(ev.name,handler,ev.capture);
+                        }
+                        hasDelg = true;
                     }
-                    delgs[dom.key] = dom;
-                    //从本地移除
-                    arr.splice(ii--,1);
-                    const parent = dom.parent;
-                    //如果父无此事件，则需要绑定到父事件
-                    let eh = getCfg(parent,ev.name);
-                    if(!eh){
-                        // 保存handler
-                        saveCfg(parent,ev.name,handler,ev.capture);
-                        module.getNode(parent.key).addEventListener(evt[0],handler,ev.capture);
-                    }
-                    hasDelg = true;
                 }else if(!hasBound){
                     hasBound = true;
                     // 保存handler
-                    saveCfg(dom,evt,handler,capture);
-                    el.addEventListener(evt[0],handler,capture);
+                    saveCfg(dom,ev.name,handler,capture);
+                    el.addEventListener(ev.name,handler,capture);
                 }
             }
         }
@@ -113,16 +115,15 @@ export class EventManager{
         function handler(e){
             //从事件element获取事件
             let el = e.currentTarget;
-            // let dom = module.getElement(el.getAttribute('key'));
             const dom = el['vdom'];
             if(!dom || !dom.events || !dom.events.has(e.type)){
                 return;
             }
-            const evts = dom.getEvent(e.type);
             
+            const evts = dom.getEvent(e.type);
             //已执行事件map，不重复执行
             let execMap = new Map();
-
+            
             for(let ii=0;ii<evts.length;ii++){
                 const eid = evts[ii];
                 const ev:NEvent = module.objectManager.getEvent(eid);
@@ -132,19 +133,18 @@ export class EventManager{
                 if(!ev.handler){
                     return;
                 }
-
+                
                 //禁止冒泡
                 if (ev.nopopo) {
                     e.stopPropagation();
                 }
-
                 //代理事件，需要作用在子节点上
                 if(ev.delg){ // 代理
                     let delgs = ev.getParam(module,dom,'$delgs');
                     //向上找节点
                     for(let i=0;i<e.path.length&&e.path[i] !== el;i++){
                         let el1 = e.path[i];
-                        let key = el1.getAttribute('key');
+                        let key = el1.vdom.key;
                         //　找到事件节点
                         if(key && delgs.hasOwnProperty(key)){
                             let dom1 = delgs[key];

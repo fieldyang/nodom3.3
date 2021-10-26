@@ -44,23 +44,22 @@ export class ModuleA extends Module{
         rows:[{name:'nodom1'},{name:'nodom2'},{name:'nodom3'}]
     }
 
-    methods = {
-        changeX2(model){
-            model.x2='hello';
-            console.log(model);
-        },
-        onBeforeFirstRender(){
-            // console.log(this);
-        },
-        onBeforeRender(model){
-            if(!this.props || !this.props.$data){
-                return;
-            }
-            for(let k of Object.keys(this.props.$data)){
-                model[k] = this.props.$data[k];
-            }
-            delete this.props.$data
+
+    changeX2(model){
+        model.x2='hello';
+        console.log(model);
+    }
+    onBeforeFirstRender(){
+        // console.log(this);
+    }
+    onBeforeRender(model){
+        if(!this.props || !this.props.$data){
+            return;
         }
+        for(let k of Object.keys(this.props.$data)){
+            model[k] = this.props.$data[k];
+        }
+        delete this.props.$data
     }
 }
 

@@ -35,12 +35,10 @@ export class ModuleA extends Module{
         x2:0
     }
 
-    methods = {
-        onBeforeFirstRender(){
-            console.log(this);
-        },
-        changeX2(dom,module){
-            this.x2 = 'hahaha'
-        }
+    onBeforeFirstRender(){
+        console.log(this);
+    }
+    changeX2(dom,module){
+        this.x2 = 'hahaha'
     }
 }

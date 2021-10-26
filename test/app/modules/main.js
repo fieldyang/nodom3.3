@@ -25,37 +25,35 @@ export class ModuleMain extends Module{
         `
     }
     data = {
-            show:true,
-            x:{
-                y:123
-            },
-            y:'hello',
-            name:'yanglei',
-            rows:[
-                {name:'yang'},
-                {name:'lei'},
-            ]
-        }
-    
-    methods = {
-        getData(){
-            // return {
-            //     x1:'x.y',
-            //     x2:['y',true]
-            // }
-            return{
-                n:'name',
-                x1:'x.y',
-                x2:['y',true]
-            }
+        show:true,
+        x:{
+            y:123
         },
-        change(){
-            this.show = false;
-            this.y = 'aaaa';
-            // console.log(this);
-        }
-        
+        y:'hello',
+        name:'yanglei',
+        rows:[
+            {name:'yang'},
+            {name:'lei'},
+        ]
     }
+    
+    getData(){
+        // return {
+        //     x1:'x.y',
+        //     x2:['y',true]
+        // }
+        return{
+            n:'name',
+            x1:'x.y',
+            x2:['y',true]
+        }
+    }
+    change(){
+        this.show = false;
+        this.y = 'aaaa';
+        // console.log(this);
+    }
+    
     modules = [ModuleA]
     
 }

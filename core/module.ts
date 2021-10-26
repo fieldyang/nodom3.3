@@ -35,7 +35,7 @@ export class Module {
      * 事件参数: model(当前按钮对应model),dom(事件对应虚拟dom),eventObj(事件对象),e(实际触发的html event)
      * 表达式方法：参数按照表达式方式给定即可
      */
-    public methods: any;
+    // public methods: any;
 
     /**
      * 子模块类集合，模版中引用的模块类需要声明
@@ -119,7 +119,7 @@ export class Module {
     constructor() {
         this.id = Util.genId();
         this.objectManager = new ObjectManager(this);
-        this.methods = {};
+        // this.methods = {};
         this.state = 0;
         this.changedModelMap = new Map();
         //加入模块工厂
@@ -369,24 +369,7 @@ export class Module {
      * @returns     方法
      */
     public getMethod(name: string): Function {
-        return this.methods[name];
-    }
-
-    /**
-     * 添加方法
-     * @param name  方法名
-     * @param foo   方法函数
-     */
-    public addMethod(name: string, foo: Function) {
-        this.methods[name] = foo;
-    }
-
-    /**
-     * 移除方法
-     * @param name  方法名
-     */
-    public removeMethod(name: string) {
-        delete this.methods[name];
+        return this[name];
     }
 
     /**
@@ -402,7 +385,7 @@ export class Module {
      * @param methodName    方法名
      */
     public invokeMethod(methodName: string,arg1?:any,arg2?:any,arg3?:any) {
-        let foo = this.getMethod(methodName);
+        let foo = this[methodName];
         if (foo && typeof foo === 'function') {
             let args = [];
             for(let i=1;i<arguments.length;i++){

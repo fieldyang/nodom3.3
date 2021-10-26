@@ -18,14 +18,13 @@ export class ModuleB extends Module{
         x2:0
     }
 
-    methods = {
-        onBeforeFirstRender(){
-            // console.log(this);
-        },
-        changeX2(model,dom){
-            // console.log(this);
-            model.x2 = 'hahaha'
-        }
+    
+    onBeforeFirstRender(){
+        // console.log(this);
+    }
+    changeX2(model,dom){
+        // console.log(this);
+        model.x2 = 'hahaha'
     }
 
     modules = [ModuleC]

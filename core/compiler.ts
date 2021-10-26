@@ -95,7 +95,7 @@ export class Compiler {
                     }
                     //当前节点及其子节点同时作为孩子节点
                     let tobj = tagObjs.pop();
-                    chds = tobj.children.concat(chds);
+                    chds = (tobj.children||[]).concat(chds);
                     chds.unshift(tobj);
                 }
                 //找到节点
@@ -133,7 +133,11 @@ export class Compiler {
                     tagObjs.push(dom);
                 }else{ //自闭合，直接作为前一个的孩子节点
                     if(tagObjs.length>0){
-                        tagObjs[tagObjs.length-1].children.push(dom);
+                        if(tagObjs[tagObjs.length-1].children){
+                            tagObjs[tagObjs.length-1].children.push(dom);
+                        }else{
+                            tagObjs[tagObjs.length-1].children = [dom];
+                        }
                     }
                 }
                 //设置根节点
