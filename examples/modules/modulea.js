@@ -45,6 +45,13 @@ export class ModuleA extends Module{
     }
 
     methods = {
+<<<<<<< HEAD
+        onBeforeFirstRender(){
+            console.log(this);
+        },
+        changeX2(model,dom,){
+            model.x2 = 'hahaha'
+=======
         changeX2(model){
             model.x2='hello';
             console.log(model);
@@ -60,6 +67,7 @@ export class ModuleA extends Module{
                 model[k] = this.props.$data[k];
             }
             delete this.props.$data
+>>>>>>> 7f23f804704351135f6c900ed982ade3ed659656
         }
     }
 }

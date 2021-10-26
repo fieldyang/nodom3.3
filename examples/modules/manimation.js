@@ -3,7 +3,6 @@ export class MAnimation extends Module {
 	template() {
 		return `
             <div>
-
                 <h1>基础用法</h1>
                 <p> 你需要为x-animation指令指定一个对象，其中包括name和tigger </p>
                 <p>name 为你过渡的类名，tigger为你过渡的触发条件</p>
