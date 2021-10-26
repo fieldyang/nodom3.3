@@ -1,10 +1,11 @@
 import { DirectiveManager } from "./directivemanager";
 import { DirectiveType } from "./directivetype";
-import { Element } from "./element";
+import { VirtualDom } from "./virtualdom";
 import { Module } from "./module";
 import { Util } from "./util";
 import { Expression } from "./expression";
-import { GlobalCache } from "./globalcache";
+import { NError } from "./error";
+import { NodomMessage } from "./nodom";
 
 /**
  * 指令类
@@ -28,35 +29,51 @@ export  class Directive {
     /**
      * 表达式id
      */
-    public expression:number;
+    public expression:Expression;
 
-    
+    /**
+     * 禁用
+     */
+    public disabled:boolean;
     /**
      * 构造方法
      * @param type  	类型名
      * @param value 	指令值
      */
-    constructor(type:string,value:string|Expression) {
+    constructor(type?:string,value?:string|Expression) {
         this.id = Util.genId();
-        this.type = DirectiveManager.getType(type);
+        if(type){
+            this.type = DirectiveManager.getType(type);
+            if(!this.type){
+                throw new NError('notexist1',NodomMessage.TipWords['directive'],type);
+            }
+        }
+        
         if (Util.isString(value)) {
             this.value = (<string>value).trim();
         }else if(value instanceof Expression){
-            this.expression = value.id;
+            this.expression = value;
         }else{
             this.value = value;
         }
-        //存入指令缓存
-        GlobalCache.saveDirective(this);
     }
 
     /**
      * 执行指令
      * @param module    模块
-     * @param dom       dom节点
+     * @param dom       渲染目标节点对象
+     * @param src       源节点
+     * @returns         true/false
      */
-    public exec(module:Module,dom:Element) {
-        this.type.handle.apply(this,[module,dom]);
+    public exec(module:Module,dom:any,src:VirtualDom):boolean {
+        //禁用，不执行
+        if(this.disabled){
+            return true;
+        }
+        if(this.expression){
+            this.value = this.expression.val(module,dom.model);
+        }
+        return this.type.handle.apply(this,[module,dom,src]);
     }
 
     /**
@@ -66,7 +83,7 @@ export  class Directive {
      * @param name      参数名
      * @param value     参数值
      */
-    public setParam(module:Module,dom:Element,name:string,value:any){
+    public setParam(module:Module,dom:VirtualDom,name:string,value:any){
         module.objectManager.setDirectiveParam(this.id,dom.key,name,value);
     }
 
@@ -77,7 +94,7 @@ export  class Directive {
      * @param name      参数名
      * @returns         参数值
      */
-    public getParam(module:Module,dom:Element,name:string){
+    public getParam(module:Module,dom:VirtualDom,name:string){
         return module.objectManager.getDirectiveParam(this.id,dom.key,name);
     }
 
@@ -87,7 +104,18 @@ export  class Directive {
      * @param dom       指令对应的虚拟dom
      * @param name      参数名
      */
-    public removeParam(module:Module,dom:Element,name:string){
+    public removeParam(module:Module,dom:VirtualDom,name:string){
         module.objectManager.removeDirectiveParam(this.id,dom.key,name);
+    }
+
+    /**
+     * 克隆
+     */
+    public clone():Directive{
+        let d = new Directive();
+        d.type = this.type;
+        d.expression = this.expression;
+        d.value = this.value;
+        return d;
     }
 }

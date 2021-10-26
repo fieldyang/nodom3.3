@@ -5,20 +5,20 @@ export class ModuleC extends Module{
         return `
             <div>
                 <div>这是子模块C</div>
-                <slot></slot>
+                <slot innerRender></slot>
             </div>
         `
         
     }
     data = {
-        name:'yang',
+        name:'modulec',
         x1:0,
         x2:0
     }
 
     methods = {
         onBeforeFirstRender(){
-            console.log(this);
+            // console.log(this);
         },
         changeX2(dom,module){
             console.log(this);

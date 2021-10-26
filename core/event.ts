@@ -1,4 +1,4 @@
-import { Element } from "./element";
+import { VirtualDom } from "./virtualdom";
 import { GlobalCache } from "./globalcache";
 import { Model } from "./model";
 import { Module } from "./module";
@@ -133,7 +133,7 @@ export class NEvent {
      * @param name      参数名
      * @param value     参数值
      */
-    public setParam(module:Module,dom:Element,name: string, value: any) {
+    public setParam(module:Module,dom:VirtualDom,name: string, value: any) {
         module.objectManager.setEventParam(this.id,dom.key,name,value);
     }
 
@@ -144,7 +144,7 @@ export class NEvent {
      * @param name      参数名
      * @returns         参数值
      */
-    public getParam(module:Module,dom:Element,name: string) {
+    public getParam(module:Module,dom:VirtualDom,name: string) {
         return module.objectManager.getEventParam(this.id,dom.key,name);
     }
 
@@ -154,7 +154,7 @@ export class NEvent {
      * @param dom       虚拟dom
      * @param name      参数名
      */
-    public removeParam(module:Module,dom:Element,name: string) {
+    public removeParam(module:Module,dom:VirtualDom,name: string) {
         return module.objectManager.removeEventParam(this.id,dom.key,name);
     }
     /**
@@ -162,7 +162,7 @@ export class NEvent {
      * @param module    模块
      * @param dom       虚拟dom
      */
-    public clearParam(module:Module,dom:Element){
+    public clearParam(module:Module,dom:VirtualDom){
         module.objectManager.clearEventParam(this.id,dom.key);
     }
 }

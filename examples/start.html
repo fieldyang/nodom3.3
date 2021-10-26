@@ -17,6 +17,8 @@
                     <div>
 					    <p nid={{id}}>hello <span class='name'>hello:{{name}} hahaha</span></p>
                         <p>age is:<span class='age'>{{age}}</span></p>
+						<p nid={{id}}><span class='name'>hello1:{{name1}} hahaha</span></p>
+                        <p>age1 is:<span class='age'>{{age1}}</span></p>
 						<p p1 =  123 p2=p3='abc' v='hello world'>salary is:<span class='age'>{{Math.round(salary)}}</span></p>
 						<h3>html 转义字符</h3>
 						<p p1>x &amp;y &copy;nodom &nbsp;&nbsp;noomi</p>
@@ -32,42 +34,35 @@
  
 						</pre>
                         <button e-click='change'>change</button>
-						<style>
-							@import url(css/a.css);
-							.name{ 
-								color:green
-							}
-							.age{
-								font-size:16px;
-								color:blue
-							}
-						</style>
+						<button e-click='change1'>change1</button>
                     </div>
 				`
 			}
 			data={
 				name:'nodom',
                 age:3,
+				name1:'yang',
+				age1:43,
 				id:1,
 				salary:3000.25
 			}
 
             methods = {
-                change(){
-					console.log('ddd');
-                    this.name='nodom3';
-                    this.age = 1;
-                }
+                change(model){
+					model.name='nodom3';
+                    model.age = 1;
+                },
+				change1(model){
+					model.name1='nodom3.2';
+                    model.age1 = 0.5;
+				}
             } 
             
 		}
     	nodom(Module1,'div');
 		console.log(document.querySelector('div').textContent);
 	</script>
-<<<<<<< HEAD
 
 
 </html>
-=======
-</html>
->>>>>>> 82f8a2ab4af1ad276a3753f5ac6128cd0aa51fc0
+

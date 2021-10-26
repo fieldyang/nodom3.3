@@ -62,17 +62,7 @@
 							<span class="{{cls}}">{{title}}</span>
 							<recur ref/>
 						</div>
-						
 						<h3>递归带repeat</h3>
-						<!-- <for cond={{ritem2}}>
-							<div class='first'>first id is:{{id}}-{{title}}</div>
-							<recur cond='items' name='r1' class='secondct'>
-								<for cond={{items}} >
-									<div class='second'>id is:{{id}}-{{title}}</div>
-									<recur ref='r1' />
-								</for>
-							</recur>
-						</for> -->
 						<div x-model='ritem2'>
 							<recur cond='items' name='r1' class='secondct'>
 								<for cond={{items}} >
@@ -119,18 +109,21 @@
 								id:1,
 								title:'aaa1',
 								items:[
+									{title:'aaa12',id:12},
 									{title:'aaa11',id:11,items:[
 										{title:'aaa111',id:111},
 										{title:'aaa112',id:112}
 									]},
-									{title:'aaa12',id:12},
 									{title:'aaa13',id:13}
 								]},{
 								title:'aaa2',
 								id:2,
 								items:[
 									{title:'aaa21',id:21,items:[
-										{title:'aaa211',id:211},
+											{title:'aaa211',id:211,items:[
+											{title:'aaa2111',id:111},
+											{title:'aaa2112',id:112}
+										]},
 										{title:'aaa212',id:212},
 									]},
 									{title:'aaa22',id:22}
@@ -159,7 +152,6 @@
 			}
 			methods = {
 				change(model){
-					console.log(model);
 					model.ritem2.items[0].items[1].title='hahaha';
 					model.ritem.ritem.title='hahaha';
 				}

@@ -62,13 +62,13 @@
 					this.show = !this.show;
 					this.sum();
 				},
-				change:function(dom,module,evo,e){
-					this.edus.push({
+				change:function(model,dom,evo,e){
+					model.edus.push({
 						eduId:5,eduName:'博士后'
 					})
 				},
-				change1:function(dom,module,evo,e){
-					this.edus[0].eduName = '幼儿园';
+				change1:function(model,dom,evo,e){
+					model.edus[0].eduName = '幼儿园';
 					
 				}
 			}

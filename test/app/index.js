@@ -1,1 +1,3 @@
-import { ModuleFactory } from "../../dist/nodom.js";
+let s = `           
+                `
+console.log(/^[\s\n\r\t\v]+$/.test(s));

@@ -1,18 +1,10 @@
-import { ModuleFactory } from "../index";
 import { ModelManager } from "./modelmanager";
 import { Module } from "./module";
 import { Util } from "./util";
 /**
  * 模型类
  */
-
-
 export class Model {
-    /**
-     * 模块id
-     */
-    public $moduleId: number;
-
     /**
      * model key
      */
@@ -22,9 +14,8 @@ export class Model {
      * @param module 	模块对象
      * @returns         模型代理对象
      */
-    constructor(data: any, module: Module) {
+    constructor(data: any, module?: Module) {
         //模型管理器
-        let mm: ModelManager = module.modelManager;
         let proxy = new Proxy(data, {
             set: (src: any, key: string, value: any, receiver: any) => {
                 //值未变,proxy 不处理
@@ -35,13 +26,10 @@ export class Model {
                 if (['__proto__', 'constructor'].includes(<string>key)) {
                     return true;
                 }
-                const excArr = ['$watch', "$moduleId", "$set","$get", "$key", "$index"];
-                //不进行赋值
-                if (typeof value !== 'object' || (value === null || !value.$watch)) {
-                    //更新渲染
-                    if (excArr.indexOf(key) == -1) {
-                        mm.update(proxy, key, src[key], value);
-                    }
+                const excArr = ["$key"];
+                //非对象，null，非model更新渲染
+                if(typeof value !== 'function' && excArr.indexOf(key) === -1){
+                    ModelManager.update(proxy, key, src[key], value);
                 }
                 return Reflect.set(src, key, value, receiver);
             },
@@ -49,9 +37,9 @@ export class Model {
                 let res = Reflect.get(src, key, receiver);
                 //数组的sort和fill触发强行渲染
                 if(Array.isArray(src) && ['sort','fill'].indexOf(<string>key) !== -1){ //强制渲染
-                    mm.update(proxy,null,null,null,true);
+                    ModelManager.update(proxy,null,null,null,true);
                 }
-                let data = mm.getFromDataMap(src[key]);
+                let data = ModelManager.getFromDataMap(src[key]);
                 if (data) {
                     return data;
                 }
@@ -59,7 +47,7 @@ export class Model {
                 if (res !== null && typeof res === 'object') {
                     //如果是对象，则返回代理，便于后续激活get set方法                   
                     //判断是否已经代理，如果未代理，则增加代理
-                    if (!src[key].$watch) {
+                    if (!src[key].$key) {
                         let p = new Model(res, module);
                         return p;
                     }
@@ -68,24 +56,27 @@ export class Model {
             },
             deleteProperty: function (src: any, key: any) {
                 //如果删除对象，从mm中同步删除
-                if (src[key] != null && typeof src[key] === 'object') {
-                    mm.delToDataMap(src[key]);
-                    mm.delModelToModelMap(src[key]);
+                if (src[key] !== null && typeof src[key] === 'object') {
+                    ModelManager.delFromDataMap(src[key]);
+                    ModelManager.delModel(src[key]);
                 }
                 delete src[key];
+                ModelManager.update(proxy,key,null,null,true);
                 return true;
             }
         });
         proxy.$watch = this.$watch;
-        proxy.$moduleId = module.id;
         proxy.$get = this.$get;
         proxy.$set = this.$set;
         proxy.$key = Util.genId();
-        mm.addToDataMap(data, proxy);
-        mm.addModelToModelMap(proxy, data);
+        ModelManager.addToDataMap(data, proxy);
+        ModelManager.addModel(proxy, data);
+        //绑定到模块
+        if(module){
+            ModelManager.bindToModule(proxy,module);
+        }
         return proxy;
     }
-
 
     /**
      * 观察(取消观察)某个数据项
@@ -104,11 +95,10 @@ export class Model {
         if (!model) {
             return;
         }
-        const mod = ModuleFactory.get(this.$moduleId);
         if (cancel) {
-            mod.modelManager.removeWatcherFromModelMap(model, key, operate);
+            ModelManager.removeWatcher(model, key, operate);
         } else {
-            mod.modelManager.addWatcherToModelMap(model, key, operate);
+            ModelManager.addWatcher(model, key, operate);
         }
     }
     /**
@@ -138,18 +128,26 @@ export class Model {
      * 设置值
      * @param key       子属性，可以分级，如 name.firstName
      * @param value     属性值
+     * @param module    需要绑定的新模块
      */
-    $set(key:string,value:any){
+    $set(key:string,value:any,module?:Module){
         let model: Model = this;
+        let mids = ModelManager.getModuleIds(this);
         if (key.indexOf('.') !== -1) {    //层级字段
             let arr = key.split('.');
             for (let i = 0; i < arr.length - 1; i++) {
                 //不存在，则创建新的model
                 if (!model[arr[i]]) {
-                    model[arr[i]] = new Model({},ModuleFactory.get(this.$moduleId));
+                    let m = new Model({});
+                    ModelManager.bindToModules(m,mids);
+                    model[arr[i]] = m;
                 }
             }
             key = arr[arr.length - 1];
+        }
+        //绑定model到模块
+        if(typeof value === 'object' && module){
+            ModelManager.bindToModule(value,module);
         }
         model[key] = value;
     }

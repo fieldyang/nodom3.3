@@ -1,10 +1,9 @@
 import { DirectiveElementManager } from "./directiveelementmanager";
 import { Directive } from "./directive";
-import { Element } from "./element";
+import { VirtualDom } from "./virtualdom";
 import { NError } from "./error";
 import { NEvent } from "./event";
 import { Expression } from "./expression";
-import { GlobalCache } from "./globalcache";
 import { Module } from "./module";
 import { ModuleFactory } from "./modulefactory";
 
@@ -19,6 +18,10 @@ export class Compiler {
      */
     private module:Module;
 
+    /**
+     * 构造器
+     * @param module 
+     */
     constructor(module:Module){
         this.elementId = 0;
         this.module = module;
@@ -28,7 +31,7 @@ export class Compiler {
     * @param elementStr     待编译html串
     * @returns              虚拟dom
     */
-    public compile(elementStr: string): Element {
+    public compile(elementStr: string): VirtualDom {
         return this.compileTemplate(elementStr);
     }
 
@@ -37,15 +40,13 @@ export class Compiler {
      * @param srcStr    源串
      * @returns         
      */
-    private compileTemplate(srcStr:string):Element{
-        const me = this;
+    private compileTemplate(srcStr:string):VirtualDom{
         // 清理comment
         let regExp = /\<\!\-\-[\s\S]*?\-\-\>/g;
         srcStr = srcStr.replace(regExp,'');
         //不可见字符正则式
         const regSpace = /^[\s\n\r\t\v]+$/;
         // 1 识别标签
-        // regExp = /(?<!\{\{[^<}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^>{{]*?\}\})/g;
         regExp = /(?<!{{[^}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^{{]*}})/g;
         let st = 0;
         //标签串数组,含开始和结束标签
@@ -72,9 +73,9 @@ export class Compiler {
         // 标签名数组
         let tagNames = [];
         // 标签对象数组
-        let tagObjs:Element[] = [];
+        let tagObjs:VirtualDom[] = [];
         // 根节点
-        let root:Element;
+        let root:VirtualDom;
         tagStack.forEach((tag,ii)=>{
             //开始标签名
             let stg;
@@ -101,10 +102,10 @@ export class Compiler {
                 if(stg === etg){
                     // 添加到父节点
                     let po = tagObjs.pop();
-                    po.children = po.children.concat(chds);
+                    po.children = (po.children||[]).concat(chds);
                     this.handleSlot(po);
                     if(tagObjs.length>0){
-                        tagObjs[tagObjs.length-1].children.push(po);
+                        tagObjs[tagObjs.length-1].add(po);
                     }
                     if(isPreTag && etg === 'pre'){
                         isPreTag = false;
@@ -123,7 +124,7 @@ export class Compiler {
                 }
                 //前一个文本节点存在，则作为前一个节点的孩子
                 if(ii>0 && textStack[ii] !== ''){
-                    tagObjs[tagObjs.length-1].children.push(this.handleText(textStack[ii]));
+                    tagObjs[tagObjs.length-1].add(this.handleText(textStack[ii]));
                     textStack[ii] = '';
                 }
                 if(!tag.endsWith('\/>')){ // 非自闭合
@@ -155,7 +156,7 @@ export class Compiler {
      */
     private handleTag(tagStr:string):any{
         const me = this;
-        let ele:Element;
+        let ele:VirtualDom;
         //字符串和表达式替换
         const reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|({{[\S\s]*?\}{0,2}\s*}})|([\w$-]+(\s*=)?)/g;
         let pName:string;
@@ -163,6 +164,7 @@ export class Compiler {
         let tagName:string;
         let startValue:boolean;
         let r:RegExpExecArray;
+        let allModelField:boolean = true;
         //属性名正则式
         const regName = /[a-zA-Z$_]\S*/;
         while((r=reg.exec(tagStr))!==null){
@@ -170,7 +172,7 @@ export class Compiler {
             if(regName.test(s)){ //属性名
                 if(!tagName){
                     tagName = s;
-                    ele = new Element(tagName,me.genKey());
+                    ele = new VirtualDom(tagName,me.genKey());
                 }else if(s.endsWith('=')) { //带等号
                     if(pName){  //前一个属性名存在，设置空值
                         setValue();
@@ -196,6 +198,7 @@ export class Compiler {
         //后置处理
         this.postHandleNode(ele);
         ele.sortDirective();
+        ele.allModelField = allModelField;
         return [ele,tagName];
 
         /**
@@ -211,8 +214,8 @@ export class Compiler {
                 }
                 //表达式编译
                 if(/^\{\{[\S\s]*\}\}$/.test(value)){
-                    value = me.compileExpression(value)[0];
-                    value = GlobalCache.getExpression(value);
+                    value = me.compileExpression(value,ele)[0];
+                    allModelField = value.allModelField;
                 }
             }
             //指令
@@ -233,16 +236,16 @@ export class Compiler {
      * 处理模块子节点为slot节点
      * @param dom   dom节点
      */
-    private handleSlot(dom:Element){
+    private handleSlot(dom:VirtualDom){
         if(dom.hasDirective('module')){ //po为子模块，其所有子模块判断是否加上slot
-            let slotCt:Element;
+            let slotCt:VirtualDom;
             for(let j=0;j<dom.children.length;j++){
                 let c = dom.children[j];
-                if(c.hasDirective('slot')){
+                if(c.hasDirective('slot')){ //带slot的不处理
                     continue;
                 }
-                if(!slotCt){
-                    slotCt = new Element('div',this.genKey());
+                if(!slotCt){//第一个直接被slotCt替换
+                    slotCt = new VirtualDom('div',this.genKey());
                     slotCt.addDirective(new Directive('slot',null));
                     //当前位置，用slot替代
                     dom.children.splice(j,1,slotCt);
@@ -260,10 +263,10 @@ export class Compiler {
      * @param txt 文本串
      */
     private handleText(txt:string) {
-        let ele = new Element(null,this.genKey());
+        let ele = new VirtualDom(null,this.genKey());
         txt = this.preHandleText(txt);
         if(/\{\{[\s\S]+\}\}/.test(txt)){  //检查是否含有表达式
-            ele.expressions = <any[]>this.compileExpression(txt);
+            ele.expressions = <any[]>this.compileExpression(txt,ele);
         }else{
             ele.textContent = txt;
         }
@@ -274,7 +277,7 @@ export class Compiler {
      * @param exprStr   含表达式的串
      * @return          处理后的字符串和表达式数组
      */
-    public compileExpression(exprStr: string):string|any[]{
+    public compileExpression(exprStr: string,dom:VirtualDom):string|any[]{
         if(!exprStr){
             return;
         }
@@ -291,8 +294,9 @@ export class Compiler {
             }
             //实例化表达式对象
             let exp = new Expression(this.module,re[0].substring(2, re[0].length - 2));
+            dom.allModelField = exp.allModelField;
             //加入数组
-            retA.push(exp.id);
+            retA.push(exp);
             oIndex = ind + re[0].length;
         }
         //最后的字符串
@@ -307,7 +311,7 @@ export class Compiler {
      * 包括：模块类元素、自定义元素
      * @param node  虚拟dom节点
      */
-    private postHandleNode(node:Element){
+    private postHandleNode(node:VirtualDom){
         // 模块类判断
         if (ModuleFactory.hasClass(node.tagName)) {
             node.addDirective(new Directive('module',node.tagName));

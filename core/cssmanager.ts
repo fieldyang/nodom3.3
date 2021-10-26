@@ -1,5 +1,5 @@
 import {Module} from "./module";
-import {Element} from "./element";
+import {VirtualDom} from "./virtualdom";
 /**
  * css 管理器
  * 针对不同的rule，处理方式不同
@@ -23,20 +23,29 @@ export class CssManager{
      */
     private static importIndex = 0;
 
+    /**
+     * css class 前置名
+     */
     private static cssPreName = '___nodommodule___';
-
     
     /**
      * 处理style 元素
-     * @param module 
-     * @param dom 
-     * @returns 
+     * @param module    模块
+     * @param dom       虚拟都没
+     * @param root      模块root dom
+     * @param add       是否添加
+     * @returns         如果是styledom，则返回true，否则返回false
      */
-    public static handleStyleDom(module:Module,dom:Element){
-        if(!dom || dom.tagName.toLowerCase() !== 'style' || dom.getProp('scope') !== 'this'){
-            return;
+    public static handleStyleDom(module:Module,dom:VirtualDom,root:VirtualDom,add?:boolean):boolean{
+        if(dom.tagName.toLowerCase() !== 'style'){
+            return false;
         }
-        module.renderTree.addClass(this.cssPreName + module.id);
+        if(add){
+            root.addClass(this.cssPreName + module.id);
+        }else{
+            root.removeClass(this.cssPreName + module.id);
+        }
+        return true;
     }
 
     /**
@@ -45,19 +54,12 @@ export class CssManager{
      * @param dom       style text element
      * @returns         true:style text节点,false:非style text节点
      */
-    public static handleStyleTextDom(module:Module,dom:Element):boolean{
-        if(!dom.parent || dom.parent.tagName.toLowerCase() !== 'style'){
+    public static handleStyleTextDom(module:Module,dom:any):boolean{
+        if(dom.parent.tagName.toLowerCase() !== 'style'){
             return false;
         }
         //scope=this，在模块根节点添加 限定 class
-        const preName = dom.parent.getProp('scope') === 'this'?this.cssPreName + module.id:undefined;
-        let pre;
-        if(preName){
-            module.renderTree.addClass(preName);
-            pre = '.' + preName;
-        }
-        
-        CssManager.addRules(module,dom.textContent,pre);
+        CssManager.addRules(module,dom.textContent,dom.parent.getProp('scope') === 'this'?'.' + this.cssPreName + module.id:undefined);
         return true;
     }
 

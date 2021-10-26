@@ -2,6 +2,7 @@ import {Module} from '../../dist/nodom.js'
 import {ModuleA} from './modulea.js'
 import {ModuleB} from './moduleb.js'
 import {ModuleC} from './modulec.js'
+import {ModuleD} from './moduled.js'
 export class ModuleMain extends Module{
     template(){
         return `
@@ -10,46 +11,40 @@ export class ModuleMain extends Module{
                 <div>y is {{y}}</div>
                 <div>x.y is {{x.y}}</div>
                 <h2>默认slot</h2>
-                <p>第一个子模块</p> 
-                <!--<mod-a p1='true' xxx='111'>
-                    <mod-b p2='false'>
-                         <modc>
-                            <div>hahaha</div>
+                
+                <p>第一个子模块</p>
+                <mod-a p1=1 xxx='111'>
+                    <mod-b p2='false' xxx='222'>
+                        <modc>
+                            <div>name is:{{name}}</div>
                         </modc>
                     </mod-b>
-                <slot>
-                        <h3 style='color:blue'> hello change plug 1</h3>    
-                    </slot>
-                    <slot name='s2'>替换的第二个slot  {{name}}</slot>
-                
+                    <slot name='s2'><p  style='color:red'>替换的第二个slot  {{name}}</p></slot>
                 </mod-a>
-    -->
-    
+                
                 <hr/>
                 <p>第二个子模块</p>
                 <h2>替换plug</h2>
-                <ModuleA x-data={{{'..yyy':'xxx',n:'name',x1:'x.y',x2:['y',true]}}} xxx='222'>
+                <ModuleA $yyy={{xxx}} $n={{name}} $x1={{x.y}} $x2={{y}} xxx='222'>
                     <slot>
                         <h3 style='color:red'> hello change plug 2</h3>    
                     </slot>
-                    
+                    <slot name='s2'>替换的第二个slot  {{name}}</slot>
                 </ModuleA> 
-            <!--
+                
                 <p>第三个子模块</p>
                 <h2>默认子节点自动转换为slot节点</h2>
                 <ModuleA xxx='333'>
-                    
-                    <p style='color:gold'>
-                        我自动作为solot节点
-                    </p>
                     <h3 style='color:gold'>
                         我自动作为solot节点
                     </h3>
-                    <slot>hahaha</slot>
-                </ModuleA>-->
-
-                <mod-a temp={{genTemp(show)}}>
-                </mod-a>
+                </ModuleA>
+                <h2>传递模版</h2>
+                <mod-a temp={{genTemp(show)}} />
+                
+                <h3>repeat module</h3>
+                <mod-d x-repeat={{rows}} />
+                
            </div>
         `
     }
@@ -94,8 +89,6 @@ export class ModuleMain extends Module{
                 <div>name is: {{name}}</div>
             `
         }
-        
     }
     // modules = [ModuleA,ModuleB,ModuleC]
-    
 }

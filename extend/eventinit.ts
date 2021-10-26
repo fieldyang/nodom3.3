@@ -1,17 +1,17 @@
 import { NEvent } from "../core/event";
 import { Module } from "../core/module";
-import { Element } from "../core/element";
+import { VirtualDom } from "../core/virtualdom";
 import { EventManager } from "../core/eventmanager";
 
 /**
  * tap事件
  */
 EventManager.regist('tap',{
-    touchstart(dom:Element,module:Module,evtObj:NEvent,e: TouchEvent) {
+    touchstart(dom:VirtualDom,module:Module,evtObj:NEvent,e: TouchEvent) {
         let tch = e.touches[0];
         evtObj.dependEvent.setParam(module,dom,'pos', { sx: tch.pageX, sy: tch.pageY, t: Date.now() });
     },
-    touchmove(dom:Element,module:Module,evtObj:NEvent,e: TouchEvent) {
+    touchmove(dom:VirtualDom,module:Module,evtObj:NEvent,e: TouchEvent) {
         let pos = evtObj.dependEvent.getParam(module,dom,'pos');
         if(!pos){
             return;
@@ -24,7 +24,7 @@ EventManager.regist('tap',{
             pos.move = true;
         }
     },
-    touchend(dom:Element,module:Module,evtObj:NEvent,e: TouchEvent) {
+    touchend(dom:VirtualDom,module:Module,evtObj:NEvent,e: TouchEvent) {
         let pos = evtObj.dependEvent.getParam(module,dom,'pos');
         if(!pos){
             return;
@@ -49,7 +49,7 @@ EventManager.regist('tap',{
  * swipe事件
  */
  EventManager.regist('swipe',{
-    touchstart(dom:Element,module:Module,evtObj:NEvent,e: TouchEvent){
+    touchstart(dom:VirtualDom,module:Module,evtObj:NEvent,e: TouchEvent){
         let tch = e.touches[0];
         let t = Date.now();
         evtObj.dependEvent.setParam(module,dom,'swipe', {
@@ -58,7 +58,7 @@ EventManager.regist('tap',{
             oldLoc: { x: tch.pageX, y: tch.pageY }
         });
     },
-    touchmove(dom:Element,module:Module,evtObj:NEvent,e: TouchEvent){
+    touchmove(dom:VirtualDom,module:Module,evtObj:NEvent,e: TouchEvent){
         let nt = Date.now();
         let tch = e.touches[0];
         let mv = evtObj.dependEvent.getParam(module,dom,'swipe');
@@ -71,7 +71,7 @@ EventManager.regist('tap',{
         }
         mv.oldLoc = { x: tch.pageX, y: tch.pageY };
     },
-    touchend(dom:Element,module:Module,evtObj:NEvent,e: any){
+    touchend(dom:VirtualDom,module:Module,evtObj:NEvent,e: any){
         let mv = evtObj.dependEvent.getParam(module,dom,'swipe');
         let nt = Date.now();
 

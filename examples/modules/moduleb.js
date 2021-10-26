@@ -6,6 +6,7 @@ export class ModuleB extends Module{
         return `
             <div>
                 <div>这是子模块B</div>
+                <p>模块B的内容</p>
                 <slot>haha slot b</slot>
             </div>
         `
@@ -19,11 +20,19 @@ export class ModuleB extends Module{
 
     methods = {
         onBeforeFirstRender(){
+<<<<<<< HEAD
             console.log(this);
         },
         changeX2(dom,module){
             console.log(this);
             this.x2 = 'hahaha'
+=======
+            // console.log(this);
+        },
+        changeX2(model,dom){
+            // console.log(this);
+            model.x2 = 'hahaha'
+>>>>>>> 7f23f804704351135f6c900ed982ade3ed659656
         }
     }
 

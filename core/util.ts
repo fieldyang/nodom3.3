@@ -1,6 +1,7 @@
 import { NError } from "./error";
+import { NEvent } from "./event";
 import { NodomMessage } from "./nodom";
-import { Element } from "./element";
+import { VirtualDom } from "./virtualdom";
 /**
  * 基础服务库
  * @since       1.0.0
@@ -67,6 +68,8 @@ export class Util {
         this.keyWordMap.set('with',true);
         this.keyWordMap.set('Array',true);
         this.keyWordMap.set('Date',true);
+        this.keyWordMap.set('Set',true);
+        this.keyWordMap.set('Map',true);
         this.keyWordMap.set('eval',true);
         this.keyWordMap.set('function',true);
         this.keyWordMap.set('Infinity',true);
@@ -105,7 +108,6 @@ export class Util {
     public static clone(srcObj: Object, expKey?: RegExp | string[], extra?: any): any {
         let me = this;
         let map: WeakMap<Object, any> = new WeakMap();
-        // let map: Map<Object, any> = new Map();
         return clone(srcObj, expKey, extra);
 
         /**
@@ -362,157 +364,19 @@ export class Util {
     }
 
 
-    /***********************对象相关******************/
-
-    /**
-     * 找到符合符合属性值条件的对象（深度遍历）
-     * @param obj       待查询对象
-     * @param props     属性值对象
-     * @param one       是否满足一个条件就可以，默认false
-     */
-    public static findObjByProps(obj: Object, props: Object, one: boolean): Array<Object> | Object {
-        if (!this.isObject(obj)) {
-            throw new NError('invoke', 'Util.findObjByProps', '0', 'Object');
-        }
-
-        //默认false
-        one = one || false;
-        let ps: Array<string> = this.getOwnProps(props);
-        let find: boolean = false;
-        if (one === false) {  //所有条件都满足
-            find = true;
-            for (let i = 0; i < ps.length; i++) {
-                let p = ps[i];
-                if (obj[p] !== props[p]) {
-                    find = false;
-                    break;
-                }
-            }
-        } else {              //一个条件满足
-            for (let i = 0; i < ps.length; i++) {
-                let p = ps[i];
-                if (obj[p] === props[p]) {
-                    find = true;
-                    break;
-                }
-            }
-        }
-        if (find) {
-            return obj;
-        }
-
-
-        //子节点查找
-        for (let p in obj) {
-            let o = obj[p];
-            if (o !== null) {
-                if (this.isObject(o)) {      //子对象
-                    //递归查找
-                    let oprops = this.getOwnProps(o);
-                    for (let i = 0; i < oprops.length; i++) {
-                        let item = o[oprops[i]];
-                        if (item !== null && this.isObject(item)) {
-                            let r = this.findObjByProps(item, props, one);
-                            if (r !== null) {
-                                return r;
-                            }
-                        }
-                    }
-                } else if (this.isArray(o)) { //数组对象
-                    for (let i = 0; i < o.length; i++) {
-                        let item = o[i];
-                        if (item !== null && this.isObject(item)) {
-                            let r = this.findObjByProps(item, props, one);
-                            if (r !== null) {
-                                return r;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    /**********dom相关***********/
-    /**
-     * 获取dom节点
-     * @param selector  选择器
-     * @param findAll   是否获取所有，默认为false
-     * @param pview     父html element
-     * @returns         html element/null 或 nodelist或[]
-     */
-    public static get(selector: string, findAll?: boolean, pview?: HTMLElement | Document): Node | NodeList {
-        pview = pview || document;
-        if (findAll === true) {
-            return pview.querySelectorAll(selector);
-        }
-        return pview.querySelector(selector);
-    }
-
-    /**
-     * 是否为element
-     * @param el    传入的对象
-     * @returns     true/false
-     */
-    public static isEl(el: any): boolean {
-        return el instanceof HTMLElement || el instanceof SVGElement;
-    }
-
-    /**
-     * 是否为node
-     * @param node 传入的对象
-     * @returns true/false
-     */
-    public static isNode(node: any): boolean {
-        return node !== undefined && node !== null && (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.DOCUMENT_FRAGMENT_NODE);
-    }
-
-    /**
-     * 新建dom
-     * @param tagName   标签名
-     * @param config    属性集合
-     * @param text      innerText
-     * @returns         新建的elelment
-     */
-    public static newEl(tagName: string, config?: Object, text?: string): HTMLElement {
-        if (!this.isString(tagName) || this.isEmpty(tagName)) {
-            throw new NError('invoke', 'this.newEl', '0', 'string');
-        }
-        let el = document.createElement(tagName);
-
-        if (this.isObject(config)) {
-            this.attr(el, config);
-        } else if (this.isString(text)) {
-            el.innerHTML = text;
-        }
-        return el;
-    }
-    /**
-     * 新建svg element
-     * @param tagName   标签名
-     * @returns         svg element
-     */
-    public static newSvgEl(tagName: string, config?: Object): SVGElement {
-        let el: SVGElement = document.createElementNS("http://www.w3.org/2000/svg", tagName);
-        if (this.isObject(config)) {
-            this.attr(el, config);
-        }
-        return el;
-    }
     /**
      * 把srcNode替换为nodes
      * @param srcNode       源dom
      * @param nodes         替换的dom或dom数组
      */
     public static replaceNode(srcNode: Node, nodes: Node | Array<Node>) {
-        if (!this.isNode(srcNode)) {
-            throw new NError('invoke', 'this.replaceNode', '0', 'Node');
-        }
+        // if (!this.isNode(srcNode)) {
+        //     throw new NError('invoke', 'this.replaceNode', '0', 'Node');
+        // }
 
-        if (!this.isNode(nodes) && !this.isArray(nodes)) {
-            throw new NError('invoke1', 'this.replaceNode', '1', 'Node', 'Node Array');
-        }
+        // if (!this.isNode(nodes) && !this.isArray(nodes)) {
+        //     throw new NError('invoke1', 'this.replaceNode', '1', 'Node', 'Node Array');
+        // }
         let pnode: Node = srcNode.parentNode;
         let bnode: Node = srcNode.nextSibling;
         if (pnode === null) {
@@ -528,75 +392,19 @@ export class Util {
             }
         });
     }
+    
     /**
      * 清空子节点
      * @param el
      */
     public static empty(el: HTMLElement) {
         const me = this;
-        if (!me.isEl(el)) {
-            throw new NError('invoke', 'this.empty', '0', 'Element');
-        }
         let nodes: NodeList = el.childNodes;
         for (let i = nodes.length - 1; i >= 0; i--) {
             el.removeChild(nodes[i]);
         }
     }
-    /**
-     * 删除节点
-     * @param node html node
-     */
-    public static remove(node: Node) {
-        const me = this;
-        if (!me.isNode(node)) {
-            throw new NError('invoke', 'this.remove', '0', 'Node');
-        }
-        if (node.parentNode !== null) {
-            node.parentNode.removeChild(node);
-        }
-    }
-
-
-    /**
-     * 获取／设置属性
-     * @param el    element
-     * @param param 属性名，设置多个属性时用对象
-     * @param value 属性值，获取属性时不需要设置
-     * @returns     属性值
-     */
-    public static attr(el, param: string | Object, value?: any): any {
-        const me = this;
-        if (!me.isEl(el)) {
-            throw new NError('invoke', 'this.attr', '0', 'Element');
-        }
-        if (this.isEmpty(param)) {
-            throw new NError('invoke', 'this.attr', '1', 'string', 'object');
-        }
-        if (value === undefined || value === null) {
-            if (this.isObject(param)) { //设置多个属性
-                this.getOwnProps(param).forEach(function (k) {
-                    if (k === 'value') {
-                        el[k] = param[k];
-                    } else {
-                        el.setAttribute(k, param[k]);
-                    }
-                });
-            } else if (this.isString(param)) { //获取属性
-                if (param === 'value') {
-                    return param[value];
-                }
-                return el.getAttribute(<string>param);
-            }
-        } else { //设置属性
-            if (param === 'value') {
-                el[<string>param] = value;
-            } else {
-                el.setAttribute(<string>param, value);
-            }
-        }
-    }
-
-
+    
     /******日期相关******/
     /**
      * 日期格式化
@@ -714,7 +522,7 @@ export class Util {
      * @param id    附加id
      * @param deep  是否深度处理
      */
-    public static setNodeKey(node:Element, id?:string,deep?:boolean){
+    public static setNodeKey(node:VirtualDom, id?:string,deep?:boolean){
         node.key += '_' + (id||Util.genId());
         if(deep && node.children){
             for(let c of node.children) {
@@ -722,6 +530,24 @@ export class Util {
             }
         }
     }
+
+    /**
+     * 给dom添加事件
+     * @param dom   dom节点
+     * @param ev    事件对象
+     */
+    public static addEvent(dom:any,ev:NEvent){
+        if(!dom.events){
+            dom.events = {};
+        }
+        if(!dom.events[ev.name]){
+            dom.events[ev.name] = [ev.id];
+        }else{
+            dom.events[ev.name].push(ev.id);
+        }
+    }
+
+    
 }
 
 //初始化keymap

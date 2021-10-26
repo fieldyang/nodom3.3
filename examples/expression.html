@@ -4,119 +4,135 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<title>expression</title>
-		<!-- <script type="text/javascript" src="../js/require.js"></script> -->
-		<script type="text/javascript" src="../dist/nodom.js"></script>
 
 		<style></style>
 	</head>
 
 	<body>
 		<div class="view">
-			<div>多级数据：{{ac.age.as}}</div>
-			<h2>数据计算</h2>
-			<div>价格：{{(Math.round((price * discount)))|currency + 'hello'}}</div>
-			<div>折扣：{{$cacDis(price*discount)}}</div>
-			<div>描述：{{30 +$addStr('hello' + desc) + 20}}</div>
-			<div>随机折扣:{{(Math.random()*price)|number:1}}</div>
-			<div>当前日期是:{{date1|date:'yyyy/MM/dd'}}</div>
-			<div>{{date1|date:'yyyy-MM-dd HH:mm:ss'}}</div>
-			<div>当前时间是:{{date1|date:'HH:mm:ss'}}</div>
-			<div x-if="Object.keys(goods).length>0">判断商品列表是否存在</div>
-			<div>路径：{{'/'+'path'+'/'+url}}</div>
-			排序过滤器：
-			<ul>
-				<li x-repeat="rows|orderby:name:desc">{{name}}'s address is {{addr}}</li>
-			</ul>
-			<div>{{!true}}</div>
-			<div>小数点位数过滤器：{{progress|number:1}}</div>
-			<div>转换为小写字母:{{name|tolowercase}}</div>
-			<div>转换为大写字母:{{name|touppercase}}</div>
-			<div>数组求和:{{$sum(...arr)}}</div>
-			<div>判断数组中有没有‘num’: <span x-if="new Set(arr).has(num)">true</span></div>
-			<div>价格求和: {{$sum(1,2)+price}}</div>
-			<div>
-				{{(new Date().getTime())|date:'yyyy-MM-dd'}} 是否工作日：<span x-if="new Date().getDay()<6"
-					>true</span
-				>
-			</div>
-			<div>货币过滤器：{{(price*discount)|currency:¥}}</div>
-			<div x-if="price>30 && discount !== undefined">是否是低价商品并且有部分折扣</div>
-			<div>计算：{{$cac(1,2)+ (Math.round((price * discount)))|number:1 + 1}}</div>
-			<div>instanceof用法:{{arr instanceof Array}}</div>
-			<div>{{num+1}}</div>
-			<hr />
-			<div>支持从数据中直接调用函数：{{sum($num,0)}}</div>
-			<div>三目运算：{{num>0?1:0}}</div>
-			{{desc}} {{this.state}}
 		</div>
 	</body>
-	<script>
-		nodom.app({
-			module: {
-				el: ".view",
-				data: {
-					rows: [
-						{
-							name: "yang",
-							addr: "chengdu",
-						},
-						{
-							name: "zhangs",
-							addr: "mianyang",
-						},
-						{
-							name: "NoDom",
-							addr: "luoyang",
-						},
-						{
-							name: "hallo",
-							addr: "beijing",
-						},
-					],
-					$num: 3,
-					progress: 1.321,
-					name: "kyle",
-					str: "hello nodom!",
-					notime: "2021",
-					num: 1,
-					price: 236.83,
-					discount: 0.12,
-					desc: "this is expression",
-					goods: {
-						juice: ["orange"],
+	<script type='module'>
+		import{nodom,Module,Util} from '../dist/nodom.js'
+		class Module1 extends Module{
+			template(){
+				return `
+					<div>
+						<div>多级数据：{{ac.age.as}}</div>
+						<h2>数据计算</h2>
+						<div>价格：{{Math.round(price * discount) + 'hello'}}</div>
+						<div>折扣：{{cacDis(price*discount)}}</div>
+						<div>描述：{{30 + addStr('hello' + desc) + 20}}</div>
+						<div>随机折扣:{{(Math.random()*price).toFixed(1)}}</div>
+						<div>当前日期是:{{genDate(date1)}}</div>
+						<div>当前日期时间是:{{genDate(date1,1)}}</div>
+						<div>当前时间是:{{genDate(date1,2)}}</div>
+						<div x-if={{Object.keys(goods).length>0}}>商品列表存在则显示</div>
+						<div>路径：{{'/'+'path'+'/'+url}}</div>
+						排序过滤器：
+						<ul>
+							<li x-repeat={{sortArr(rows)}}>{{name}}'s address is {{addr}}</li>
+						</ul>
+						<div>{{!true}}</div>
+						<!--<div>小数点位数过滤器：{{progress.toFixed(1)}}</div>
+						<div>转换为小写字母:{{name.toLowerCase()}}</div>
+						<div>转换为大写字母:{{name.toUpperCase()}}</div>
+						<div>数组求和:{{sum(...arr)}}</div>
+						<div>判断数组中有没有‘num’: <span x-if={{new Set(arr).has(num)}}>true</span></div>
+						<div>价格求和: {{sum(1,2)+price}}</div>
+						<div>
+							{{genDate(new Date().getTime())}} 是否为工作日：<span x-if={{new Date().getDay()<6}}>true</span>
+						</div>
+						<div>货币：¥{{(price*discount).toFixed(1)}}</div>
+						<div x-if={{price>30 && discount !== undefined}}>是低价商品并且还有折扣</div>
+						<div>计算：{{cac(1,2)+ (Math.round((price * discount))).toFixed(1) + 1}}</div>
+						<div>instanceof用法:{{arr instanceof Array}}</div>
+						<div>{{num+1}}</div>
+						<hr />
+						<div>三目运算：{{num>0?1:0}}</div>
+						<div>对象判断：{{{x:1,yyy:2}.constructor.name === 'Object'}}</div>
+						<div>数组方法：{{arr.join(',')}}</div>
+						{{desc + ' ' + this.state}} -->
+					</div>
+				`
+			}
+			data = {
+				rows: [
+					{
+						name: "yang",
+						addr: "chengdu",
 					},
-					date1: new Date().getTime(),
-					url: "home",
-					arr: [1, 2, 3, 4, 5, 6, 2, 3, 1, 2, 5],
-					ac: {
-						age: {
-							as: 1,
-						},
+					{
+						name: "zhangs",
+						addr: "mianyang",
 					},
-					sum: function (a, b) {
-						return a + b;
+					{
+						name: "nodom",
+						addr: "luoyang",
 					},
+					{
+						name: "hallo",
+						addr: "beijing",
+					},
+				],
+				$num: 3,
+				progress: 1.321,
+				name: "kyle",
+				str: "hello nodom!",
+				notime: "2021",
+				num: 1,
+				price: 236.83,
+				discount: 0.12,
+				desc: "this is expression",
+				goods: {
+					juice: ["orange"],
 				},
-				methods: {
-					cacDis: (data) => {
-						console.log(data);
-						return Math.round(data * 10);
+				date1: new Date().getTime(),
+				url: "home",
+				state:'from root model',
+				arr: [1, 2, 3, 4, 5, 6, 2, 3, 1, 2, 5],
+				ac: {
+					age: {
+						as: 1,
 					},
-					addStr: (data) => {
-						return data;
-					},
-					sum: function (arg) {
-						let sum = 0;
-						for (let i = 0; i < arguments.length; i++) {
-							sum += arguments[i];
+				}
+			}	
+			methods = {
+				cacDis(data){
+					return Math.round(data * 10);
+				},
+				addStr(data){
+					return data;
+				},
+				sum(arg) {
+					let sum = 0;
+					for (let i = 0; i < arguments.length; i++) {
+						sum += arguments[i];
+					}
+					return sum;
+				},
+				cac(a, b) {
+					return a + b;
+				},
+				genDate(date1,flag){
+					if(flag === 1){ //日期时间
+						return Util.formatDate(date1,'yyyy-MM-dd HH:mm:ss');	
+					}else if(flag === 2){  //时间
+						return Util.formatDate(date1,'HH:mm:ss');	
+					}else{ //日期
+						return Util.formatDate(date1,'yyyy-MM-dd');
+					}
+				},
+				sortArr(arr){
+					return arr.sort((a,b)=> {
+						if(a.name> b.name){
+							return 1;
 						}
-						return sum;
-					},
-					cac(a, b) {
-						return a + b;
-					},
-				},
-			},
-		});
+						return -1;
+					});
+				}
+			}
+		}
+		nodom(Module1,'div');
 	</script>
 </html>

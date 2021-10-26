@@ -1,6 +1,7 @@
 import { Module } from "./module";
-import { Element } from "./element";
+import { VirtualDom } from "./virtualdom";
 import { NEvent } from "./event";
+import { Util } from "./util";
 /**
  * 事件管理器
  */
@@ -8,38 +9,41 @@ export class EventManager{
     /**
      * 外部事件集
      */
-     private static extendEventMap = new Map();
+    private static extendEventMap = new Map();
     /**
      * 绑定事件
      * @param module 
      * @param dom 
      */
-    public static bind(module:Module,dom:Element){
-        //判断并设置事件绑定标志
-        if(dom.getParam(module,'$eventDispatched')){
+    public static bind(module:Module,dom:VirtualDom){
+        if(!dom.events){
             return;
         }
-        dom.setParam(module,'$eventDispatched',true);
-
-        let el = module.objectManager.getNode(dom.key);
+        //判断并设置事件绑定标志
+        let el = module.getNode(dom.key);
+        if(el['bindEvent']){
+            return;
+        }
+        el['bindEvent'] = true;
+        
         for (let evt of dom.events) {
+            let arr = evt[1];
             //同一个事件名可能对应多个事件对象
-            if(evt[1].length === 0) return;
+            if(arr.length === 0) return;
             //获取usecapture
-            let capture = (evt[1].findIndex(item=>module.objectManager.getEvent(item).capture === true) !== -1);
+            let capture = (arr.findIndex(item=>module.objectManager.getEvent(item).capture === true) !== -1);
             
             // 只代理一次，也只绑定一次
-
             //是否已代理
             let hasDelg:boolean = false;
             //是否已绑定
             let hasBound:boolean = false;
             //遍历处理代理事件
-            for(let ii=0;ii<evt[1].length;ii++){
-                const ev:NEvent = module.objectManager.getEvent(evt[1][ii]);
+            for(let ii=0;ii<arr.length;ii++){
+                const ev:NEvent = module.objectManager.getEvent(arr[ii]);
                 //处理外部事件，如果有外部事件，则移除改事件
                 if(this.handleExtendEvent(module,dom,ev)){
-                    evt[1].splice(ii--,1);
+                    arr.splice(ii--,1);
                     continue;
                 }
 
@@ -50,8 +54,9 @@ export class EventManager{
                 
                 //代理事件
                 if(ev.delg && !hasDelg){
-                    //加入父对象
-                    dom.parent.addEvent(ev);
+                    //事件加入父对象
+                    Util.addEvent(dom.parent,ev);
+                    
                     // 保存代理dom信息
                     let delgs = ev.getParam(module,dom.parent,'$delgs');
                     if(!delgs){
@@ -60,31 +65,47 @@ export class EventManager{
                     }
                     delgs[dom.key] = dom;
                     //从本地移除
-                    evt[1].splice(ii--,1);
+                    arr.splice(ii--,1);
                     const parent = dom.parent;
                     //如果父无此事件，则需要绑定到父事件
-                    let eh = parent.getParam(module,'$events.' + evt[0]);
+                    let eh = getCfg(parent,ev.name);
                     if(!eh){
                         // 保存handler
-                        parent.setParam(module,'$events.' + evt[0],{
-                            handler:handler,
-                            capture:ev.capture
-                        });
-                        module.objectManager.getNode(parent.key).addEventListener(evt[0],handler,ev.capture);
+                        saveCfg(parent,ev.name,handler,ev.capture);
+                        module.getNode(parent.key).addEventListener(evt[0],handler,ev.capture);
                     }
                     hasDelg = true;
                 }else if(!hasBound){
                     hasBound = true;
                     // 保存handler
-                    dom.setParam(module,'$events.' + evt[0],{
-                        handler:handler,
-                        capture:capture
-                    });
+                    saveCfg(dom,evt,handler,capture);
                     el.addEventListener(evt[0],handler,capture);
                 }
             }
         }
+        /**
+         * 保存事件配置
+         * @param dom       dom节点
+         * @param ev        事件名
+         * @param handler   事件方法
+         * @param capture   是否capture
+         */
+        function saveCfg(dom,ev,handler,capture){
+            module.objectManager.set('$domevents_' + dom.key + '_' + ev,{
+                handler:handler,
+                capture:capture
+            });
+        }
 
+        /**
+         * 获取事件配置
+         * @param dom       dom节点
+         * @param ev        事件名
+         * @returns         {handler,capture}
+         */
+        function getCfg(dom,ev):any{
+            return module.objectManager.get('$domevents_' + dom.key + '_' + ev);
+        }   
         /**
          * 事件handler
          * @param e  Event
@@ -92,14 +113,13 @@ export class EventManager{
         function handler(e){
             //从事件element获取事件
             let el = e.currentTarget;
-            let dom = module.getElement(el.getAttribute('key'));
-            if(!dom){
+            // let dom = module.getElement(el.getAttribute('key'));
+            const dom = el['vdom'];
+            if(!dom || !dom.events || !dom.events.has(e.type)){
                 return;
             }
-            let evts = dom.getEvent(e.type);
-            if(!evts){
-                return;
-            }
+            const evts = dom.getEvent(e.type);
+            
             //已执行事件map，不重复执行
             let execMap = new Map();
 
@@ -161,10 +181,10 @@ export class EventManager{
      * @param ev        事件对象
      * @returns 
      */
-    public static unbind(module:Module,dom:Element,ev:NEvent){
+    public static unbind(module:Module,dom:any,ev:NEvent){
         let evts;
         if(ev.delg){
-            evts = dom.parent.events.get(ev.name);
+            evts = dom.parent.getEvent(ev.name);
             let delgs = ev.getParam(module,dom.parent,'$delgs');
             delete delgs[dom.key];
             //如果代理不为空，则不删除事件
@@ -172,7 +192,7 @@ export class EventManager{
                 return;
             }
         }else{
-            evts = dom.events.get(ev.name);
+            evts = dom.getEvent(ev.name);
         }
         if(!evts){
             return;
@@ -183,7 +203,7 @@ export class EventManager{
         evts.splice(index,1);
         //判断并解绑
         if(evts.length === 0){
-            let cfg = dom.getParam(module,'$events.' + ev.name);
+            const cfg = module.objectManager.get('$domevents_' + dom.key + '_' + ev.name)
             if(cfg && cfg.handler){
                 (<HTMLElement>dom.getEl(module)).removeEventListener(ev.name,cfg.handler,cfg.capture);
             }
@@ -197,7 +217,7 @@ export class EventManager{
      * @param event     事件对象
      * @returns         如果有是外部事件，则返回true，否则返回false
      */
-    private static handleExtendEvent(module:Module,dom:Element,event:NEvent):boolean{
+    private static handleExtendEvent(module:Module,dom:VirtualDom,event:NEvent):boolean{
         let evts = this.get(event.name);
         if(!evts){
             return false;

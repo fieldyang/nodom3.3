@@ -1,6 +1,6 @@
 import { NCache } from "./cache";
 import { Directive } from "./directive";
-import { Element } from "./element";
+import { VirtualDom } from "./virtualdom";
 import { NEvent } from "./event";
 import { Expression } from "./expression";
 import { GlobalCache } from "./globalcache";
@@ -251,7 +251,7 @@ export  class ObjectManager {
      * 获取旧虚拟dom
      * @param dom       dom对象
      */
-    public saveElement(dom:Element){
+    public saveElement(dom:VirtualDom){
         this.cache.set('$doms.' + dom.key,dom);
     }
     /**
@@ -259,7 +259,7 @@ export  class ObjectManager {
      * @param key       dom key
      * @returns         dom对象
      */
-    public getElement(key:string):Element{
+    public getElement(key:string):VirtualDom{
         return this.cache.get('$doms.' + key);
     }
 
@@ -271,24 +271,6 @@ export  class ObjectManager {
         this.cache.remove('$doms.' + key);
     }
 
-
-    /**
-     * 获取key对应的html节点
-     * @param key       el key
-     * @returns         html element
-     */
-    public getNode(key: string): Node {
-        return this.cache.get('$doms.' + key + '.$el');
-    }
-
-    /**
-     * 保存key对应的html node
-     * @param key       dom key
-     * @param node      node
-     */
-    public saveNode(key:string,node:Node){
-        this.cache.set('$doms.' + key + '.$el',node);
-    }
 
     /**
      * 移除保存的节点（包括参数和html dom）

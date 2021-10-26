@@ -13,7 +13,7 @@
 		import{nodom,Module} from '../dist/nodom.js'
 		class Module1 extends Module{
 			template(){
-				return `
+				let s = `
                     <div>
 					    <p class='cls1' nid={{id}}>hello <span class='name'>hello:{{name}} hahaha</span></p>
                         <p class='cls2'>age is:<span class='age'>{{age}}</span></p>
@@ -21,13 +21,13 @@
 						
 						<style scope='this'>
 							{{genCls(imp,this.age)}}
-
 						</style>
 						
                         <button e-click='change1'>changeCls1</button>
                         <button e-click='change2'>changeCls2</button>
                     </div>
-				`
+				`;
+                return s;
 			}
 			data={
 				name:'nodom',
@@ -38,14 +38,13 @@
 			}
 
             methods = {
-                change1(){
-                    this.imp = true;
+                change1(model){
+                    model.imp = true;
                 },
-                change2(){
-                    this.imp = false;
+                change2(model){
+                    model.imp = false;
                 },
                 genCls(imp,age){
-                    console.log(age);
                     return `
                         .cls1{
                             font-size:16px;
@@ -73,15 +72,9 @@
                                 transform: translateX(100%);
                             }
                         }
-
-                        
-                        
                     `
                 }
-
-                
             } 
-            
 		}
     	nodom(Module1,'div');
 		

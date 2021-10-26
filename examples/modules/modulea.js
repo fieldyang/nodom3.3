@@ -6,6 +6,7 @@ export class ModuleA extends Module{
             return `
                 <div>
                     <div>这是子模块A</div>
+                    <p>模块A的内容</p>
                     <slot></slot>
                 </div>
             `
@@ -26,7 +27,7 @@ export class ModuleA extends Module{
                         hello plug
                     </slot>
                     <div>这是外部数据x1:{{x1}}</div>
-                    <div>nodom
+                    <div>
                         <p>这是外部数据x2:{{x2}}</p>
                         <slot name='s2'>第二个slot</slot>
                     </div>
@@ -44,11 +45,29 @@ export class ModuleA extends Module{
     }
 
     methods = {
+<<<<<<< HEAD
         onBeforeFirstRender(){
             console.log(this);
         },
         changeX2(model,dom,){
             model.x2 = 'hahaha'
+=======
+        changeX2(model){
+            model.x2='hello';
+            console.log(model);
+        },
+        onBeforeFirstRender(){
+            // console.log(this);
+        },
+        onBeforeRender(model){
+            if(!this.props || !this.props.$data){
+                return;
+            }
+            for(let k of Object.keys(this.props.$data)){
+                model[k] = this.props.$data[k];
+            }
+            delete this.props.$data
+>>>>>>> 7f23f804704351135f6c900ed982ade3ed659656
         }
     }
 }

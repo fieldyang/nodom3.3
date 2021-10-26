@@ -7,15 +7,16 @@ export class MRepeat extends Module{
             <button e-click='push'>push</button>
             <button e-click='addFood'>addFood</button>
             <button e-click='desc'>价格降序</button>
+            <button e-click='clear'>清空</button>
             
-            <!-- <div class="tip">基本使用</div> -->
+            <div class="tip">基本使用</div>
             <div class="code">
                 菜单：
-                <for cond="{{foods}}" nid={{$index}}>
-                    <span nid={{$index}}>菜名：{{name}}，价格：{{price}}</span>
+                <for cond="{{foods}}">
+                    <span>菜名：{{name}}，价格：{{price}}</span>
                 </for>
             </div>
-            <!-- <div class=tip>索引号的使用（编号从0开始）</div> 
+            <div class=tip>索引号的使用（编号从0开始）</div> 
             <div class=code>
                 菜单：
                 <for cond={{foods}}>
@@ -30,14 +31,18 @@ export class MRepeat extends Module{
                     菜名：{{name}}，价格：{{price}}
                 </for>
             </div>
-            
-            <div class=tip>价格升序排序（编号从1开始）</div>
+            <div class=tip>repeat 嵌套</div>
             <div class=code>
                 菜单：
-                <div x-repeat={{foods.sort((a,b)=>{if(a.price>b.price)  return 1;return -1;})}}>
+                <div x-repeat={{foods1}}>
                     编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
+                    <p>配料列表：</p>
+                    <ol>
+                        <li x-repeat={{rows}}>食材：{{title}}，重量：{{weight}}</li>
+                    </ol>
+                    
                 </div>
-            </div> -->
+            </div>
         </div>
         `
     }
@@ -47,7 +52,6 @@ export class MRepeat extends Module{
         discount:{data:0.9},
         xxx:true,
         foods: [{
-            
             name: '夫妻肺片',
             price: 25
         }, {
@@ -65,7 +69,21 @@ export class MRepeat extends Module{
         }, {
             name: '水煮肉片',
             price: 24
+        }],
+        foods1:[{
+            name: '夫妻肺片',
+            price: 25,
+            rows:[{title:'芹菜',weight:100},{title:'猪头肉',weight:200}]
+        }, {
+            name: '京酱肉丝',
+            price: 22,
+            rows:[{title:'瘦肉',weight:100},{title:'葱',weight:200}]
+        }, {
+            name: '糖醋里脊',
+            price: 20,
+            rows:[{title:'排骨',weight:200}]
         }]
+
     }
     methods={
         top(arr){
@@ -84,6 +102,9 @@ export class MRepeat extends Module{
                 }
             }
             return a1;
+        },
+        sort1(arr){
+            return arr.sort((a,b)=> a.price>b.price);
         },
         desc(model){
             model.foods.sort((a,b)=>{if(a.price>b.price)return -1;return 1;})
@@ -105,6 +126,10 @@ export class MRepeat extends Module{
                     price: 30
                 }
             )
+        },
+        clear(model){
+            delete model.foods;
+            console.log(model);
         }
     }
 }

@@ -48,11 +48,6 @@ export class Router {
     static routerKeyMap:Map<number,string> = new Map();
 
     /**
-     * 路由模块依赖map {依赖模块id:被依赖模块id}
-     */
-    static moduleDependMap:Map<number,number> = new Map();
-    
-    /**
      * 根路由
      */
     static root:Route;
@@ -123,7 +118,6 @@ export class Router {
             }
             // 清理map映射
             this.activeFieldMap.delete(module.id);
-            this.moduleDependMap.delete(module.id);
             //module置为不激活
             module.unactive();
         }
@@ -132,7 +126,7 @@ export class Router {
             if (route !== null) {
                 let module:Module = await this.getModule(route);
                 // 模块处理
-                this.dependHandle(module,route,diff[3]?.module);
+                this.dependHandle(module,route,diff[3]?diff[3].module:null);
             }
         } else { //路由不同
             //加载模块
@@ -145,8 +139,6 @@ export class Router {
                 }
                 
                 let module:Module = await this.getModule(route);
-                //添加路由容器依赖
-                this.moduleDependMap.set(module.id,parentModule.id);
                 
                 // 模块处理
                 this.dependHandle(module,route,parentModule);
@@ -178,10 +170,10 @@ export class Router {
     }
 
     /*
-        * 重定向
-        * @param path 	路径
-        */
-    static redirect(path:string) {
+     * 重定向
+     * @param path 	路径
+     */
+    public static redirect(path:string) {
         this.go(path);
     }
 
@@ -317,7 +309,6 @@ export class Router {
      */
     private static dependHandle(module:Module,route:Route,pm:Module){
         const me = this;
-        
         //激活
         module.active();
         //设置参数
@@ -330,11 +321,11 @@ export class Router {
         module.model['$route'] = o;
         if(pm){
             if(pm.state === 4){  //被依赖模块处于渲染后状态
-                module.setContainer(<HTMLElement>pm.objectManager.getNode(this.routerKeyMap.get(pm.id)));
+                module.setContainer(<HTMLElement>pm.getNode(Router.routerKeyMap.get(pm.id)));
                 this.setDomActive(pm,route.fullPath);
             }else{ //被依赖模块不处于被渲染后状态
                 pm.addRenderOps(function(m,p){
-                    module.setContainer(<HTMLElement>m.objectManager.getNode(Router.routerKeyMap.get(m.id)));
+                    module.setContainer(<HTMLElement>m.getNode(Router.routerKeyMap.get(m.id)));
                     me.setDomActive(m,p);
                 },1,[pm,route.fullPath],true);
             }
@@ -354,12 +345,6 @@ export class Router {
         }
         for(let o of arr){
             o.model[o.field] = o.path === path;
-        }
-        //渲染，因为当前模块还在渲染队列中，需要延迟加载
-        if(module.state !== 4){
-            setTimeout(()=>{
-                Renderer.add(module);
-            },0)
         }
     }
 
