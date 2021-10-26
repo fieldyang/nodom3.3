@@ -456,7 +456,9 @@ export class Util {
      * @returns     true/false
      */
     public static isEl(el: any): boolean {
-        return el instanceof HTMLElement || el instanceof SVGElement;
+        // return el instanceof HTMLElement || el instanceof SVGElement;
+        let rtn=el instanceof HTMLElement || el instanceof SVGElement;
+        return rtn;
     }
 
     /**
