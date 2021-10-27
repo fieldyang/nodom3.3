@@ -25,54 +25,48 @@
 			template(){
 				return `
 				<div>
-					<div>hello</div>
+					<button e-click='show'>show</button>
+					<button e-click='change'>change</button>
 					<!-- e-swipedown='swipedown' touch设备下测试-->
-					<ul x-show='show' e-click='clickP' >
-						<li x-repeat={{edus}} e-click='clickItem:delg:once' e-mousewheel='clickItem:delg:once'><span>{{eduName}}</span></li>
+					<ul x-show={{show}} e-click='clickP' >
+						<li x-repeat={{edus}} e-click='clickItem:once:delg' ><span>{{eduName}}</span></li>
 					</ul>
 				</div>
 				`
 			}
 			data = {
-				show:0,
+				show:1,
 				edus:[
 					{eduId:1,eduName:'高中'},
 					{eduId:2,eduName:'本科'},
 					{eduId:3,eduName:'硕士研究生'},
 					{eduId:4,eduName:'博士研究生'}
-				],
-				sum:function(){
-					console.log(this);
-				}
+				]
 			}
-			methods = {
-				clickP:function(d,module,evo,e){
-					console.log('parent',this);
-				},
-				swipedown:function(d,module,evo,e){
-					console.log(e.v0);
-				},
-				outP:function(dom,module,evo,e){
-					console.log('out parent',this);
-				},
-				clickItem:function(d,module,evo,e){
-					console.log('child',this);
-				},
-				show:function(dom,module,evo,e){
-					this.show = !this.show;
-					this.sum();
-				},
-				change:function(model,dom,evo,e){
-					model.edus.push({
-						eduId:5,eduName:'博士后'
-					})
-				},
-				change1:function(model,dom,evo,e){
-					model.edus[0].eduName = '幼儿园';
-					
-				}
+		
+			clickP(model,dom,evo,e){
+				console.log('parent',model);
+			}
+			swipedown(model,dom,evo,e){
+				console.log(e.v0);
+			}
+			clickItem(model,dom,evo,e){
+				console.log('child',model);
+			}
+			show(model,dom,evo,e){
+				console.log(model.show);
+				model.show = !model.show;
+			}
+			change(model,dom,evo,e){
+				model.edus.push({
+					eduId:5,eduName:'博士后'
+				})
+			}
+			change1(model,dom,evo,e){
+				model.edus[0].eduName = '幼儿园';
 			}
 		}
+	
 		nodom(Module1,'div');
 	</script>
 </html>

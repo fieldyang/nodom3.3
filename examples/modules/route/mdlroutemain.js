@@ -15,17 +15,16 @@ export class MdlRouteMain extends Module {
         date1: (new Date()).getTime()
     }
 
-    methods={
-        formatDate(d){
-            return Util.formatDate(d,'yyyy/MM/dd');
-        },
-        onBeforeFirstRender(){
-            let hash = location.hash;
-            if(hash){
-                Router.go(hash.substr(1));
-            }else{
-                Router.go('/router/route1/home');
-            }
+    formatDate(d){
+        return Util.formatDate(d,'yyyy/MM/dd');
+    }
+    onBeforeFirstRender(){
+        let hash = location.hash;
+        if(hash){
+            Router.go(hash.substr(1));
+        }else{
+            Router.go('/router/route1/home');
         }
     }
+
 }

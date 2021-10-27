@@ -44,6 +44,7 @@ export class ModuleA extends Module{
         rows:[{name:'nodom1'},{name:'nodom2'},{name:'nodom3'}]
     }
 
+<<<<<<< HEAD
     methods = {
 <<<<<<< HEAD
         onBeforeFirstRender(){
@@ -68,7 +69,24 @@ export class ModuleA extends Module{
             }
             delete this.props.$data
 >>>>>>> 7f23f804704351135f6c900ed982ade3ed659656
+=======
+
+    changeX2(model){
+        model.x2='hello';
+        console.log(model);
+    }
+    onBeforeFirstRender(){
+        // console.log(this);
+    }
+    onBeforeRender(model){
+        if(!this.props || !this.props.$data){
+            return;
         }
+        for(let k of Object.keys(this.props.$data)){
+            model[k] = this.props.$data[k];
+>>>>>>> 0547aeb95f8b05ff2f4047578fd747ba01df2ef2
+        }
+        delete this.props.$data
     }
 }
 

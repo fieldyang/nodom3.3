@@ -12,7 +12,7 @@ export class MRepeat extends Module{
             <div class="tip">基本使用</div>
             <div class="code">
                 菜单：
-                <for cond="{{foods}}">
+                <for cond="{{foods}}" class={{genCls($index)}}>
                     <span>菜名：{{name}}，价格：{{price}}</span>
                 </for>
             </div>
@@ -43,6 +43,15 @@ export class MRepeat extends Module{
                     
                 </div>
             </div>
+
+            <style>
+                .red{
+                    color:red;
+                }
+                .blue{
+                    color:blue;
+                }
+            </style>
         </div>
         `
     }
@@ -85,51 +94,53 @@ export class MRepeat extends Module{
         }]
 
     }
-    methods={
-        top(arr){
-            var a = [];
-            for(let i=0;i<3;i++){
-                a.push(arr[i]);
-            }
-            
-            return a;
-        },
-        getOdd(arr){
-            let a1 = [];
-            for(let i=0;i<arr.length;i++){
-                if(i%2){
-                    a1.push(arr[i]);
-                }
-            }
-            return a1;
-        },
-        sort1(arr){
-            return arr.sort((a,b)=> a.price>b.price);
-        },
-        desc(model){
-            model.foods.sort((a,b)=>{if(a.price>b.price)return -1;return 1;})
-        },
-        pop(model){
-            model.foods.pop();
-        },
-        push(model){
-            model.foods.push({name:'push菜单',price:50});
-        },
-        addFood(model){
-            model.foods.splice(2,0,
-                {
-                    name: '新增1',
-                    price: 20
-                },
-                {
-                    name: '新增2',
-                    price: 30
-                }
-            )
-        },
-        clear(model){
-            delete model.foods;
-            console.log(model);
+    top(arr){
+        var a = [];
+        for(let i=0;i<3;i++){
+            a.push(arr[i]);
         }
+        
+        return a;
+    }
+    getOdd(arr){
+        let a1 = [];
+        for(let i=0;i<arr.length;i++){
+            if(i%2){
+                a1.push(arr[i]);
+            }
+        }
+        return a1;
+    }
+    sort1(arr){
+        return arr.sort((a,b)=> a.price>b.price);
+    }
+    desc(model){
+        model.foods.sort((a,b)=>{if(a.price>b.price)return -1;return 1;})
+    }
+    pop(model){
+        model.foods.pop();
+    }
+    push(model){
+        model.foods.push({name:'push菜单',price:50});
+    }
+    addFood(model){
+        model.foods.splice(2,0,
+            {
+                name: '新增1',
+                price: 20
+            },
+            {
+                name: '新增2',
+                price: 30
+            }
+        )
+    }
+    clear(model){
+        delete model.foods;
+        console.log(model);
+    }
+
+    genCls(index){
+        return index%2?'red':'blue'
     }
 }

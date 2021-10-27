@@ -27,9 +27,7 @@ export class MdlMod4 extends Module {
         ]
     }
 
-    methods = {
-        onBeforeFirstRender(model){
-            console.log(model);
-        }
+    onBeforeFirstRender(model){
+        console.log(model);
     }
 }

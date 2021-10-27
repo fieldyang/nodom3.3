@@ -62,39 +62,39 @@
 					{ eduId: 4, eduName: "博士研究生" },
 				],
 			}
-			methods = {
-				watchSexy: function (oldValue, value) {
-					console.log(this, oldValue, value);
-				},
-				change: function (model,dom) {
-					model.married = 0;
-					model.sexy = "F";
-					model.edu = 3;
-					model.name = "aaaa";
-					model.intro = '这是nodom简介';
-				},
-				change1: function (model,dom) {
-					model.name = "nodom123";
-				},
-				onFirstRender: function () {
-					console.log("dddd");
-					// console.log($.FilterManager.exec(this,'date','1616472327001',':yyyy-MM-dd HH:mm:ss'));
-				},
-				onRender: function () {
-					console.log("d1");
-				},
-
-				formatDate(d){
-					return Util.formatDate(d,'yyyy-MM-dd');
-				},
-
-				formatTime(d){
-					return Util.formatDate(d,'yyyy-MM-dd HH:mm:ss.S')
-				}
-				
+		
+			watchSexy (oldValue, value) {
+				console.log(this, oldValue, value);
 			}
+			change (model,dom) {
+				model.married = 0;
+				model.sexy = "F";
+				model.edu = 3;
+				model.name = "aaaa";
+				model.intro = '这是nodom简介';
+			}
+			change1 (model,dom) {
+				model.name = "nodom123";
+			}
+			onFirstRender () {
+				console.log("dddd");
+				// console.log($.FilterManager.exec(this,'date','1616472327001',':yyyy-MM-dd HH:mm:ss'));
+			}
+			onRender(){
+				console.log("d1");
+			}
+
+			formatDate(d){
+				return Util.formatDate(d,'yyyy-MM-dd');
+			}
+
+			formatTime(d){
+				return Util.formatDate(d,'yyyy-MM-dd HH:mm:ss.S')
+			}
+			
 		}
+		
 		nodom(Module1,'div');
-		console.log(new Date());
+		
 	</script>
 </html>

@@ -530,24 +530,6 @@ export class Util {
             }
         }
     }
-
-    /**
-     * 给dom添加事件
-     * @param dom   dom节点
-     * @param ev    事件对象
-     */
-    public static addEvent(dom:any,ev:NEvent){
-        if(!dom.events){
-            dom.events = {};
-        }
-        if(!dom.events[ev.name]){
-            dom.events[ev.name] = [ev.id];
-        }else{
-            dom.events[ev.name].push(ev.id);
-        }
-    }
-
-    
 }
 
 //初始化keymap

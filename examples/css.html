@@ -19,8 +19,8 @@
                         <p class='cls2'>age is:<span class='age'>{{age}}</span></p>
 						<p class='cls3'>salary is:<span class='age'>{{Math.round(salary)}}</span></p>
 						
-						<style scope='this'>
-							{{genCls(imp,this.age)}}
+						<style>
+							{{genCls(imp,this.model.age)}}
 						</style>
 						
                         <button e-click='change1'>changeCls1</button>
@@ -37,45 +37,45 @@
                 imp:false
 			}
 
-            methods = {
-                change1(model){
-                    model.imp = true;
-                },
-                change2(model){
-                    model.imp = false;
-                },
-                genCls(imp,age){
-                    return `
-                        .cls1{
-                            font-size:16px;
-                            color:${imp && this.age?'red':'blue'};
+            change1(model){
+                model.imp = true;
+            }
+            change2(model){
+                model.imp = false;
+            }
+            genCls(imp,age){
+                const s =`
+                    .cls1{
+                        font-size:16px;
+                        color:${imp && this.age?'red':'blue'};
+                    }
+
+                    @page {
+                        margin: 1cm;
+                    }
+
+                    .cls2{
+                        color:${imp?'red':'blue'};
+                    }
+
+                    .cls3{
+                        color:${imp?'red':'blue'};
+                    }
+
+                    @keyframes slidein {
+                        from {
+                            transform: translateX(0%);
                         }
 
-                        @page {
-                           margin: 1cm;
+                        to {
+                            transform: translateX(100%);
                         }
+                    }
+                `;
+                return s;
+            }
+        } 
 
-                        .cls2{
-                            color:${imp?'red':'blue'};
-                        }
-
-                        .cls3{
-                            color:${imp?'red':'blue'};
-                        }
-
-                        @keyframes slidein {
-                            from {
-                                transform: translateX(0%);
-                            }
-
-                            to {
-                                transform: translateX(100%);
-                            }
-                        }
-                    `
-                }
-            } 
-		}
     	nodom(Module1,'div');
 		
 	</script>

@@ -105,26 +105,20 @@
                 }
             }
         }
-        methods = {
-            changeName(model) {
-                model.name = 'yang';
-                model.datas = [{a:3,b:3}];
-                // this.rows = [{
-                //     name: 'lei'
-                // }, {
-                //     name: 'haha'
-                // }];
-                // console.log(this.data);
-            },
-            onBeforeFirstRender(model){
-                model.$watch('datas',(m,oldValue,newValue)=>{
-                    console.log(m,oldValue,newValue)
-                })
-            }
+        
+        changeName(model) {
+            model.name = 'yang';
+            model.datas = [{a:3,b:3}];
+            
         }
-}
+        onBeforeFirstRender(model){
+            model.$watch('datas',(m,oldValue,newValue)=>{
+                console.log(m,oldValue,newValue)
+            })
+        }
+    }
 
-nodom(Module1,'div');
+    nodom(Module1,'div');
 </script>
 
 </html>

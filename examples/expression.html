@@ -99,42 +99,42 @@
 					},
 				}
 			}	
-			methods = {
-				cacDis(data){
-					return Math.round(data * 10);
-				},
-				addStr(data){
-					return data;
-				},
-				sum(arg) {
-					let sum = 0;
-					for (let i = 0; i < arguments.length; i++) {
-						sum += arguments[i];
-					}
-					return sum;
-				},
-				cac(a, b) {
-					return a + b;
-				},
-				genDate(date1,flag){
-					if(flag === 1){ //日期时间
-						return Util.formatDate(date1,'yyyy-MM-dd HH:mm:ss');	
-					}else if(flag === 2){  //时间
-						return Util.formatDate(date1,'HH:mm:ss');	
-					}else{ //日期
-						return Util.formatDate(date1,'yyyy-MM-dd');
-					}
-				},
-				sortArr(arr){
-					return arr.sort((a,b)=> {
-						if(a.name> b.name){
-							return 1;
-						}
-						return -1;
-					});
+			
+			cacDis(data){
+				return Math.round(data * 10);
+			}
+			addStr(data){
+				return data;
+			}
+			sum(arg) {
+				let sum = 0;
+				for (let i = 0; i < arguments.length; i++) {
+					sum += arguments[i];
+				}
+				return sum;
+			}
+			cac(a, b) {
+				return a + b;
+			}
+			genDate(date1,flag){
+				if(flag === 1){ //日期时间
+					return Util.formatDate(date1,'yyyy-MM-dd HH:mm:ss');	
+				}else if(flag === 2){  //时间
+					return Util.formatDate(date1,'HH:mm:ss');	
+				}else{ //日期
+					return Util.formatDate(date1,'yyyy-MM-dd');
 				}
 			}
+			sortArr(arr){
+				return arr.sort((a,b)=> {
+					if(a.name> b.name){
+						return 1;
+					}
+					return -1;
+				});
+			}
 		}
+		
 		nodom(Module1,'div');
 	</script>
 </html>

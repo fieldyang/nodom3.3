@@ -49,46 +49,44 @@ export class ModuleMain extends Module{
         `
     }
     data = {
-            show:true,
-            x:{
-                y:123
-            },
-            y:'hello world!',
-            name:'yanglei',
-            rows:[
-                {name:'yang'},
-                {name:'lei'},
-            ]
-        }
-    
-    methods = {
-        getData(){
-            // return {
-            //     x1:'x.y',
-            //     x2:['y',true]
-            // }
-            return{
-                n:'name',
-                x1:'x.y',
-                x2:['y',true]
-            }
+        show:true,
+        x:{
+            y:123
         },
-        change(model){
-            model.show = false;
-            model.y = 'aaaa';
-            // console.log(this);
-        },
-        genTemp(show){
-            if(show)
-                return `
-                    <p>这是传递的子模版111</p>
-                    <div x-repeat={{rows}}>{{name}}</div>
-                `;
-            return`
-                <p>这是传递的子模版222</p>
-                <div>name is: {{name}}</div>
-            `
+        y:'hello world!',
+        name:'yanglei',
+        rows:[
+            {name:'yang'},
+            {name:'lei'},
+        ]
+    }
+
+
+    getData(){
+        // return {
+        //     x1:'x.y',
+        //     x2:['y',true]
+        // }
+        return{
+            n:'name',
+            x1:'x.y',
+            x2:['y',true]
         }
     }
-    // modules = [ModuleA,ModuleB,ModuleC]
+    change(model){
+        model.show = false;
+        model.y = 'aaaa';
+        // console.log(this);
+    }
+    genTemp(show){
+        if(show)
+            return `
+                <p>这是传递的子模版111</p>
+                <div x-repeat={{rows}}>{{name}}</div>
+            `;
+        return`
+            <p>这是传递的子模版222</p>
+            <div>name is: {{name}}</div>
+        `
+    }
 }

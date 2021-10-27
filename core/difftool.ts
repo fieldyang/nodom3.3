@@ -26,14 +26,14 @@ export class DiffTool {
                 let change = false;
                 for (let p of ['props', 'assets']) {
                     //属性比较
-                    if (!src[p] && dst[p] || src[p] && !dst[p]) {
+                    if(!src[p] && dst[p] || src[p] && !dst[p]){
                         change = true;
-                    } else if (src[p] && dst[p]) {
-                        if (Object.keys(src[p]).length !== Object.keys(dst[p]).length) {
+                    }else if(src[p] && dst[p]){
+                        if(src[p].size !== dst[p].size){
                             change = true;
-                        } else {
-                            for (const [k, v] of src[p]) {
-                                if (v !== dst[p].get(k)) {
+                        }else{
+                            for(let k of src[p]){
+                                if(k[1] !== dst[p].get(k[0])){
                                     change = true;
                                     break;
                                 }
