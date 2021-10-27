@@ -26,7 +26,7 @@ export class MAnimation extends Module {
                         width: 200px;
                     }
                 </pre> 
-                <button e-click='tigger1'>点我触发过渡1</button>
+                <button e-click=tigger1>点我触发过渡1</button>
                 <h2>过渡1</h2>
                 <div class="container">
                     <div class='div2' x-animation={{transition1}}></div>
@@ -189,28 +189,27 @@ export class MAnimation extends Module {
 		},
 	};
 
-	methods = {
-		//触发过渡1
-		tigger1(model) {
-			model.transition1.tigger = !model.transition1.tigger;
-		},
-		tigger2(model) {
-			model.transition2.tigger = !model.transition2.tigger;
-			model.transition3.tigger = !model.transition3.tigger;
-			model.transition4.tigger = !model.transition4.tigger;
-		},
-		tigger3(model) {
-			model.transition5.tigger = !model.transition5.tigger;
-			model.transition6.tigger = !model.transition6.tigger;
-		},
-		tigger4(model) {
-			model.transition7.tigger = !model.transition7.tigger;
-		},
-		tigger5(model) {
-			model.animaiton.tigger = !model.animaiton.tigger;
-		},
-		tigger6(model) {
-			model.transition8.tigger = !model.transition8.tigger;
-		},
-	};
+	//触发过渡1
+	tigger1(model) {
+		console.log(111);
+		model.transition1.tigger = !model.transition1.tigger;
+	}
+	tigger2(model) {
+		model.transition2.tigger = !model.transition2.tigger;
+		model.transition3.tigger = !model.transition3.tigger;
+		model.transition4.tigger = !model.transition4.tigger;
+	}
+	tigger3(model) {
+		model.transition5.tigger = !model.transition5.tigger;
+		model.transition6.tigger = !model.transition6.tigger;
+	}
+	tigger4(model) {
+		model.transition7.tigger = !model.transition7.tigger;
+	}
+	tigger5(model) {
+		model.animaiton.tigger = !model.animaiton.tigger;
+	}
+	tigger6(model) {
+		model.transition8.tigger = !model.transition8.tigger;
+	}
 }
