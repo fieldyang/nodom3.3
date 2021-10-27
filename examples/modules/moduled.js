@@ -5,18 +5,13 @@ export class ModuleD extends Module {
 		return `
             <div>
                 <p>mod-d</p>
-                <button style='background:gold' e-click=print>按钮</button>
+                <button style='background:gold'>按钮</button>
             </div>
         `;
 	}
 	data = {
 		x1: 0,
 		x2: 0,
-	};
-	methods = {
-		print() {
-			console.log(this);
-		},
 	};
 }
 

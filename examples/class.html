@@ -61,19 +61,17 @@
 				],
 			};
 
-			methods = {
-				genClass($index) {
-					let model = this.model.commodities[$index];
-					let str = "";
-					if (model.price > 100) {
-						str += `red `;
-					}
-					if (model.discount < 0.8) {
-						str += `bold `;
-					}
-					return str;
-				},
-			};
+			genClass($index) {
+				let model = this.model.commodities[$index];
+				let str = "";
+				if (model.price > 100) {
+					str += `red `;
+				}
+				if (model.discount < 0.8) {
+					str += `bold `;
+				}
+				return str;
+			}
 		}
 		nodom(Main, "div");
 	</script>
