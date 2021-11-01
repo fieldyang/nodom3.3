@@ -12,10 +12,12 @@ export class ModuleB extends Module{
         `
         
     }
-    data = {
-        name:'yang',
-        x1:0,
-        x2:0
+    data(){
+        return{
+            name:'yang',
+            x1:0,
+            x2:0
+        }
     }
 
     

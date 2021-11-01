@@ -30,14 +30,7 @@ export class Renderer {
             this.waitList.push(module.id);
         }
     }
-    //从列表移除
-    public static remove(module:Module) {
-        let ind;
-        if ((ind = this.waitList.indexOf(module.id)) !== -1) {
-            this.waitList.splice(ind, 1);
-        }
-    }
-
+    
     /**
      * 队列渲染
      */
@@ -186,7 +179,7 @@ export class Renderer {
      * @param parentEl 	        父html
      * @param isRenderChild     是否渲染子节点
      */
-     public static renderToHtml(module: Module,src:VirtualDom, parentEl:HTMLElement,isRenderChild?:boolean) {
+    public static renderToHtml(module: Module,src:VirtualDom, parentEl:HTMLElement,isRenderChild?:boolean) {
         let el = module.getNode(src.key);
         if(el){   //html dom节点已存在
             if(src.tagName){
@@ -312,6 +305,62 @@ export class Renderer {
                 for (let k of dom.assets) {
                     el[k[0]] = k[1];
                 }    
+            }
+        }
+    }
+
+    /**
+     * 处理更改的dom节点
+     * @param module        待处理模块
+     * @param changeDoms    更改的dom参数数组
+     */
+    public static handleChangedDoms(module:Module,changeDoms:any[]){
+        for(let item of changeDoms){
+            let[n1,n2,pEl] = [
+                item[1]?module.getNode(item[1].key):null,
+                item[2]&&typeof item[2]==='object'?module.getNode(item[2].key):null,
+                item[3]?module.getNode(item[3].key):null
+            ];
+            switch(item[0]){
+                case 1: //添加
+                    //把新dom缓存添加到旧dom缓存
+                    Renderer.renderToHtml(module,item[1],<HTMLElement>pEl,true);
+                    n1 = module.getNode(item[1].key);
+                    if(!n2){ //不存在添加节点或为索引号
+                        if(typeof item[2] === 'number' && pEl.childNodes.length-1>item[2]){
+                            pEl.insertBefore(n1,pEl.childNodes[item[2]]);
+                        }else{
+                            pEl.appendChild(n1);
+                        }
+                    }else{
+                        pEl.insertBefore(n1,n2);
+                    }
+                    break;
+                case 2: //修改
+                    Renderer.renderToHtml(module,item[1],null,false);
+                    break;
+                case 3: //删除
+                    //清除缓存
+                    module.objectManager.removeSavedNode(item[1].key);
+                    module.keyNodeMap.delete(item[1].key);
+                    //从html dom树移除
+                    pEl.removeChild(n1);
+                    break;
+                case 4: //移动
+                    if(item[4] ){  //相对节点后
+                        if(n2&&n2.nextSibling){
+                            pEl.insertBefore(n1,n2.nextSibling);
+                        }else{
+                            pEl.appendChild(n1);
+                        }
+                    }else{
+                        pEl.insertBefore(n1,n2);
+                    }
+                    break;
+                default: //替换
+                    Renderer.renderToHtml(module,item[1],<HTMLElement>pEl,true);
+                    n1 = module.getNode(item[1].key);
+                    pEl.replaceChild(n1,n2);
             }
         }
     }

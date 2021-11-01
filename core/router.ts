@@ -320,7 +320,7 @@ export class Router {
         }
         module.model['$route'] = o;
         if(pm){
-            if(pm.state === 4){  //被依赖模块处于渲染后状态
+            if(pm.state === 2){  //被依赖模块处于渲染后状态
                 module.setContainer(<HTMLElement>pm.getNode(Router.routerKeyMap.get(pm.id)));
                 this.setDomActive(pm,route.fullPath);
             }else{ //被依赖模块不处于被渲染后状态

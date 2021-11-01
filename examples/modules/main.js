@@ -48,19 +48,20 @@ export class ModuleMain extends Module{
            </div>
         `
     }
-    data = {
-        show:true,
-        x:{
-            y:123
-        },
-        y:'hello world!',
-        name:'yanglei',
-        rows:[
-            {name:'yang'},
-            {name:'lei'},
-        ]
+    data(){
+        return{
+            show:true,
+            x:{
+                y:123
+            },
+            y:'hello world!',
+            name:'yanglei',
+            rows:[
+                {name:'yang'},
+                {name:'lei'},
+            ]
+        }
     }
-
 
     getData(){
         // return {

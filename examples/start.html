@@ -38,15 +38,16 @@
                     </div>
 				`
 			}
-			data={
-				name:'nodom',
-                age:3,
-				name1:'yang',
-				age1:43,
-				id:1,
-				salary:3000.25
-			}
-
+			data(){
+				return{
+					name:'nodom',
+					age:3,
+					name1:'yang',
+					age1:43,
+					id:1,
+					salary:3000.25
+				}
+			}	
             
 			change(model){
 				model.name='nodom3';

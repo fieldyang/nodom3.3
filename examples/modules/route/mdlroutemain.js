@@ -9,10 +9,12 @@ export class MdlRouteMain extends Module {
         </div>
         `;
     }
-    data={
-        page1: true,
-        page2: false,
-        date1: (new Date()).getTime()
+    data(){
+        return{
+            page1: true,
+            page2: false,
+            date1: (new Date()).getTime()
+        }
     }
 
     formatDate(d){

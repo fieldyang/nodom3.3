@@ -37,14 +37,14 @@ export class ModuleA extends Module{
         }
         
     }
-    data = {
-        name:'yang',
-        x1:0,
-        x2:0,
-        rows:[{name:'nodom1'},{name:'nodom2'},{name:'nodom3'}]
+    data(){
+        return{
+            name:'yang',
+            x1:0,
+            x2:0,
+            rows:[{name:'nodom1'},{name:'nodom2'},{name:'nodom3'}]
+        }
     }
-
-
     changeX2(model){
         model.x2='hello';
         console.log(model);

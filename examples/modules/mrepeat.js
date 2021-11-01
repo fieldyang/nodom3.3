@@ -55,44 +55,45 @@ export class MRepeat extends Module{
         </div>
         `
     }
-    data={
-        show:0,
-        date1:new Date().getTime(),
-        discount:{data:0.9},
-        xxx:true,
-        foods: [{
-            name: '夫妻肺片',
-            price: 25
-        }, {
-            name: '京酱肉丝',
-            price: 22
-        }, {
-            name: '糖醋里脊',
-            price: 20
-        }, {
-            name: '红烧茄子',
-            price: 12
-        }, {
-            name: '口水鸡',
-            price: 18
-        }, {
-            name: '水煮肉片',
-            price: 24
-        }],
-        foods1:[{
-            name: '夫妻肺片',
-            price: 25,
-            rows:[{title:'芹菜',weight:100},{title:'猪头肉',weight:200}]
-        }, {
-            name: '京酱肉丝',
-            price: 22,
-            rows:[{title:'瘦肉',weight:100},{title:'葱',weight:200}]
-        }, {
-            name: '糖醋里脊',
-            price: 20,
-            rows:[{title:'排骨',weight:200}]
-        }]
-
+    data(){
+        return{
+            show:0,
+            date1:new Date().getTime(),
+            discount:{data:0.9},
+            xxx:true,
+            foods: [{
+                name: '夫妻肺片',
+                price: 25
+            }, {
+                name: '京酱肉丝',
+                price: 22
+            }, {
+                name: '糖醋里脊',
+                price: 20
+            }, {
+                name: '红烧茄子',
+                price: 12
+            }, {
+                name: '口水鸡',
+                price: 18
+            }, {
+                name: '水煮肉片',
+                price: 24
+            }],
+            foods1:[{
+                name: '夫妻肺片',
+                price: 25,
+                rows:[{title:'芹菜',weight:100},{title:'猪头肉',weight:200}]
+            }, {
+                name: '京酱肉丝',
+                price: 22,
+                rows:[{title:'瘦肉',weight:100},{title:'葱',weight:200}]
+            }, {
+                name: '糖醋里脊',
+                price: 20,
+                rows:[{title:'排骨',weight:200}]
+            }]
+        }    
     }
     top(arr){
         var a = [];

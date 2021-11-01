@@ -74,80 +74,82 @@
 					</div>
 				`
 			}
-			data = {
-				show: 1,
-				ritem: {
-					title: "第一层",
-					cls: "cls1",
+			data(){
+				return{
+					show: 1,
 					ritem: {
-						title: "第二层",
-						cls: "cls2",
+						title: "第一层",
+						cls: "cls1",
 						ritem: {
-							title: "第三层",
-							cls: "cls3",
+							title: "第二层",
+							cls: "cls2",
+							ritem: {
+								title: "第三层",
+								cls: "cls3",
+							},
 						},
 					},
-				},
-				ritem1: {
-					cls: "cls1",
-					items: [{ title: "数据11" }, { title: "数据12" }],
 					ritem1: {
-						cls: "cls2",
-						items: [{ title: "数据21" }, { title: "数据22" }],
+						cls: "cls1",
+						items: [{ title: "数据11" }, { title: "数据12" }],
 						ritem1: {
-							cls: "cls3",
-							items: [{ title: "数据31" }, { title: "数据32" }, { title: "数据33" }],
+							cls: "cls2",
+							items: [{ title: "数据21" }, { title: "数据22" }],
+							ritem1: {
+								cls: "cls3",
+								items: [{ title: "数据31" }, { title: "数据32" }, { title: "数据33" }],
+							},
 						},
 					},
-				},
-				ritem2:{
-					items:[
-						{
-							title:'aaa',
-							id:1,
-							items:[{
+					ritem2:{
+						items:[
+							{
+								title:'aaa',
 								id:1,
-								title:'aaa1',
-								items:[
-									{title:'aaa12',id:12},
-									{title:'aaa11',id:11,items:[
-										{title:'aaa111',id:111},
-										{title:'aaa112',id:112}
-									]},
-									{title:'aaa13',id:13}
-								]},{
-								title:'aaa2',
-								id:2,
-								items:[
-									{title:'aaa21',id:21,items:[
-											{title:'aaa211',id:211,items:[
-											{title:'aaa2111',id:111},
-											{title:'aaa2112',id:112}
+								items:[{
+									id:1,
+									title:'aaa1',
+									items:[
+										{title:'aaa12',id:12},
+										{title:'aaa11',id:11,items:[
+											{title:'aaa111',id:111},
+											{title:'aaa112',id:112}
 										]},
-										{title:'aaa212',id:212},
-									]},
-									{title:'aaa22',id:22}
-								]}
-							]
-						},{
-							title:'bbb',
-							id:2,
-							items:[{
-								title:'bbb1',
-								id:10,
-								items:[
-									{title:'bbb11',id:1011},
-									{title:'bbb12',id:1012}
-								]},{
-								title:'bbb2',
-								id:20,
-								items:[
-									{title:'bbb21',id:201},
-									{title:'bbb22',id:202}
-								]}
-							]
-						}
-					]
+										{title:'aaa13',id:13}
+									]},{
+									title:'aaa2',
+									id:2,
+									items:[
+										{title:'aaa21',id:21,items:[
+												{title:'aaa211',id:211,items:[
+												{title:'aaa2111',id:111},
+												{title:'aaa2112',id:112}
+											]},
+											{title:'aaa212',id:212},
+										]},
+										{title:'aaa22',id:22}
+									]}
+								]
+							},{
+								title:'bbb',
+								id:2,
+								items:[{
+									title:'bbb1',
+									id:10,
+									items:[
+										{title:'bbb11',id:1011},
+										{title:'bbb12',id:1012}
+									]},{
+									title:'bbb2',
+									id:20,
+									items:[
+										{title:'bbb21',id:201},
+										{title:'bbb22',id:202}
+									]}
+								]
+							}
+						]
+					}
 				}
 			}
 			

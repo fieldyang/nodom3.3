@@ -9,9 +9,11 @@ export class ModuleD extends Module{
             </div>
         `
     }
-    data = {
-        x1:0,
-        x2:0
+    data(){
+        return{
+            x1:0,
+            x2:0
+        }
     }
 }
 

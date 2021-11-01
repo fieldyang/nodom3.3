@@ -14,10 +14,12 @@ export class MdlPMod1 extends Module {
         </div>	
         `;
     } 
-    data = {
-        home: true,
-        list: false,
-        data: false
+    data(){
+        return{
+            home: true,
+            list: false,
+            data: false
+        }
     }
     
     onFirstRender () {

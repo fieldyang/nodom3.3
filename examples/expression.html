@@ -56,45 +56,47 @@
 					</div>
 				`
 			}
-			data = {
-				rows: [
-					{
-						name: "yang",
-						addr: "chengdu",
+			data(){
+				return {
+					rows: [
+						{
+							name: "yang",
+							addr: "chengdu",
+						},
+						{
+							name: "zhangs",
+							addr: "mianyang",
+						},
+						{
+							name: "nodom",
+							addr: "luoyang",
+						},
+						{
+							name: "hallo",
+							addr: "beijing",
+						},
+					],
+					$num: 3,
+					progress: 1.321,
+					name: "kyle",
+					str: "hello nodom!",
+					notime: "2021",
+					num: 1,
+					price: 236.83,
+					discount: 0.12,
+					desc: "this is expression",
+					goods: {
+						juice: ["orange"],
 					},
-					{
-						name: "zhangs",
-						addr: "mianyang",
-					},
-					{
-						name: "nodom",
-						addr: "luoyang",
-					},
-					{
-						name: "hallo",
-						addr: "beijing",
-					},
-				],
-				$num: 3,
-				progress: 1.321,
-				name: "kyle",
-				str: "hello nodom!",
-				notime: "2021",
-				num: 1,
-				price: 236.83,
-				discount: 0.12,
-				desc: "this is expression",
-				goods: {
-					juice: ["orange"],
-				},
-				date1: new Date().getTime(),
-				url: "home",
-				state:'from root model',
-				arr: [1, 2, 3, 4, 5, 6, 2, 3, 1, 2, 5],
-				ac: {
-					age: {
-						as: 1,
-					},
+					date1: new Date().getTime(),
+					url: "home",
+					state:'from root model',
+					arr: [1, 2, 3, 4, 5, 6, 2, 3, 1, 2, 5],
+					ac: {
+						age: {
+							as: 1,
+						},
+					}
 				}
 			}	
 			

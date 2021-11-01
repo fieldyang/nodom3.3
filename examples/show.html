@@ -42,11 +42,13 @@
                 `
             }
 
-            data = {
-                show:true,
-                price:2000
+            data(){
+                    return{
+                    show:true,
+                    price:2000
+                }
             }
-
+            
             change(model){
                 model.show = !model.show;
             }

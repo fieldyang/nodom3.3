@@ -6,5 +6,5 @@ export class MdlMod1 extends Module {
     template(){
         return "<div>这是首页,路径是{{$route.path}}</div>";
     }
-    data={}
+    
 }

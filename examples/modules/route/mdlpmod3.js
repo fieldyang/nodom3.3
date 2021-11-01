@@ -10,5 +10,4 @@ export class MdlPMod3 extends Module {
         </div>
         `
     }
-    data = {} 
 }
