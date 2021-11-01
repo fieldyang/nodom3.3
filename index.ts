@@ -16,7 +16,6 @@ export { NFactory } from "./core/factory";
 
 export { NodomMessage_en } from "./core/locales/msg_en";
 export { NodomMessage_zh } from "./core/locales/msg_zh";
-
 export { Model } from "./core/model";
 export { ModelManager } from "./core/modelmanager";
 export { Module } from "./core/module";
@@ -28,7 +27,6 @@ export { Scheduler } from "./core/scheduler";
 export { NCache } from "./core/cache";
 export * from "./core/types";
 export * from "./core/nodom";
-
 export { Util } from './core/util';
 export * from "./extend/elementinit";
 export * from "./extend/directiveinit";
