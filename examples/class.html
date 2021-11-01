@@ -4,7 +4,7 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<title>class</title>
-		<script type="text/javascript" src="../dist/nodom.js"></script>
+		<link rel="stylesheet" href="./css/nodomui.css" />
 
 		<style>
 			.tip {
@@ -22,40 +22,57 @@
 	</head>
 
 	<body>
-		<div class="code">
-			<div class="tip">样式：price>100，字体变红色；discount<0.8，字体加粗</div>
-			<ul>
-				<li x-repeat="commodities" x-class="{red:'price>100&&(!rows||rows.length===0)',bold:'discount<0.8'}">
-					{{name}}的价格是{{price}}，折扣是{{discount}}
-				</li>
-			</ul>
-		</div>
+		<div></div>
 	</body>
-	<script>
-		nodom.app({
-			module: {
-				el: ".code",
-				data: {
-					commodities: [
-						{
-							name: "T恤",
-							price: 150,
-							discount: 0.9,
-							rows: [1, 2],
-						},
-						{
-							name: "短裤",
-							price: "80",
-							discount: 0.75,
-						},
-						{
-							name: "外套",
-							price: 200,
-							discount: 0.6,
-						},
-					],
-				},
-			},
-		});
+	<script type="module">
+		import { nodom, Module } from "../dist/nodom.js";
+		class Main extends Module {
+			template() {
+				return `
+		              <div class='code'>
+			        <div class="tip">样式：price>100，字体变红色；discount<0.8，字体加粗</div>
+			        <ul>
+		                      <li x-repeat={{commodities}} class={{ genClass($index) }}>
+		                          {{name}}的价格是{{price}}，折扣是{{discount}}
+		                      </li>
+			        </ul>
+		        </div>
+		           `;
+			}
+			data = {
+				a: 1,
+				commodities: [
+					{
+						name: "T恤",
+						price: 150,
+						discount: 0.9,
+						rows: [1, 2],
+					},
+					{
+						name: "短裤",
+						price: "80",
+						discount: 0.75,
+					},
+					{
+						name: "外套",
+						price: 200,
+						discount: 0.6,
+					},
+				],
+			};
+
+			genClass($index) {
+				let model = this.model.commodities[$index];
+				let str = "";
+				if (model.price > 100) {
+					str += `red `;
+				}
+				if (model.discount < 0.8) {
+					str += `bold `;
+				}
+				return str;
+			}
+		}
+		nodom(Main, "div");
 	</script>
 </html>

@@ -1,33 +1,31 @@
-import {Module,registModule} from '../../dist/nodom.js'
-import { ModuleC } from './modulec.js';
+import { Module, registModule } from "../../dist/nodom.js";
+import { ModuleC } from "./modulec.js";
 
-export class ModuleB extends Module{
-    template(props){
-        return `
+export class ModuleB extends Module {
+	template(props) {
+		return `
             <div>
                 <div>这是子模块B</div>
                 <p>模块B的内容</p>
                 <slot>haha slot b</slot>
             </div>
-        `
-        
-    }
-    data = {
-        name:'yang',
-        x1:0,
-        x2:0
-    }
+        `;
+	}
+	data = {
+		name: "yang",
+		x1: 0,
+		x2: 0,
+	};
 
-    
-    onBeforeFirstRender(){
-        // console.log(this);
-    }
-    changeX2(model,dom){
-        // console.log(this);
-        model.x2 = 'hahaha'
-    }
+	onBeforeFirstRender() {
+		// console.log(this);
+	}
+	changeX2(model, dom) {
+		// console.log(this);
+		model.x2 = "hahaha";
+	}
 
-    modules = [ModuleC]
+	modules = [ModuleC];
 }
 
-registModule(ModuleB,'mod-b');
+registModule(ModuleB, "mod-b");

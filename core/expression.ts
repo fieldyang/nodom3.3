@@ -24,13 +24,13 @@ export class Expression {
     /**
      * 值
      */
-    value:any;
+    value: any;
 
     /**
      * @param module    模块
      * @param exprStr	表达式串
      */
-    constructor(module:Module,exprStr: string) {
+    constructor(module: Module, exprStr: string) {
         this.id = Util.genId();
         this.allModelField = true;
         if (!module || !exprStr) {
@@ -45,44 +45,44 @@ export class Expression {
      * @param exprStr   表达式串
      * @returns         编译后的表达式串
      */
-    private compile(exprStr:string){
+    private compile(exprStr: string) {
         //字符串，object key，有效命名(函数或字段)
         const reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|([a-zA-Z$_][\w$]*\s*?:)|(\.?[a-zA-Z$_][\w$]*(\.[a-zA-Z$_][\w$]*)*(\s*[\[\(](\s*\))?)?)/g;
         let r;
         let retS = '';
         let index = 0;  //当前位置
 
-        while((r=reg.exec(exprStr)) !== null){
+        while ((r = reg.exec(exprStr)) !== null) {
             let s = r[0];
-            if(index < r.index){
-                retS += exprStr.substring(index,r.index);
+            if (index < r.index) {
+                retS += exprStr.substring(index, r.index);
             }
-            if(s[0] === "'" || s[0] === '"' || s[0] === '`'){ //字符串
+            if (s[0] === "'" || s[0] === '"' || s[0] === '`') { //字符串
                 retS += s;
-            }else{
-                let lch = s[s.length-1];
-                if(lch === ':'){  //object key
+            } else {
+                let lch = s[s.length - 1];
+                if (lch === ':') {  //object key
                     retS += s;
-                }else if(lch === '(' || lch === ')'){ //函数，非内部函数
+                } else if (lch === '(' || lch === ')') { //函数，非内部函数
                     retS += handleFunc(s);
-                }else { //字段
-                    if(s.startsWith('this.')|| Util.isKeyWord(s) || s[0] === '.'){ //非model属性
-                        retS += s; 
-                    }else{  //model属性
-                        retS += '$model.' + s;   
+                } else { //字段
+                    if (s.startsWith('this.') || Util.isKeyWord(s) || s[0] === '.') { //非model属性
+                        retS += s;
+                    } else {  //model属性
+                        retS += '$model.' + s;
                         //存在‘.’，则变量不全在在当前模型中
-                        if(s.indexOf('.') !== -1){
+                        if (s.indexOf('.') !== -1) {
                             this.allModelField = false;
                         }
                     }
                 }
-            } 
+            }
             index = reg.lastIndex;
         }
-        if(index < exprStr.length){
+        if (index < exprStr.length) {
             retS += exprStr.substr(index);
         }
-        
+
         return retS;
 
         /**
@@ -90,13 +90,13 @@ export class Expression {
          * @param str   源串
          * @returns     处理后的串
          */
-        function handleFunc(str):string{
+        function handleFunc(str): string {
             let ind = str.indexOf('.');
-                    
+
             //中间无'.'
-            if(ind === -1){
+            if (ind === -1) {
                 let ind1 = str.lastIndexOf('(');
-                let fn = str.substr(0,ind1);
+                let fn = str.substr(0, ind1);
                 //末尾字符
                 if(!Util.isKeyWord(fn)){
                     let lch = str[str.length-1];
@@ -106,9 +106,9 @@ export class Expression {
                         return 'this.invokeMethod("' + fn + '")';
                     }
                 }
-            }else if(str[0] !== '.'){  //第一个为点不处理
-                let fn = str.substr(0,ind);
-                if(!Util.isKeyWord(fn)){ //首字段非关键词，则为属性
+            } else if (str[0] !== '.') {  //第一个为点不处理
+                let fn = str.substr(0, ind);
+                if (!Util.isKeyWord(fn)) { //首字段非关键词，则为属性
                     return '$model.' + str;
                 }
             }
@@ -121,10 +121,10 @@ export class Expression {
      * @param model 	模型 或 fieldObj对象 
      * @returns 		计算结果
      */
-    public val(module:Module,model: Model) {
-        if (!model){
+    public val(module: Module, model: Model) {
+        if (!model) {
             model = module.model;
-        } 
+        }
         let v;
         try {
             v = this.execFunc.apply(module,[model,module]);
@@ -138,7 +138,7 @@ export class Expression {
     /**
      * 克隆
      */
-     public clone() {
+    public clone() {
         return this;
     }
 }
