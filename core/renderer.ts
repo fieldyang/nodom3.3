@@ -102,11 +102,7 @@ export class Renderer {
             if(src.children && src.children.length>0){
                 dst.children = [];
                 for(let c of src.children){
-                    if(c instanceof VirtualDom){ //未编译节点
-                        Renderer.renderDom(module,c,dst.model,dst,key?key:null);
-                    }else{ //已编译节点
-                        dst.children.push(c);
-                    }
+                    Renderer.renderDom(module,c,dst.model,dst,key?key:null);
                 }
             }
         }else if(!dst.notChange){ //文本节点

@@ -36,12 +36,12 @@ export class Module {
     /**
      * 父模块通过dom节点传递的属性
      */
-    private props:any;
+    public props:any;
 
     /**
      * 编译后的dom树
      */
-     public originTree:VirtualDom;
+    public originTree:VirtualDom;
 
     /**
      * 渲染树
@@ -207,16 +207,19 @@ export class Module {
 
     /**
      * 添加子模块
-     * @param moduleId      模块id
-     * @param className     类名
+     * @param module    模块id或模块
      */
-    public addChild(moduleId: number) {
-        if (!this.children.includes(moduleId)) {
-            this.children.push(moduleId);
-            let m: Module = ModuleFactory.get(moduleId);
-            if (m) {
-                m.parentId = this.id;
-            }
+    public addChild(module: number|Module) {
+        let mid;
+        if(typeof module === 'number'){
+            mid = module;
+            module = ModuleFactory.get(mid);
+        }else{
+            mid = module.id;
+        }
+        if (!this.children.includes(mid)) {
+            this.children.push(mid);
+            module.parentId = this.id;
         }
     }
 

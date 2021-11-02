@@ -11,7 +11,6 @@ export class ModuleMain extends Module{
                 <div>y is {{y}}</div>
                 <div>x.y is {{x.y}}</div>
                 <h2>默认slot</h2>
-                
                 <p>第一个子模块</p>
                 <mod-a p1=1 xxx='111'>
                     <mod-b p2='false' xxx='222'>
@@ -41,10 +40,10 @@ export class ModuleMain extends Module{
                 </ModuleA>
                 <h2>传递模版</h2>
                 <mod-a temp={{genTemp(show)}} />
-                
                 <h3>repeat module</h3>
-                <mod-d x-repeat={{rows}} />
-                
+                <mod-a>
+                    <mod-d x-repeat={{rows}} />
+                </mod-a>
            </div>
         `
     }

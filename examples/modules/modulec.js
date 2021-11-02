@@ -5,10 +5,9 @@ export class ModuleC extends Module{
         return `
             <div>
                 <div>这是子模块C</div>
-                <slot innerRender></slot>
+                <slot></slot>
             </div>
         `
-        
     }
     data(){
         return{
