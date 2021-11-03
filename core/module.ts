@@ -433,7 +433,7 @@ export class Module {
                 if(typeof o === 'object'){
                     ModelManager.bindToModule(o,this);
                     this.model[d] = o;
-                }else if(!this.props){ //非对象，只传第一次，避免覆盖模块修改的数据
+                }else if(!this.props || this.model[d] === undefined){ //非对象，值不存在，或第一次，避免覆盖模块修改的数据
                     this.model[d] = o;
                 }
             }
