@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<title>animation</title>
+		<link rel="stylesheet" href="./css/nodomui.css" />
+
+		<style>
+			.div1 {
+				background-color: cornflowerblue;
+				width: 100px;
+				height: 100px;
+				margin: 20px;
+				display: block;
+			}
+			.div2 {
+				background-color: #f0a45d;
+				width: 100px;
+				height: 100px;
+				margin: 20px;
+			}
+
+			.container {
+				border: 1px solid black;
+				display: flex;
+				flex-direction: row;
+			}
+
+			.shape-enter-active,
+			.shape-leave-active {
+				transition: all 1s ease;
+			}
+			.shape-enter-from,
+			.shape-leave-to {
+				height: 100px;
+				width: 100px;
+			}
+			.shape-enter-to,
+			.shape-leave-from {
+				height: 200px;
+				width: 200px;
+			}
+
+			.myfade-enter-active {
+				animation-name: myfade;
+				animation-duration: 1s;
+			}
+			.myfade-leave-active {
+				animation-name: myfade;
+				animation-duration: 1s;
+				animation-direction: reverse;
+			}
+			@keyframes myfade {
+				0% {
+					opacity: 0;
+				}
+				100% {
+					opacity: 1;
+				}
+			}
+		</style>
+	</head>
+
+	<body>
+		<div></div>
+	</body>
+	<script type="module">
+		import { nodom } from "../dist/nodom.js";
+		import { MAnimation } from "./modules/manimation.js";
+		nodom(MAnimation, "div");
+	</script>
+</html>
