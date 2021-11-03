@@ -4,7 +4,7 @@ export class ModuleA extends Module{
     template(props){
         if(props.p1){
             return `
-                <div>
+                <div class='modulea' style='color:red'>
                     <div>这是子模块A</div>
                     <p>模块A的内容</p>
                     <slot></slot>
@@ -20,8 +20,7 @@ export class ModuleA extends Module{
             
         }else{
             return `
-                <div>
-                    <div>这是子模块2</div>
+                <div class='modulea'>
                     <div>这是外部数据name:{{n}}</div>
                     <slot>
                         hello plug

@@ -111,7 +111,7 @@ export class Compiler {
                         isPreTag = false;
                     }
                 }else{
-                    throw new NError('wrongTempate');
+                    throw new NError('wrongTemplate');
                 }
             }else { //标签头
                 //去掉标签前后< >

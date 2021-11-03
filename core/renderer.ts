@@ -13,7 +13,7 @@ export class Renderer {
     /**
      * 等待渲染列表（模块名）
      */
-    private static waitList: Array < number > = [];
+    public static waitList: Array < number > = [];
 
     /**
      * 当前模块根dom
@@ -169,13 +169,13 @@ export class Renderer {
 
 
     /**
-     * 渲染到html element
+     * 渲染为html element
      * @param module 	        模块
      * @param src               渲染节点
      * @param parentEl 	        父html
      * @param isRenderChild     是否渲染子节点
      */
-    public static renderToHtml(module: Module,src:VirtualDom, parentEl:HTMLElement,isRenderChild?:boolean) {
+    public static renderToHtml(module: Module,src:VirtualDom, parentEl:HTMLElement,isRenderChild?:boolean):Node {
         let el = module.getNode(src.key);
         if(el){   //html dom节点已存在
             if(src.tagName){
@@ -226,10 +226,8 @@ export class Renderer {
             if(dom.subModuleId){
                 let m:Module = ModuleFactory.get(dom.subModuleId);
                 if(m){
-                    m.setContainer(el);
+                    m.setContainer(el,true);
                 }
-                //添加到父模块
-                module.addChild(m.id);
             }
             //设置属性
             if(dom.props){

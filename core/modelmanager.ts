@@ -268,6 +268,7 @@ export class ModelManager {
         if(!obj){
             return;
         }
+        
         let mids = obj.modules;
         let modules = [];
         for(let mid of mids){

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>nodom test</title>
+</head>
+<body>
+    <div></div>
+</body>
+<script type='module'>
+    import {nodom,Module} from '../dist/nodom.js'
+    import {ModuleE} from './modules/modulee.js'
+
+    export class Module1 extends Module{
+        template(props){
+            return `
+                <div>
+                    <button e-click='add'>add</button>
+                    <button e-click='change1'>change1</button>
+                    <mod-e style='font-size:18px;' $rows={{rows}}></mod-e>
+                </div>
+            `;
+        }
+        data(){
+            return {
+                xxx:1,
+                rows:[
+                    {id:1,name:'nodom'},
+                    {id:2,name:'noomi'},
+                    {id:3,name:'relaen'}
+                ]
+            }
+        }
+        add(model){
+            model.rows.push({id:4,name:'weblab'});
+            console.log(model.rows);
+        }
+
+        change1(model){
+            model.xxx = 2;
+        }
+    }
+    nodom(Module1,'div');
+</script>
+</html>

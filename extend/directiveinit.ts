@@ -46,7 +46,6 @@ export default (function () {
             }
             //保存到dom上，提升渲染性能
             dom.subModuleId = mid;
-                
             if(handle){ //需要处理
                 //设置props，如果改变了props，启动渲染
                 let o:any = {};

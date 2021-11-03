@@ -12,7 +12,7 @@ export class ModuleMain extends Module{
                 <div>x.y is {{x.y}}</div>
                 <h2>默认slot</h2>
                 <p>第一个子模块</p>
-                <mod-a p1=1 xxx='111'>
+                <mod-a p1=1 xxx='111' class='m1' style='font-weight:bold;'>
                     <mod-b p2='false' xxx='222'>
                         <modc>
                             <div>name is:{{name}}</div>

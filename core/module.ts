@@ -8,6 +8,7 @@ import { ObjectManager } from "./objectmanager";
 import { Renderer } from "./renderer";
 import { Util } from "./util";
 import { DiffTool } from "./difftool";
+import { ModelManager } from "./modelmanager";
 
 /**
  * 模块类
@@ -97,6 +98,11 @@ export class Module {
      * 不允许加入渲染队列标志，在renderdom前设置，避免render前修改数据引发二次渲染
      */
     public dontAddToRender:boolean;
+
+    /**
+     * 是否替换容器
+     */
+    public replaceContainer:boolean;
 
     /**
      * 构造器
@@ -193,14 +199,32 @@ export class Module {
      */
     private doFirstRender() {
         this.doModuleEvent('onBeforeFirstRender');
-        this.dontAddToRender = false;
         //渲染树
         this.renderTree = Renderer.renderDom(this,this.originTree,this.model);
         this.doModuleEvent('onBeforeFirstRenderToHTML');
-        //清空子元素
-        Util.empty(this.container);
-        //渲染到html
-        Renderer.renderToHtml(this,this.renderTree,this.container,true);
+        //渲染为html element
+        let el:any = Renderer.renderToHtml(this,this.renderTree,null,true);
+        if(this.replaceContainer){ //替换
+            ['style','class'].forEach(item=>{
+                let c = this.container.getAttribute(item);
+                if(!c){
+                    return;
+                }
+                c = c.trim();
+                let c1 = el.getAttribute(item) || '';
+                if(item==='style'){
+                    c += (c.endsWith(';')?'':';') + c1;
+                }else{
+                    c += ' ' + c1;
+                }
+                el.setAttribute(item,c);
+            });
+            Util.replaceNode(this.container,el);
+        }else{
+            //清空子元素
+            Util.empty(this.container);
+            this.container.appendChild(el);
+        }
         //执行首次渲染后事件
         this.doModuleEvent('onFirstRender');
     }
@@ -311,10 +335,12 @@ export class Module {
 
     /**
      * 设置渲染容器
-     * @param el    容器
+     * @param el        容器
+     * @param replace   渲染时是否直接替换container
      */
-    public setContainer(el:HTMLElement){
+    public setContainer(el:HTMLElement,replace?:boolean){
         this.container = el;
+        this.replaceContainer = replace;
     }
 
     /**
@@ -375,20 +401,21 @@ export class Module {
      */
     public setProps(props:any){
         let change:boolean = false;
+        //保留数据
+        let dataObj = props.$data;
+        //属性对比不对data进行对比，删除数据属性
+        delete props.$data;
         if(!this.props){
             change = true;
         }else{
             const keys = Object.getOwnPropertyNames(props);
-            let len1 = keys.indexOf('$data')===-1?keys.length:keys.length-1;
+            let len1 = keys.length;
             const keys1 = this.props?Object.getOwnPropertyNames(this.props):[];
-            let len2 = keys.indexOf('$data')===-1?keys1.length:keys1.length-1;
+            let len2 = keys1.length;
             if(len1 !== len2){
                 change = true;
             }else{
                 for(let k of keys){
-                    if(k === '$data'){
-                        continue;
-                    }
                     // object 默认改变
                     if(props[k] !== this.props[k] || typeof(props[k]) === 'object'){
                         change = true;
@@ -397,6 +424,21 @@ export class Module {
                 }
             }
         }
+
+        //props数据复制到模块model
+        if(dataObj){
+            for(let d in dataObj){
+                let o = dataObj[d];
+                //如果为对象，需要绑定到模块
+                if(typeof o === 'object'){
+                    ModelManager.bindToModule(o,this);
+                    this.model[d] = o;
+                }else if(!this.props){ //非对象，只传第一次，避免覆盖模块修改的数据
+                    this.model[d] = o;
+                }
+            }
+        }
+        
         this.props = props;
         if(change){ //有改变，进行编译并激活
             this.compile();

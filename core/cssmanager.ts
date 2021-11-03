@@ -58,7 +58,6 @@ export class CssManager{
         if(dom.parent.tagName.toLowerCase() !== 'style'){
             return false;
         }
-        console.log(dom,dom.parent);
         //scope=this，在模块根节点添加 限定 class
         CssManager.addRules(module,dom.textContent,dom.parent.getProp('scope') === 'this'?'.' + this.cssPreName + module.id:undefined);
         return true;
