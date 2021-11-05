@@ -20,10 +20,11 @@
                 <div>
                     <button e-click='add'>add</button>
                     <button e-click='change1'>change1</button>
-                    <div >{{o2.name}}</div>
-                    <mod-a>
-                        <slot>
-                            <mod-e style='font-size:18px;' shareModel></mod-e>
+                    <div>name is:{{o2.name}}</div>
+                    <!--useDomModel表示用当前dom对应的model直接覆盖子模块的model-->
+                    <mod-a useDomModel>
+                        <slot name='xx'>
+                            <mod-e style='font-size:18px;' useDomModel></mod-e>
                         </slot>
                     </mod-a>
                 </div>

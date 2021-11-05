@@ -8,9 +8,10 @@ export class ModuleE extends Module{
                 <p>子模块e</p>
                 <button e-click='change'>change</button>
                 <button e-click='change1'>change1</button>
-                <for cond={{rows}}>
+                <!--<for cond={{rows}}>
                     <div>id is:{{id}},name is:<span style='color:red;font-weight:bold;padding-left:10px'>{{name}}</span></div>
-                </for>
+                </for>-->
+                <div>id is:{{id}},name is:<span style='color:red;font-weight:bold;padding-left:10px'>{{name}}</span></div>
             </div>
         `
     }

@@ -153,7 +153,6 @@ export class Module {
      * 模型渲染
      */
     public render(): boolean {
-        console.log(this,this.id);
         this.dontAddToRender = true;
         //编译
         if(!this.originTree){

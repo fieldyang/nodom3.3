@@ -45,10 +45,11 @@ export default (function () {
                 dom.setParam(module,'moduleId',mid);
                 module.addChild(m);
                 //共享当前dom的model给子模块
-                if(dom.hasProp('shareModel')){
+                if(dom.hasProp('useDomModel')){
                     m.model = dom.model;
-                    //绑定到子模块，共享update
+                    //绑定model到子模块，共享update,watch方法
                     ModelManager.bindToModule(m.model,m);
+                    dom.delProp('useDomModel');
                 }
             }
             //保存到dom上，提升渲染性能
@@ -101,6 +102,7 @@ export default (function () {
         'repeat',
         function(module:Module,dom:VirtualDom,src:VirtualDom){
             let rows = this.value;
+            console.log(rows);
             // 无数据，不渲染
             if (!Util.isArray(rows) || rows.length === 0) {
                 return false;
