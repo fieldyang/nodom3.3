@@ -90,7 +90,7 @@ export default (function () {
      * 指令名 repeat
      * 描述：重复指令
      */
-    createDirective(
+     createDirective(
         'repeat',
         function(module:Module,dom:VirtualDom,src:VirtualDom){
             let rows = this.value;
@@ -101,17 +101,24 @@ export default (function () {
             const parent = dom.parent;
             //禁用该指令
             this.disabled = true;
+            let data = [];
+
             for (let i = 0; i < rows.length; i++) {
-                rows[i].$index = i;
+                // rows[i].$index = i;
+                data.push({
+                    $index: i,
+                    value: rows[i]
+                })
+
                 //渲染一次-1，所以需要+1
                 src.staticNum++;
-                Renderer.renderDom(module,src,rows[i],parent,rows[i].$key);
+                Renderer.renderDom(module,src,data[i],parent,data[i].$key);
             }
+
             //启用该指令
             this.disabled = false;
             return false;
         },
-        2
     );
 
     /**
