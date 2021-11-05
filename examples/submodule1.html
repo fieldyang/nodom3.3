@@ -11,6 +11,7 @@
 </body>
 <script type='module'>
     import {nodom,Module} from '../dist/nodom.js'
+    import {ModuleA} from './modules/modulea.js'
     import {ModuleE} from './modules/modulee.js'
 
     export class Module1 extends Module{
@@ -19,7 +20,12 @@
                 <div>
                     <button e-click='add'>add</button>
                     <button e-click='change1'>change1</button>
-                    <mod-e style='font-size:18px;' $rows={{rows}}></mod-e>
+                    <div >{{o2.name}}</div>
+                    <mod-a>
+                        <slot>
+                            <mod-e style='font-size:18px;' shareModel></mod-e>
+                        </slot>
+                    </mod-a>
                 </div>
             `;
         }

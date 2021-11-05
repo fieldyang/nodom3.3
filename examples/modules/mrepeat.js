@@ -12,15 +12,16 @@ export class MRepeat extends Module{
             <div class="tip">基本使用</div>
             <div class="code">
                 菜单：
-                <for cond="{{foods}}" class={{genCls($index)}}>
+                <for cond="{{foods}}" $index='idx' }}>
                     <span>菜名：{{name}}，价格：{{price}}</span>
                 </for>
             </div>
             <div class=tip>索引号的使用（编号从0开始）</div> 
+            <p> 如果使用索引号，需要在带有repeat的指令中配置$index属性，该属性指定索引名。</p>
             <div class=code>
                 菜单：
-                <for cond={{foods}}>
-                    编号：{{$index}}，菜名：{{name}}，价格：{{price}}
+                <for cond={{foods}} $index='idx'>
+                    编号：{{idx}}，菜名：{{name}}，价格：{{price}}
                 </for>
             </div>
             
@@ -34,8 +35,8 @@ export class MRepeat extends Module{
             <div class=tip>repeat 嵌套</div>
             <div class=code>
                 菜单：
-                <div x-repeat={{foods1}}>
-                    编号：{{$index+1}}，菜名：{{name}}，价格：{{price}}
+                <div x-repeat={{foods1}} $index='idx'>
+                    编号：{{idx+1}}，菜名：{{name}}，价格：{{price}}
                     <p>配料列表：</p>
                     <ol>
                         <li x-repeat={{rows}}>食材：{{title}}，重量：{{weight}}</li>
@@ -142,6 +143,7 @@ export class MRepeat extends Module{
     }
 
     genCls(index){
+        console.log(index);
         return index%2?'red':'blue'
     }
 }

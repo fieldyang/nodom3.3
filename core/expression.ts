@@ -54,7 +54,6 @@ export class Expression {
 
         while((r=reg.exec(exprStr)) !== null){
             let s = r[0];
-            
             if(index < r.index){
                 retS += exprStr.substring(index,r.index);
             }
@@ -66,8 +65,8 @@ export class Expression {
                     retS += s;
                 }else if(lch === '(' || lch === ')'){ //函数，非内部函数
                     retS += handleFunc(s);
-                }else { //字段
-                    if(s.startsWith('this.')|| Util.isKeyWord(s) || (s[0] === '.' && s[1]!=='.')){ //非model属性
+                }else { //字段 this $model .field等不做处理
+                    if(s.startsWith('this.') || s==='$model' || s.startsWith('$model.') || Util.isKeyWord(s) || (s[0] === '.' && s[1]!=='.')){ //非model属性
                         retS += s; 
                     }else{  //model属性
                         let s1 = '';
@@ -75,7 +74,8 @@ export class Expression {
                             s1 = '...';
                             s = s.substr(3);
                         }
-                        retS += s1 + '$model.' + s;   
+                        retS += s1 +'$model.' + s;
+                        
                         //存在‘.’，则变量不全在在当前模型中
                         if(s.indexOf('.') !== -1){
                             this.allModelField = false;

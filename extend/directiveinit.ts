@@ -8,6 +8,7 @@ import { createDirective} from "../core/nodom";
 import { Renderer } from "../core/renderer";
 import { Router } from "../core/router";
 import { Util } from "../core/util";
+import { ModelManager } from "../core/modelmanager";
 
 export default (function () {
 
@@ -43,6 +44,12 @@ export default (function () {
                 //保留modelId
                 dom.setParam(module,'moduleId',mid);
                 module.addChild(m);
+                //共享当前dom的model给子模块
+                if(dom.hasProp('shareModel')){
+                    m.model = dom.model;
+                    //绑定到子模块，共享update
+                    ModelManager.bindToModule(m.model,m);
+                }
             }
             //保存到dom上，提升渲染性能
             dom.subModuleId = mid;
@@ -98,14 +105,22 @@ export default (function () {
             if (!Util.isArray(rows) || rows.length === 0) {
                 return false;
             }
+            //索引名
+            const idxName = src.getProp('$index');
             const parent = dom.parent;
             //禁用该指令
             this.disabled = true;
             for (let i = 0; i < rows.length; i++) {
-                rows[i].$index = i;
+                if(idxName){
+                    rows[i][idxName] = i;
+                }
                 //渲染一次-1，所以需要+1
                 src.staticNum++;
-                Renderer.renderDom(module,src,rows[i],parent,rows[i].$key);
+                let d = Renderer.renderDom(module,src,rows[i],parent,rows[i].$key);
+                //删除$index属性
+                if(idxName){
+                    d.delProp('$index');    
+                }
             }
             //启用该指令
             this.disabled = false;
