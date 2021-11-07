@@ -267,6 +267,7 @@ export class Module {
         if (ModuleFactory.getMain() === this) {
             return;
         }
+        this.doModuleEvent('beforeUnActive');
         //设置状态
         this.state = 1;
         //删除容器
@@ -278,13 +279,17 @@ export class Module {
         this.keyNodeMap.clear();
         //清理缓存
         this.clearCache();
-
+        this.doModuleEvent('unActive');
         //处理子模块
         for(let id of this.children){
             let m = ModuleFactory.get(id);
             if(m){
                 m.unactive();
             }
+        }
+        //从html 卸载
+        if(this.container){
+            Util.empty(this.container);
         }
     }
 

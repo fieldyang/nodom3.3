@@ -42,12 +42,12 @@ export class Compiler {
      */
     private compileTemplate(srcStr:string):VirtualDom{
         // 清理comment
-        let regExp = /\<\!\-\-[\s\S]*?\-\-\>/g;
+        const regExp = /\<\!\-\-[\s\S]*?\-\-\>/g;
         srcStr = srcStr.replace(regExp,'');
         //不可见字符正则式
         const regSpace = /^[\s\n\r\t\v]+$/;
         // 1 识别标签
-        regExp = /(?<!{{[^}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^{{]*}})/g;
+        const regTag = /(?<!{{[^}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^{{]*}})/g;
         let st = 0;
         //标签串数组,含开始和结束标签
         let tagStack = [];
@@ -56,7 +56,7 @@ export class Compiler {
         //pre标签标志
         let isPreTag:boolean = false;
         let r;
-        while((r = regExp.exec(srcStr)) !== null){
+        while((r = regTag.exec(srcStr)) !== null){
             tagStack.push(r[0]);
             //处理标签之间的文本
             let tmp='';
@@ -68,7 +68,7 @@ export class Compiler {
                 }
             }
             textStack.push(tmp);
-            st = regExp.lastIndex;
+            st = regTag.lastIndex;
         }
         // 标签名数组
         let tagNames = [];

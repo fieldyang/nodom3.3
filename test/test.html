@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<title>nodom-example start</title>
+		</head>
+
+	<body>
+		<div class="view">hahaha</div> 
+	</body>
+	<script type='module'>
+		import{nodom,Module} from '../dist/nodom.js'
+		class Module1 extends Module{
+			template(){
+				return `
+                    <div>
+					    <div width='80' title='编号' field='id' template="<span style='font-weight:bold;'>{{id}}</span>"/>
+                    <div>
+                `;
+            }
+		}
+    	nodom(Module1,'div');
+	</script>
+</html>
