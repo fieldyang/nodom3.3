@@ -26,7 +26,7 @@ export class MAnimation extends Module {
                         width: 200px;
                     }
                 </pre> 
-                <button e-click=tigger1>点我触发过渡1</button>
+                <button e-click='tigger1'>点我触发过渡1</button>
                 <h2>过渡1</h2>
                 <div class="container">
                     <div class='div2' x-animation={{transition1}}></div>
@@ -41,20 +41,22 @@ export class MAnimation extends Module {
                     <div class='div2' x-animation={{transition2}}></div>
                     <div class='div2' x-animation={{transition3}}></div>
                     <div class='div2' x-animation={{transition4}}></div>
-                </div> 
+                </div>
+                
                 <button e-click='tigger3'>点我触发fold</button>
-                <h2>fold</h2>
+                  <h2>fold</h2>
                 <div class="container">
                     <div class='div2' x-animation={{transition5}}></div>
                     <div class='div2' x-animation={{transition6}}></div>
                 </div> 
-
+                
                 <button e-click='tigger4'>点我触发fade</button>
                 <h2>fade</h2>
                 <div class="container">
                     <div class='div2' x-animation={{transition7}}></div>
                 </div> 
 
+                
 
                 <p>对于进入离开过渡，你可以分别配置，你也可以控制延时时间和播放时间以及timingFunction</p>
                 <button e-click='tigger6'>点我触发过渡</button>
@@ -62,8 +64,8 @@ export class MAnimation extends Module {
                 <div class="container">
                     <div class='div2' x-animation={{transition8}}></div>
                 </div> 
-
-
+            
+                
 
                 <h1>动画</h1>
                 <p>我们将fade效果从transiton改为animation</p>
@@ -95,99 +97,102 @@ export class MAnimation extends Module {
             </div> 
 	`;
 	}
-	data = {
-		transition1: {
-			tigger: true, // 必填
-			name: "shape", // 必填
-			isAppear: false, // 是否是进入离开过渡，默认为true
-			hooks: {
-				before(module) {
-					console.log("过渡1执行前钩子执行了！");
-					console.log("过渡1执行前钩子的this是model：", this);
-					console.log("过渡1执行前钩子传入的参数是module：", module);
-				},
-				after(module) {
-					console.log("过渡1执行后钩子执行了！");
-					console.log("过渡1执行后钩子的this是model：", this);
-					console.log("过渡1执行后钩子传入的参数是module：", module);
-				},
-			},
-		},
-		transition2: {
-			tigger: true, // 必填
-			name: "scale-fixtop", // 必填
-		},
-		transition3: {
-			tigger: true, // 必填
-			name: "scale-fixleft", // 必填
-		},
-		transition4: {
-			tigger: true, // 必填
-			name: "scale-fixcenterY", // 必填
-		},
-		transition5: {
-			tigger: true, // 必填
-			name: "fold-width", // 必填
-		},
-		transition6: {
-			tigger: true, // 必填
-			name: "fold-height", // 必填
-		},
-		transition7: {
-			tigger: true, // 必填
-			name: "fade", // 必填
-		},
-		transition8: {
-			tigger: true, // 必填
-			name: {
-				enter: "scale-fixtop",
-				leave: "scale-fixleft",
-			},
-			duration: {
-				enter: "0.5s",
-				leave: "0.5s",
-			},
-			delay: {
-				enter: "0.5s",
-				leave: "0.5s",
-			},
-			timingFunction: {
-				enter: "ease-in-out",
-				leave: "cubic-bezier(0.55, 0, 0.1, 1)",
-			},
-			hooks: {
-				enter: {
+	data() {
+		return {
+			transition1: {
+				tigger: true, // 必填
+				name: "shape", // 必填
+				isAppear: false, // 是否是进入离开过渡，默认为true
+				hooks: {
 					before(module) {
-						console.log("scale-fixtop前", module);
+						console.log("过渡1执行前钩子执行了！");
+						console.log("过渡1执行前钩子的this是model：", this);
+						console.log("过渡1执行前钩子传入的参数是module：", module);
 					},
 					after(module) {
-						console.log("scale-fixtop后", module);
+						console.log("过渡1执行后钩子执行了！");
+						console.log("过渡1执行后钩子的this是model：", this);
+						console.log("过渡1执行后钩子传入的参数是module：", module);
 					},
 				},
-				leave: {
+			},
+			transition2: {
+				tigger: true, // 必填
+				name: "scale-fixtop", // 必填
+			},
+			transition3: {
+				tigger: true, // 必填
+				name: "scale-fixleft", // 必填
+			},
+			transition4: {
+				tigger: true, // 必填
+				name: "scale-fixcenterY", // 必填
+			},
+			transition5: {
+				tigger: true, // 必填
+				name: "fold-width", // 必填
+			},
+			transition6: {
+				tigger: true, // 必填
+				name: "fold-height", // 必填
+			},
+			transition7: {
+				tigger: true, // 必填
+				name: "fade", // 必填
+			},
+			transition8: {
+				tigger: true, // 必填
+				name: {
+					enter: "scale-fixtop",
+					leave: "scale-fixleft",
+				},
+				duration: {
+					enter: "0.5s",
+					leave: "0.5s",
+				},
+				delay: {
+					enter: "0.5s",
+					leave: "0.5s",
+				},
+				timingFunction: {
+					enter: "ease-in-out",
+					leave: "cubic-bezier(0.55, 0, 0.1, 1)",
+				},
+				hooks: {
+					enter: {
+						before(module) {
+							console.log("scale-fixtop前", module);
+						},
+						after(module) {
+							console.log("scale-fixtop后", module);
+						},
+					},
+					leave: {
+						before(module) {
+							console.log("scale-fixleft前", module);
+						},
+						after(module) {
+							console.log("scale-fixleft后", module);
+						},
+					},
+				},
+			},
+			animaiton: {
+				tigger: true, // 必填
+				isAppear: false,
+				type: "animation",
+				name: "myfade", // 必填
+				hooks: {
 					before(module) {
-						console.log("scale-fixleft前", module);
+						console.log("动画执行前", module);
 					},
 					after(module) {
-						console.log("scale-fixleft后", module);
+						console.log("动画执行后", module);
 					},
 				},
 			},
-		},
-		animaiton: {
-			tigger: true, // 必填
-			type: "animation",
-			name: "myfade", // 必填
-			hooks: {
-				before(module) {
-					console.log("动画执行前", module);
-				},
-				after(module) {
-					console.log("动画执行后", module);
-				},
-			},
-		},
-	};
+		};
+	}
 
 	//触发过渡1
 	tigger1(model) {
@@ -204,6 +209,7 @@ export class MAnimation extends Module {
 		model.transition6.tigger = !model.transition6.tigger;
 	}
 	tigger4(model) {
+		console.log(model);
 		model.transition7.tigger = !model.transition7.tigger;
 	}
 	tigger5(model) {
