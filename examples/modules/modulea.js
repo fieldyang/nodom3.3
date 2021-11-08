@@ -23,7 +23,7 @@ export class ModuleA extends Module{
                 <div class='modulea'>
                     <div>这是外部数据name:{{n}}</div>
                     <for cond={{rows}}>
-                        <slot name='xx' innerRender>
+                        <slot innerRender>
                             hello plug
                         </slot>
                     </for>

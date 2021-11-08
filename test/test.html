@@ -10,16 +10,32 @@
 		<div class="view">hahaha</div> 
 	</body>
 	<script type='module'>
-		import{nodom,Module} from '../dist/nodom.js'
-		class Module1 extends Module{
-			template(){
-				return `
-                    <div>
-					    <div width='80' title='编号' field='id' template="<span style='font-weight:bold;'>{{id}}</span>"/>
-                    <div>
-                `;
-            }
+		// import{nodom,Module} from '../dist/nodom.js'
+		// class Module1 extends Module{
+		// 	template(){
+		// 		return `
+        //             <div>
+		// 			    <div width='80' title='编号' field='id' template="<span style='font-weight:bold;'></span>" ></div>
+        //             <div>
+        //         `;
+        //     }
+		// }
+    	// nodom(Module1,'div');
+
+		let reg = /(?<!{{[^}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^{{]*}})/g;
+		reg = /((?<!\\)'[\s\S]*?(?<!\\)')|((?<!\\)"[\s\S]*?(?<!\\)")|((?<!\\)`[\s\S]*?(?<!\\)`)|({{[\S\s]*?\}{0,2}\s*}})|([\w$-]+(\s*=)?)|(<\s*[a-zA-Z][a-zA-Z0-9-_]*)|(\/?>)|(<\/\s*[a-zA-Z][a-zA-Z0-9-_]*>)/g;
+		let s = `<  div >
+					    <    div width='80' title='编号' 
+							x-repeat  =   {{rows}}
+						fiexHead field='id' x={{x<1&&y>1?y:5}} template="<span style='font-weight:\\"bold;\\"' x={{yy>0}}>{{id}}</span>" ></div>
+						<input value={{name}} />
+                 </  div>`;
+		let r;
+		console.log(s);
+		while((r = reg.exec(s)) !== null){
+			console.log(r[0]);
 		}
-    	nodom(Module1,'div');
+
+		console.log(/^[a-zA-Z_$][$-\w]*?\s*?=?$/.exec('xyz   ='))
 	</script>
 </html>
