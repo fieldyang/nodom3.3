@@ -51,21 +51,23 @@ export class ModuleFactory {
      * @returns     true/false
      */
     public static hasClass(clazzName:string):boolean{
-        return this.classes.has(clazzName);
+        return this.classes.has(clazzName.toLowerCase());
     }
 
     /**
      * 添加模块类
      * @param clazz     模块类
-     * @param name      注册别名
+     * @param alias     注册别名
      */
-    public static addClass(clazz:any,name?:string){
-        if(this.classes.has(clazz.name)){
+    public static addClass(clazz:any,alias?:string){
+        //转换成小写
+        let name = clazz.name.toLowerCase();
+        if(this.classes.has(name)){
             return;
         }
-        this.classes.set(clazz.name,clazz);
-        if(name){
-            this.classes.set(name,clazz);
+        this.classes.set(name,clazz);
+        if(alias){
+            this.classes.set(alias,clazz);
         }
     }
 
@@ -75,7 +77,7 @@ export class ModuleFactory {
      * @param props         模块外部属性
      */
     private static getInstance(clazz:any): Module {
-        let className = (typeof clazz === 'string')?clazz:clazz.name;
+        let className = (typeof clazz === 'string')?clazz:clazz.name.toLowerCase();
         let cls;
         // 初始化模块
         if(!this.classes.has(className) && typeof clazz === 'function'){
@@ -89,6 +91,7 @@ export class ModuleFactory {
         }
 
         let m:Module = Reflect.construct(cls, []);
+        console.log(m);
         m.init();
         return m;
     }

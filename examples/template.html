@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>nodom test</title>
+</head>
+<body>
+    <div></div>
+</body>
+<script type='module'>
+    import {nodom,Module} from '../dist/nodom.js'
+    
+    class ModuleA extends Module{
+        template(props){
+            console.log(props);
+            let s = `
+                <div>
+                    <p>modulea</p>
+                    ${props.template}
+                </div>
+            `
+            return s;
+        }
+        data(){
+            return{
+                name:'ModuleA'
+            }
+        }
+        
+    }
+
+    class ModuleB extends Module{
+        template(props){
+            return `
+                <div>
+                    <p>moduleb</p>
+                    ${props.template}
+                </div>
+            `
+        }
+        data(){
+            return{
+                name:'moduleb'
+            }
+        }
+    }
+
+    class Module1 extends Module{
+        modules = [ModuleA,ModuleB]
+        template(props){
+            return `
+                <div>
+                    <p>
+                        template元素作为子模块的template属性传递给子模块，可通过template的props.tempate获取，template支持嵌套。
+                    </p>
+
+                    <modulea>
+                        <template>
+                            <div>
+                                modulea name is:{{name}}
+                                <moduleb>
+                                    <template>
+                                        <h3>moduleb name is:{{name}}</h3>
+                                    </template>    
+                                </moduleb>
+                            </div>
+                        </template>
+                    </modulea>
+                </div>
+            `;
+        }
+    }
+    nodom(Module1,'div');
+</script>
+</html>

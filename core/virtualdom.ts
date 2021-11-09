@@ -104,8 +104,8 @@ export class VirtualDom {
      * @param tag       标签名
      * @param key       key
      */
-    constructor(tag?: string,key?:string) {
-        this.key = key || (Util.genId()+'');
+    constructor(tag?: string,key?:string,module?:Module) {
+        this.key = key || ((module?module.getDomKeyId():Util.genId()) + '');
         if(tag){
             this.tagName = tag;
         }
