@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<style>
+		.outer {
+			width: 500px;
+			height: 500px;
+			background-color: pink;
+		}
+		.mid {
+			width: 300px;
+			height: 300px;
+			background-color: cyan;
+		}
+		.inner {
+			background-color: red;
+		}
+
+		.fade-enter-active,
+		.fade-leave-active {
+			transition: opacity 0.3s ease-in-out;
+		}
+
+		.fade-enter-from,
+		.fade-leave-to {
+			opacity: 0;
+		}
+
+		.fade-enter-to,
+		.fade-leave-from {
+			opacity: 1;
+		}
+	</style>
+	<body>
+		<div class="outer fade-enter-active"></div>
+	</body>
+	<script>
+		let reg = /(?<!{{[^}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!{{[^}}]*)(?<!=)>)(?![^{{]*}})/g;
+		let str2 = `{{asda}}<div a b='b' c={{c}} d='{{d}}' e={{"<div>{{'asd{{<ppp>}}'}}</div>"}}>{{ asdas }}`;
+
+		// let str = `{{abc}}  <div a b='b' c="{{c}}" d={{d}} e={{'<div>{{ name }}</div>'}}>{{asdas}}</div>`;
+
+		console.log(str2.match(reg));
+	</script>
+</html>

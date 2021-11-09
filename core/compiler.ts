@@ -65,34 +65,51 @@ export class Compiler {
         //pre标签标志
         let isPreTag:boolean = false;
         
+        //template计数器
+        let templateCount = 0;
+
+        //模版开始index
+        let templateStartIndex = 0;
+
+        //当前标签名
+        let tagName:string;
+
         //当前dom节点
         let dom;
         //正则式匹配结果
-        let r;
-        while((r = regTag.exec(srcStr)) !== null){
-            let re = r[0];
+        let result;
+        while((result = regTag.exec(srcStr)) !== null){
+            let re = result[0];
             if(re[0] === '<'){ //标签
-                //处理文本
-                let txt = this.handleText(srcStr.substring(lastIndex,r.index),isPreTag);
-                if(txt){
-                    domArr.push(txt);
-                    closedTag.push(false);
+                if(templateCount === 0){ //模版内部不编译
+                    //处理文本
+                    let txt = this.handleText(srcStr.substring(lastIndex,result.index),isPreTag);
+                    if(txt){
+                        domArr.push(txt);
+                        closedTag.push(false);
+                    }
                 }
                 if(re[1] === '/'){ //标签结束
                     finishTag(re);
                 }else{ //标签开始
-                    let tagName = re.substr(1).trim();
-                    isPreTag = (tagName.toLowerCase() === 'pre');
-                    //新建dom节点
-                    dom = new VirtualDom(tagName,this.genKey());    
-                    domArr.push(dom);
-                    closedTag.push(false);
+                    tagName = re.substr(1).trim().toLowerCase();
+                    if(templateCount===0){  //非模版中
+                        isPreTag = (tagName === 'pre');
+                        //新建dom节点
+                        dom = new VirtualDom(tagName,this.genKey());    
+                        domArr.push(dom);
+                        closedTag.push(false);
+                    }
                 }
             }else if(re === '>'){ //标签头结束
                 finishTagHead();
             }else if(re === '/>'){ //标签结束
                 finishTag();
             }else if(dom){ //属性
+                //当前在模版内，不处理属性
+                if(templateCount>0){
+                    continue;
+                }
                 if(propReg.test(re)){
                     if(propName){ //propName=无值 情况，当无值处理
                         handleProp();
@@ -117,22 +134,33 @@ export class Compiler {
         function finishTag(ftag?:string){
             if(ftag){
                 let tag = ftag.substring(2,ftag.length-1).toLowerCase();
-                let finded = false;
-                //反向查找
-                for(let i=domArr.length-1;i>=0;i--){
-                    if(!closedTag[i] && domArr[i].tagName && domArr[i].tagName.toLowerCase() === tag){
-                        domArr[i].children = domArr.slice(i+1);
-                        //删除后续节点
-                        domArr.splice(i+1);
-                        //标注该节点已闭合
-                        closedTag.splice(i+1);
-                        finded = true;
-                        break;
+                if(templateCount>0){
+                    if(tag !== 'template'){ //非template不处理
+                        return;
+                    }
+                    if(--templateCount === 0){ //template结束
+                        let d1 = domArr[domArr.length-1];
+                        d1.setProp('template',srcStr.substring(templateStartIndex,result.index).trim());
+                    }
+                }else{ //普通节点
+                    let finded = false;
+                    //反向查找
+                    for(let i=domArr.length-1;i>=0;i--){
+                        if(!closedTag[i] && domArr[i].tagName === tag){
+                            domArr[i].children = domArr.slice(i+1);
+                            //删除后续节点
+                            domArr.splice(i+1);
+                            //标注该节点已闭合
+                            closedTag.splice(i+1);
+                            finded = true;
+                            break;
+                        }
+                    }
+                    if(!finded){
+                        throw new NError('wrongTemplate');
                     }
                 }
-                if(!finded){
-                    throw new NError('wrongTemplate');
-                }
+                
             }
             //设置标签关闭
             let ele = domArr[domArr.length-1];
@@ -150,6 +178,13 @@ export class Compiler {
          * 标签头结束
          */
         function finishTagHead(){
+            if(tagName === 'template'){  //模版标签
+                if(templateCount === 0){  //模版最开始，需要记录模版开始位置
+                    templateStartIndex = regTag.lastIndex;
+                }
+                //嵌套template中的计数
+                templateCount++;
+            }
             if(dom){
                 lastIndex = regTag.lastIndex;
             }
@@ -203,6 +238,11 @@ export class Compiler {
         let slotCt:VirtualDom;
         for(let j=0;j<dom.children.length;j++){
             let c = dom.children[j];
+            if(c.tagName === 'template'){ //模版作为模块的template属性
+                dom.setProp('template',c.getProp('template'));
+                //template节点不再需要
+                dom.children.splice(j--,1);
+            }
             if(c.hasDirective('slot')){ //带slot的不处理
                 continue;
             }
@@ -284,11 +324,12 @@ export class Compiler {
      * @param node  虚拟dom节点
      */
     private postHandleNode(node:VirtualDom){
+        
         // 模块类判断
         if (ModuleFactory.hasClass(node.tagName)) {
-            console.log('module',node.tagName)
             node.addDirective(new Directive('module',node.tagName));
             node.tagName = 'div';
+
         }else if(DirectiveElementManager.has(node.tagName)){ //自定义元素
             let clazz = DirectiveElementManager.get(node.tagName);
             Reflect.construct(clazz,[node,this.module]);
@@ -311,11 +352,10 @@ export class Compiler {
     }
 
     /**
-     * 产生可以
-     * @returns     key
+     * 产生dom key
+     * @returns   dom key
      */
     private genKey():string{
-        // return this.module.id + '_' + this.elementId++;
-        return this.elementId++ + '';
+        return this.module.getDomKeyId() + '';
     }
 }
