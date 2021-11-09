@@ -119,7 +119,6 @@ export class VirtualDom {
         if(!this.directives){
             return;
         }
-        
         //数组
         directives.forEach(d=>{
             this.removeDirective(d);

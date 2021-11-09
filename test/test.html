@@ -40,11 +40,42 @@
 		<div class="outer fade-enter-active"></div>
 	</body>
 	<script>
-		let reg = /(?<!{{[^}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!{{[^}}]*)(?<!=)>)(?![^{{]*}})/g;
-		let str2 = `{{asda}}<div a b='b' c={{c}} d='{{d}}' e={{ "</div>{{ 'asd{{<ppp>}}' }}</div>"}}>{{ asdas }}`;
+		let reg =
+			/(?<!{{[^}}]*)<(\/?)\s*?([\w][\w\d-_]*)((?:\{\{('.*?'|".*"|`.*`|[^'"`}]+)*\}\}(?![^{{]*}})|".*"|'.*?'|[\s\w\d$=-]*)*)(\/?)\s*?>(?![^{{]*}})/gi;
 
-		// let str = `{{abc}}  <div a b='b' c="{{c}}" d={{d}} e={{'<div>{{ name }}</div>'}}>{{asdas}}</div>`;
+		let str = `
+        <div a b=b c='c' d={{d}} e="{{e}}" g={{ ()=>{ "<div>{{abc}}</div>" } }} a="a<=b>c<d>e" > 
+            "{{<内容>}}" 
+        </div> 
+        <div class={{"'cls'"}}>
+                {{ abc}} 
+         </div>
+        `;
 
-		console.log(str2.match(reg));
+		let st = 0;
+		let tagStack = [];
+		//独立文本串数组，对应需要的标签串前面
+		let textStack = [];
+		const regSpace = /^[\s\n\r\t\v]+$/;
+		//pre标签标志
+		let isPreTag = false;
+		let r;
+		while ((r = reg.exec(str2)) !== null) {
+			tagStack.push(r[0]);
+			//处理标签之间的文本
+			let tmp = "";
+			if (st < r.index - 1) {
+				tmp = str2.substring(st, r.index);
+				//全为不可见字符，则保存空字符串
+				if (!isPreTag && regSpace.test(tmp)) {
+					tmp = "";
+				}
+			}
+			textStack.push(tmp);
+			st = reg.lastIndex;
+		}
+
+		console.log(tagStack);
+		console.log(textStack);
 	</script>
 </html>

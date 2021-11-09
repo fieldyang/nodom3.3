@@ -1,6 +1,5 @@
 import { VirtualDom } from "./virtualdom";
 import { GlobalCache } from "./globalcache";
-import { Model } from "./model";
 import { Module } from "./module";
 import { Util } from "./util";
 

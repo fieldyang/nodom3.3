@@ -22,7 +22,7 @@ export class ModuleB extends Module{
 
     
     onBeforeFirstRender(){
-        // console.log(this);
+        console.log(this);
     }
     changeX2(model,dom){
         // console.log(this);

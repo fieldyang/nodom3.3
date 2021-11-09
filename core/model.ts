@@ -22,7 +22,7 @@ export class Model {
                 if (src[key] === value) {
                     return true;
                 }
-                //不处理原型属性 
+                //不处理原型属性和构造器 
                 if (['__proto__', 'constructor'].includes(<string>key)) {
                     return true;
                 }

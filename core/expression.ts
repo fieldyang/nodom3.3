@@ -47,7 +47,7 @@ export class Expression {
      */
     private compile(exprStr:string){
         //字符串，object key，有效命名(函数或字段)
-        const reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|([a-zA-Z$_][\w$]*\s*?:)|(\.?[a-zA-Z$_][\w$]*(\.[a-zA-Z$_][\w$]*)*(\s*[\[\(](\s*\))?)?)/g;
+        const reg = /('[\s\S]*?')|("[\s\S]*?")|(`[\s\S]*?`)|([a-zA-Z$_][\w$]*\s*?:)|((\.{3}|\.)?[a-zA-Z$_][\w$]*(\.[a-zA-Z$_][\w$]*)*(\s*[\[\(](\s*\))?)?)/g;
         let r;
         let retS = '';
         let index = 0;  //当前位置
@@ -65,11 +65,17 @@ export class Expression {
                     retS += s;
                 }else if(lch === '(' || lch === ')'){ //函数，非内部函数
                     retS += handleFunc(s);
-                }else { //字段
-                    if(s.startsWith('this.')|| Util.isKeyWord(s) || s[0] === '.'){ //非model属性
+                }else { //字段 this $model .field等不做处理
+                    if(s.startsWith('this.') || s==='$model' || s.startsWith('$model.') || Util.isKeyWord(s) || (s[0] === '.' && s[1]!=='.')){ //非model属性
                         retS += s; 
                     }else{  //model属性
-                        retS += '$model.' + s;   
+                        let s1 = '';
+                        if(s.startsWith('...')){ // ...属性名
+                            s1 = '...';
+                            s = s.substr(3);
+                        }
+                        retS += s1 +'$model.' + s;
+                        
                         //存在‘.’，则变量不全在在当前模型中
                         if(s.indexOf('.') !== -1){
                             this.allModelField = false;

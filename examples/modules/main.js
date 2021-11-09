@@ -7,12 +7,13 @@ export class ModuleMain extends Module {
 	template() {
 		return `
             <div>
+            
                 <button e-click='change'>change</button>
                 <div>y is {{y}}</div>
                 <div>x.y is {{x.y}}</div>
                 <h2>默认slot</h2>
                 <p>第一个子模块</p>
-                <mod-a p1=1 xxx='111' class='m1' style='font-weight:bold;'>
+                <mod-a xxx='111' class='m1' style='font-weight:bold;' p1='true'>
                     <mod-b p2='false' xxx='222'>
                         <modc>
                             <div>name is:{{name}}</div>
@@ -30,7 +31,6 @@ export class ModuleMain extends Module {
                     </slot>
                     <slot name='s2'>替换的第二个slot  {{name}}</slot>
                 </ModuleA> 
-                
                 <p>第三个子模块</p>
                 <h2>默认子节点自动转换为slot节点</h2>
                 <ModuleA xxx='333'>
@@ -38,10 +38,14 @@ export class ModuleMain extends Module {
                         我自动作为solot节点
                     </h3>
                 </ModuleA>
+                
                 <h2>传递模版</h2>
+                
                 <mod-a temp={{genTemp(show)}} />
+                
                 <h3>repeat module</h3>
-                <mod-a>
+                
+                <mod-a $rows={{rows}}>
                     <mod-d x-repeat={{rows}} />
                 </mod-a>
            </div>

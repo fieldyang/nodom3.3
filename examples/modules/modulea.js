@@ -22,9 +22,11 @@ export class ModuleA extends Module{
             return `
                 <div class='modulea'>
                     <div>这是外部数据name:{{n}}</div>
-                    <slot>
-                        hello plug
-                    </slot>
+                    <for cond={{rows}}>
+                        <slot innerRender>
+                            hello plug
+                        </slot>
+                    </for>
                     <div>这是外部数据x1:{{x1}}</div>
                     <div>
                         <p>这是外部数据x2:{{x2}}</p>

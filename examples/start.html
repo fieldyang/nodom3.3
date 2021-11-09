@@ -7,7 +7,8 @@
 		</head>
 
 	<body>
-		<div class="view">hahaha</div> 
+		<div class="view">
+		</div> 
 	</body>
 	<script type='module'>
 		import{nodom,Module} from '../dist/nodom.js'
@@ -15,16 +16,16 @@
 			template(){
 				return `
                     <div>
-					    <p nid={{id}}>hello <span class='name'>hello:{{name}} hahaha</span></p>
-                        <p>age is:<span class='age'>{{age}}</span></p>
+						<p nid={{id}}><span class='name'>hello:{{name}} hahaha</span></p>
+						<p>age is:<span class='age'>{{age}}</span></p>
 						<p nid={{id}}><span class='name'>hello1:{{name1}} hahaha</span></p>
-                        <p>age1 is:<span class='age'>{{age1}}</span></p>
-						<p p1 =  123 p2=p3='abc' v='hello world'>salary is:<span class='age'>{{Math.round(salary)}}</span></p>
+                       <p>age1 is:<span class='age'>{{age1}}</span></p>
+						<p p1 =  '123' p2 p3='abc' v='hello world'>salary is:<span class='age1'>{{Math.round(salary)}}</span></p>
 						<h3>html 转义字符</h3>
-						<p p1>x &amp;y &copy;nodom &nbsp;&nbsp;noomi</p>
+						<p p1='1'>x &amp;y &copy;nodom &nbsp;&nbsp;noomi</p>
 						<p p1>x &times; y &nbsp;&ensp;&emsp; x&divide;y &nbsp; x &gt;y &lt;z</p>
-						<h3>pre 测试</h3>
-						<pre>
+						<H3>pre 测试</H3>
+						<PRE>
 				data={
 					name:'nodom',
 					age:3,
