@@ -2,40 +2,80 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-		<title>nodom-example start</title>
-		</head>
-
-	<body>
-		<div class="view">hahaha</div> 
-	</body>
-	<script type='module'>
-		// import{nodom,Module} from '../dist/nodom.js'
-		// class Module1 extends Module{
-		// 	template(){
-		// 		return `
-        //             <div>
-		// 			    <div width='80' title='编号' field='id' template="<span style='font-weight:bold;'></span>" ></div>
-        //             <div>
-        //         `;
-        //     }
-		// }
-    	// nodom(Module1,'div');
-
-		let reg = /(?<!{{[^}}]*)(?:<(\/?)\s*?([a-zA-Z][a-zA-Z0-9-_]*)([\s\S]*?)(\/?)(?<!=)>)(?![^{{]*}})/g;
-		reg = /((?<!\\)'[\s\S]*?(?<!\\)')|((?<!\\)"[\s\S]*?(?<!\\)")|((?<!\\)`[\s\S]*?(?<!\\)`)|({{[\S\s]*?\}{0,2}\s*}})|([\w$-]+(\s*=)?)|(<\s*[a-zA-Z][a-zA-Z0-9-_]*)|(\/?>)|(<\/\s*[a-zA-Z][a-zA-Z0-9-_]*>)/g;
-		let s = `<  div >
-					    <    div width='80' title='编号' 
-							x-repeat  =   {{rows}}
-						fiexHead field='id' x={{x<1&&y>1?y:5}} template="<span style='font-weight:\\"bold;\\"' x={{yy>0}}>{{id}}</span>" ></div>
-						<input value={{name}} />
-                 </  div>`;
-		let r;
-		console.log(s);
-		while((r = reg.exec(s)) !== null){
-			console.log(r[0]);
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<style>
+		.outer {
+			width: 500px;
+			height: 500px;
+			background-color: pink;
+		}
+		.mid {
+			width: 300px;
+			height: 300px;
+			background-color: cyan;
+		}
+		.inner {
+			background-color: red;
 		}
 
-		console.log(/^[a-zA-Z_$][$-\w]*?\s*?=?$/.exec('xyz   ='))
+		.fade-enter-active,
+		.fade-leave-active {
+			transition: opacity 0.3s ease-in-out;
+		}
+
+		.fade-enter-from,
+		.fade-leave-to {
+			opacity: 0;
+		}
+
+		.fade-enter-to,
+		.fade-leave-from {
+			opacity: 1;
+		}
+	</style>
+	<body>
+		<div class="outer fade-enter-active"></div>
+	</body>
+	<script>
+		let reg =
+			/(?<!{{[^}}]*)<(\/?)\s*?([\w][\w\d-_]*)((?:\{\{('.*?'|".*"|`.*`|[^'"`}]+)*\}\}(?![^{{]*}})|".*"|'.*?'|[\s\w\d$=-]*)*)(\/?)\s*?>(?![^{{]*}})/gi;
+
+		let str = `
+        <div a b=b c='c' d={{d}} e="{{e}}" g={{ ()=>{ "<div>{{abc}}</div>" } }} a="a<=b>c<d>e" > 
+            "{{<内容>}}" 
+        </div> 
+        <div class={{"'cls'"}}>
+                {{ abc}} 
+         </div>
+        `;
+
+		let st = 0;
+		let tagStack = [];
+		//独立文本串数组，对应需要的标签串前面
+		let textStack = [];
+		const regSpace = /^[\s\n\r\t\v]+$/;
+		//pre标签标志
+		let isPreTag = false;
+		let r;
+		while ((r = reg.exec(str2)) !== null) {
+			tagStack.push(r[0]);
+			//处理标签之间的文本
+			let tmp = "";
+			if (st < r.index - 1) {
+				tmp = str2.substring(st, r.index);
+				//全为不可见字符，则保存空字符串
+				if (!isPreTag && regSpace.test(tmp)) {
+					tmp = "";
+				}
+			}
+			textStack.push(tmp);
+			st = reg.lastIndex;
+		}
+
+		console.log(tagStack);
+		console.log(textStack);
 	</script>
 </html>
